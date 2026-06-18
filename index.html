@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中医体质检测 · TCM Constitution Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --ink:#0F0C07;--ink2:#1C1710;--ink3:#2A2318;
+  --gold:#C9A84C;--gold2:#F0D98A;--gold3:#8B6914;
+  --ivory:#F5EDD8;--ivory2:#EDE0C4;--ivory3:#D4C49A;
+  --text:#F5EDD8;--text2:#C8B898;--text3:#8A7A5C;
+  --card:#1A1508;--card2:#221C0D;
+  --border:#3A2E18;--border2:#4A3C22;
+  --red:#E05040;--green:#5A9A6A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Noto Sans SC','Noto Serif SC',sans-serif;background:var(--ink);color:var(--text);min-height:100vh;line-height:1.8;letter-spacing:.02em;}
+
+.lang-bar{position:fixed;top:0;right:0;z-index:1000;display:flex;gap:2px;padding:.5rem .75rem;}
+.lang-btn{padding:4px 10px;font-size:11px;letter-spacing:.08em;border:1px solid var(--border2);border-radius:1px;background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s;}
+.lang-btn:hover,.lang-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08);}
+
+#screen-intro{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 1.5rem;text-align:center;position:relative;overflow:hidden;}
+.intro-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(201,168,76,.07) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(201,168,76,.04) 0%,transparent 60%),var(--ink);}
+.intro-deco{position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(201,168,76,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.025) 1px,transparent 1px);background-size:60px 60px;}
+.intro-content{position:relative;z-index:1;max-width:560px;}
+.seal{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:96px;height:96px;
+  background:linear-gradient(145deg,#A82020 0%,#7C1414 60%,#921C1C 100%);
+  border:2px solid rgba(180,50,50,0.5);
+  position:relative;margin-bottom:2.5rem;
+  box-shadow:0 6px 24px rgba(100,10,10,0.55),0 0 0 5px rgba(100,10,10,0.18),inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.seal::before{
+  content:'';position:absolute;inset:5px;
+  border:1px solid rgba(245,237,216,0.18);
+  pointer-events:none;
+}
+.seal::after{
+  content:'';position:absolute;inset:-7px;
+  border:1px solid rgba(160,30,30,0.25);
+  pointer-events:none;
+}
+.seal-inner{
+  font-family:'Noto Serif SC','STSong','STKaiti','SimSun',serif;
+  font-size:26px;font-weight:700;
+  color:#F5EDD8;
+  letter-spacing:6px;writing-mode:vertical-rl;line-height:1.1;
+  text-shadow:0 1px 3px rgba(0,0,0,0.3);
+  position:relative;z-index:1;
+}
+.eyebrow{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.35em;color:var(--gold3);text-transform:uppercase;margin-bottom:1.25rem;}
+.intro-title{font-family:'Noto Serif SC','Cormorant Garamond',serif;font-size:clamp(32px,6vw,54px);font-weight:300;color:var(--ivory);letter-spacing:.1em;line-height:1.2;margin-bottom:.5rem;}
+.intro-title em{font-style:normal;color:var(--gold2);font-weight:300;}
+.intro-sub{font-family:'Noto Sans SC',sans-serif;font-size:15px;font-weight:300;color:var(--text2);letter-spacing:.2em;margin-bottom:2rem;}
+.intro-divider{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto 2rem;}
+.intro-desc{font-size:14px;color:var(--text3);line-height:2.2;margin-bottom:2.5rem;letter-spacing:.06em;font-family:'Noto Sans SC',sans-serif;font-weight:300;}
+.name-wrap{margin-bottom:2rem;}
+.name-label{display:block;font-size:10px;letter-spacing:.25em;color:var(--gold3);text-transform:uppercase;margin-bottom:.75rem;}
+.name-input{width:100%;max-width:300px;padding:14px 20px;background:rgba(255,255,255,.03);border:none;border-bottom:1px solid var(--border2);color:var(--ivory);font-size:16px;font-family:inherit;text-align:center;letter-spacing:.1em;outline:none;transition:border-color .2s;}
+.name-input:focus{border-bottom-color:var(--gold);}
+.name-input::placeholder{color:var(--text3);}
+.start-btn{display:inline-flex;align-items:center;gap:12px;padding:16px 52px;background:linear-gradient(135deg,var(--gold3) 0%,var(--gold) 50%,var(--gold2) 100%);border:none;border-radius:1px;color:var(--ink);font-size:12px;font-family:inherit;font-weight:500;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;transition:opacity .2s,transform .1s;}
+.start-btn:hover{opacity:.88;}
+.start-btn:active{transform:scale(.98);}
+.start-note{margin-top:1.25rem;font-size:11px;color:var(--text3);letter-spacing:.1em;}
+
+#screen-main{display:none;}
+.topbar{background:rgba(15,12,7,.92);border-bottom:1px solid var(--border);padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.topbar-brand{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;font-size:18px;font-weight:400;color:var(--gold2);letter-spacing:.18em;cursor:pointer;transition:opacity .15s;}
+.topbar-brand:hover{opacity:.75;}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text3);}
+.topbar-right span{color:var(--ivory2);}
+.logout-link{color:var(--text3);cursor:pointer;font-size:11px;text-decoration:underline;text-underline-offset:3px;}
+.logout-link:hover{color:var(--gold);}
+.main-nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;overflow-x:auto;scrollbar-width:none;align-items:stretch;}
+.main-nav::-webkit-scrollbar{display:none;}
+.lang-nav{display:flex;align-items:center;gap:2px;margin-left:auto;padding:0 0 0 .5rem;border-left:1px solid var(--border);flex-shrink:0;}
+.lang-nav .lang-btn{padding:3px 8px;font-size:10px;}
+.nav-tab{padding:1rem 1.25rem;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);cursor:pointer;border-bottom:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.nav-tab:hover{color:var(--text2);}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.main-body{max-width:720px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+
+.progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.progress-label{font-size:10px;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;}
+.progress-count{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold2);}
+.progress-track{width:100%;height:1px;background:var(--border);margin-bottom:2.5rem;position:relative;}
+.progress-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));transition:width .5s cubic-bezier(.22,1,.36,1);}
+
+.q-block{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.75rem;margin-bottom:.75rem;transition:border-color .2s;position:relative;overflow:hidden;}
+.q-block::before{content:'';position:absolute;top:0;left:0;width:2px;height:0;background:var(--gold);transition:height .3s ease;}
+.q-block.answered{border-color:var(--border2);}
+.q-block.answered::before{height:100%;}
+.q-num{font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;margin-bottom:.6rem;}
+.q-text{font-size:16px;color:var(--ivory2);line-height:1.9;margin-bottom:1.25rem;font-family:'Noto Sans SC',sans-serif;font-weight:300;letter-spacing:.04em;}
+.options{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.opt-btn{padding:11px 4px;border:1px solid var(--border);border-radius:1px;background:transparent;cursor:pointer;font-size:11px;color:var(--text3);font-family:inherit;transition:all .15s;text-align:center;line-height:1.5;}
+.opt-btn:hover{border-color:var(--gold3);color:var(--text2);background:rgba(201,168,76,.05);}
+.opt-btn.selected{border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold2);}
+.opt-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:.04em;}
+.quiz-actions{display:flex;gap:12px;justify-content:center;margin-top:2.5rem;}
+.btn-primary{padding:13px 44px;background:linear-gradient(135deg,var(--gold3),var(--gold));border:none;border-radius:1px;color:var(--ink);font-size:11px;font-family:inherit;font-weight:500;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+.btn-primary:hover{opacity:.88;}
+.btn-ghost{padding:13px 28px;border:1px solid var(--border2);border-radius:1px;background:transparent;color:var(--text3);font-size:11px;font-family:inherit;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--gold3);color:var(--text2);}
+.section-head{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;}
+.section-line{flex:1;height:1px;background:var(--border);}
+.section-label{font-size:10px;letter-spacing:.25em;color:var(--gold3);text-transform:uppercase;white-space:nowrap;}
+.error-note{font-size:12px;color:var(--red);text-align:center;margin-top:.75rem;letter-spacing:.05em;}
+
+.report-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;}
+#report-wrap{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:2.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden;}
+#report-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.report-logo-text{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.4em;color:var(--gold3);text-transform:uppercase;text-align:center;margin-bottom:2rem;}
+.report-hero{text-align:center;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+.report-type{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;font-size:clamp(34px,6vw,52px);font-weight:400;color:var(--gold2);letter-spacing:.12em;margin-bottom:.3rem;line-height:1.2;}
+.report-type-en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--text3);letter-spacing:.15em;margin-bottom:1.25rem;}
+.report-desc{font-size:15px;color:var(--text2);line-height:2.2;max-width:460px;margin:0 auto;font-family:'Noto Sans SC',sans-serif;font-weight:300;letter-spacing:.05em;}
+.chart-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.chart-name{width:72px;font-size:12px;color:var(--text3);text-align:right;flex-shrink:0;}
+.chart-track{flex:1;height:3px;background:var(--border);position:relative;}
+.chart-fill{position:absolute;top:0;left:0;height:100%;background:var(--border2);transition:width 1.2s cubic-bezier(.22,1,.36,1);}
+.chart-fill.top{background:linear-gradient(90deg,var(--gold3),var(--gold2));}
+.chart-pct{width:38px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text3);text-align:right;}
+.tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:.5rem;}
+.tip-card{background:var(--ink2);border:1px solid var(--border);border-radius:2px;padding:1.25rem;}
+.tip-title{font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;margin-bottom:.75rem;}
+.tip-body{font-size:14px;color:var(--text2);line-height:2.1;font-family:'Noto Sans SC',sans-serif;font-weight:300;letter-spacing:.03em;}
+.report-footer{text-align:center;font-size:10px;color:var(--text3);margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border);letter-spacing:.1em;text-transform:uppercase;}
+
+.history-empty{text-align:center;padding:5rem 1rem;color:var(--text3);font-size:14px;line-height:2.2;}
+.history-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.5rem;margin-bottom:.75rem;cursor:pointer;transition:border-color .2s;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.history-card:hover{border-color:var(--gold3);}
+.hc-type{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;font-size:24px;color:var(--gold2);letter-spacing:.1em;margin-bottom:.2rem;}
+.hc-date{font-size:11px;color:var(--text3);letter-spacing:.1em;}
+.hc-bars{display:flex;gap:3px;align-items:flex-end;height:40px;}
+.hc-bar{width:16px;background:var(--border2);border-radius:1px 1px 0 0;min-height:3px;}
+.hc-bar.top{background:var(--gold3);}
+
+.compare-selects{display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.compare-selects select{flex:1;min-width:180px;padding:12px 16px;background:var(--card);border:1px solid var(--border);color:var(--ivory2);font-size:13px;font-family:inherit;border-radius:1px;outline:none;}
+.compare-selects select:focus{border-color:var(--gold3);}
+.compare-header-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;}
+.compare-type-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.25rem;text-align:center;}
+.compare-type-name{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;font-size:22px;color:var(--gold2);letter-spacing:.1em;margin-bottom:.25rem;}
+.compare-type-date{font-size:11px;color:var(--text3);letter-spacing:.08em;}
+.compare-legend{display:flex;gap:1.5rem;justify-content:center;margin-bottom:1rem;font-size:11px;color:var(--text3);letter-spacing:.08em;}
+.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+.compare-rows{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.5rem;}
+.cmp-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.cmp-label{width:68px;font-size:12px;color:var(--text3);text-align:right;flex-shrink:0;}
+.cmp-tracks{flex:1;display:flex;flex-direction:column;gap:3px;}
+.cbar{height:4px;border-radius:2px;transition:width 1s cubic-bezier(.22,1,.36,1);min-width:3px;}
+.cbar.a{background:var(--gold);}
+.cbar.b{background:#7B6BBE;}
+.cmp-diff{width:80px;font-size:11px;color:var(--text3);text-align:right;}
+
+.data-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.5rem;margin-bottom:1rem;}
+.data-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.data-table-wrap{overflow-x:auto;margin-top:1rem;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:.75rem 1rem;text-align:left;color:var(--gold3);font-weight:400;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+td{padding:.65rem 1rem;color:var(--text2);border-bottom:1px solid rgba(58,46,24,.4);}
+tr:hover td{background:rgba(201,168,76,.03);}
+.msg{font-size:12px;padding:.65rem 1rem;border-radius:1px;margin-top:.75rem;letter-spacing:.05em;}
+.msg.error{background:rgba(224,80,64,.1);color:var(--red);}
+.msg.success{background:rgba(90,154,106,.1);color:var(--green);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--ink);}
+::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* ── 舌诊模块 ── */
+.tongue-q-block{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.75rem;margin-bottom:.75rem;transition:border-color .2s;position:relative;overflow:hidden;}
+.tongue-q-block::before{content:'';position:absolute;top:0;left:0;width:2px;height:0;background:var(--gold);transition:height .3s ease;}
+.tongue-q-block.answered::before{height:100%;}
+.tongue-q-block.answered{border-color:var(--border2);}
+.tongue-opts-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tongue-opts-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.tongue-opts-4{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.tongue-opts-5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.tongue-opt{padding:14px 8px;border:1px solid var(--border);border-radius:1px;background:transparent;cursor:pointer;font-size:12px;color:var(--text3);font-family:inherit;transition:all .15s;text-align:center;line-height:1.5;}
+.tongue-opt:hover{border-color:var(--gold3);color:var(--text2);background:rgba(201,168,76,.05);}
+.tongue-opt.selected{border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold2);}
+.tongue-invite{background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid var(--border2);border-left:2px solid var(--gold);border-radius:2px;padding:1.5rem;margin-top:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.tongue-invite-text{flex:1;}
+.tongue-invite-title{font-size:12px;letter-spacing:.12em;color:var(--gold2);margin-bottom:.35rem;}
+.tongue-invite-desc{font-size:12px;color:var(--text3);line-height:1.8;}
+.tongue-invite-btns{display:flex;gap:8px;flex-shrink:0;}
+.tongue-intro{text-align:center;padding:2rem 1rem 2.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+.tongue-intro-icon{font-size:36px;margin-bottom:1rem;}
+.tongue-intro-title{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;font-size:26px;color:var(--gold2);letter-spacing:.12em;margin-bottom:.5rem;}
+.tongue-intro-sub{font-size:13px;color:var(--text3);line-height:2;letter-spacing:.04em;}
+.tongue-ai-box{margin-top:1.5rem;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));border:1px solid var(--border2);border-left:2px solid var(--gold3);border-radius:2px;padding:1.5rem;}
+
+/* ── 结果页舌诊增强区块 ── */
+.tongue-enhance{margin-top:1.5rem;border:1px solid var(--border2);border-left:2px solid var(--gold3);border-radius:2px;overflow:hidden;}
+.tongue-enhance-header{display:flex;align-items:center;gap:1rem;padding:1.25rem 1.5rem;cursor:pointer;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));transition:background .15s;user-select:none;}
+.tongue-enhance-header:hover{background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(201,168,76,.04));}
+.tongue-enhance-icon{width:28px;height:28px;border:1px solid var(--gold3);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold);flex-shrink:0;border-radius:1px;}
+.tongue-enhance-meta{flex:1;}
+.tongue-enhance-title{font-size:12px;letter-spacing:.15em;color:var(--gold2);margin-bottom:.2rem;}
+.tongue-enhance-sub{font-size:11px;color:var(--text3);letter-spacing:.04em;}
+.tongue-enhance-arrow{color:var(--gold3);font-size:13px;transition:transform .25s;flex-shrink:0;}
+.tongue-enhance-arrow.open{transform:rotate(180deg);}
+.tongue-enhance-body{padding:1.5rem;border-top:1px solid var(--border);display:none;}
+.tongue-enhance-body.open{display:block;}
+.tongue-enhance.done .tongue-enhance-header{background:linear-gradient(135deg,rgba(90,154,106,.07),rgba(90,154,106,.02));border-left-color:var(--green);cursor:default;}
+.tongue-enhance.done .tongue-enhance-title{color:var(--green);}
+.combined-ai-box{margin-top:1.5rem;background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid var(--gold3);border-left:2px solid var(--gold);border-radius:2px;padding:1.5rem;}
+.combined-ai-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:1rem;}
+.combined-ai-badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.5s ease-in-out infinite;}
+
+/* ── 平板 / 中等屏幕适配 (Bug7) ── */
+@media (min-width:769px) and (max-width:1024px){
+  .main-body{max-width:640px;padding:2rem 1.25rem 5rem;}
+  .q-text{font-size:15px;}
+  .opt-btn{font-size:12px;}
+  .tip-body{font-size:13px;}
+  .compare-selects{flex-wrap:wrap;}
+  .compare-selects select{min-width:220px;}
+}
+/* ── 超宽屏幕保护 ── */
+#screen-main{min-height:100vh;}
+.main-body{overflow-x:hidden;}
+
+/* ── 移动端响应式优化 ── */
+@media (max-width:768px){
+  /* 基础排版 */
+  body{font-size:16px;line-height:1.9;}
+
+  /* 顶部栏 */
+  .lang-bar{padding:.35rem .5rem;gap:1px;}
+  .lang-btn{padding:4px 8px;font-size:11px;}
+  .topbar{padding:.75rem 1rem;}
+  .topbar-brand{font-size:16px;}
+  .topbar-right{font-size:13px;gap:8px;}
+
+  /* 导航标签 */
+  .main-nav{padding:0 .5rem;}
+  .nav-tab{font-size:13px;padding:.9rem .85rem;letter-spacing:.05em;}
+  .lang-nav{padding:0 0 0 .35rem;}
+  .lang-nav .lang-btn{padding:3px 6px;font-size:10px;}
+
+  /* 主内容区 */
+  .main-body{padding:1.75rem 1rem 5rem;}
+
+  /* 进度 */
+  .progress-label{font-size:12px;}
+  .progress-count{font-size:26px;}
+
+  /* 题目卡 */
+  .q-block{padding:1.5rem 1.25rem;}
+  .q-num{font-size:11px;}
+  .q-text{font-size:16px;line-height:1.85;margin-bottom:1.25rem;}
+
+  /* 选项按钮 — 5列改3列，确保触控区域≥44px */
+  .options{grid-template-columns:repeat(3,1fr)!important;gap:8px;}
+  .opt-btn{padding:14px 6px;font-size:13px;min-height:48px;}
+
+  /* 主操作按钮 */
+  .btn-primary{padding:15px 36px;font-size:13px;min-height:48px;}
+  .btn-ghost{padding:15px 24px;font-size:13px;min-height:48px;}
+
+  /* 报告页 */
+  .report-actions{gap:10px;}
+  #report-wrap{padding:1.75rem 1.25rem;}
+  .report-desc{font-size:15px;line-height:2;}
+  .tips-grid{grid-template-columns:1fr;}
+  .tip-body{font-size:15px;line-height:2;}
+  .tip-title{font-size:11px;}
+  .chart-name{font-size:13px;}
+  .chart-pct{font-size:16px;}
+
+  /* AI 分析文字 */
+  #ai-result-text{font-size:15px!important;line-height:2!important;}
+  #tongue-ai-text{font-size:15px!important;line-height:2!important;}
+
+  /* 历史记录 */
+  .hc-type{font-size:20px;}
+  .hc-date{font-size:12px;}
+
+  /* 对比分析 */
+  .compare-selects{flex-direction:column;}
+  .compare-selects select{min-width:100%;}
+  .cmp-label{font-size:13px;width:60px;}
+  .cmp-diff{font-size:12px;width:64px;}
+
+  /* 舌诊 */
+  .tongue-intro{padding:1.5rem .75rem 2rem;}
+  .tongue-intro-title{font-size:22px;}
+  .tongue-intro-sub{font-size:14px;line-height:1.9;}
+  .tongue-q-block{padding:1.5rem 1.25rem;}
+  .tongue-opts-5{grid-template-columns:repeat(3,1fr)!important;gap:8px;}
+  .tongue-opts-4{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .tongue-opt{padding:14px 6px;font-size:13px;min-height:48px;}
+  .tongue-invite{flex-direction:column;gap:.75rem;}
+  .tongue-invite-title{font-size:13px;}
+  .tongue-invite-desc{font-size:13px;}
+  .tongue-invite-btns{width:100%;justify-content:stretch;}
+  .tongue-invite-btns .btn-primary,.tongue-invite-btns .btn-ghost{flex:1;text-align:center;}
+
+  /* 首页 */
+  #screen-intro{padding:3rem 1.25rem;}
+  .intro-desc{font-size:15px;line-height:2;}
+  .name-input{font-size:16px;}
+  .start-btn{padding:16px 40px;font-size:13px;}
+
+  /* 免责声明 */
+  #disclaimer-text,#tongue-disclaimer-text{font-size:12px!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+  <button class="lang-btn" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('es')">ES</button>
+  <button class="lang-btn" onclick="setLang('de')">DE</button>
+  <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+</div>
+
+<div id="screen-intro">
+  <div class="intro-bg"></div>
+  <div class="intro-deco"></div>
+  <div class="intro-content">
+    <div class="seal"><div class="seal-inner" id="seal-text">体质</div></div>
+    <div class="eyebrow" id="eyebrow-text">传统中医体质学</div>
+    <h1 class="intro-title"><em id="title1-text">体质</em> <span id="title2-text">检测系统</span></h1>
+    <div class="intro-sub" id="subtitle-text">九种体质 · 专业评估 · 个人化建议</div>
+    <div class="intro-divider"></div>
+    <p class="intro-desc" id="desc-text">根据中华中医药学会标准，透过33道题目精准评估您在九种体质中各自的比例，并给出专属调养建议。</p>
+    <div class="name-wrap">
+      <label class="name-label" id="name-label-text">您的姓名</label>
+      <input type="text" id="user-name-input" class="name-input" placeholder="请输入您的姓名" maxlength="20">
+    </div>
+    <button class="start-btn" onclick="enterMain()"><span id="start-btn-text">开始检测</span> <span style="opacity:.6">→</span></button>
+    <p class="start-note" id="start-note-text">约需 5 分钟 · 请如实作答以获得准确结果</p>
+  </div>
+</div>
+
+<div id="screen-main">
+  <div class="topbar">
+    <div class="topbar-brand" id="brand-text" onclick="doLogout()" title="返回首页">中医体质检测</div>
+    <div class="topbar-right">
+      <span id="header-name">—</span>
+      <span class="logout-link" onclick="doLogout()" id="logout-text">退出</span>
+    </div>
+  </div>
+  <div class="main-nav">
+    <div class="nav-tab" onclick="doLogout()" id="tab-home-label">首页</div>
+    <div class="nav-tab active" onclick="showTab('quiz')" id="tab-quiz-label">开始检测</div>
+    <div class="nav-tab" onclick="showTab('tongue')" id="tab-tongue-label">舌诊</div>
+    <div class="nav-tab" onclick="showTab('history')" id="tab-history-label">历史记录</div>
+    <div class="nav-tab" onclick="showTab('compare')" id="tab-compare-label">对比分析</div>
+    <div class="nav-tab" onclick="showTab('export')" id="tab-export-label">数据管理</div>
+    <div class="lang-nav">
+      <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" onclick="setLang('ja')">日</button>
+    </div>
+  </div>
+  <div class="main-body">
+    <div id="tab-quiz">
+      <div class="progress-header">
+        <span class="progress-label" id="prog-label-text">检测进度</span>
+        <span class="progress-count" id="q-count">0 / 33</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="q-bar" style="width:0%"></div></div>
+      <div id="quiz-questions"></div>
+      <div class="quiz-actions">
+        <button class="btn-ghost" onclick="resetQuiz()" id="reset-btn-text">重置</button>
+        <button class="btn-primary" onclick="submitQuiz()" id="submit-btn-text">查看结果</button>
+      </div>
+      <p class="error-note" id="quiz-error"></p>
+    </div>
+
+    <div id="tab-result" style="display:none;">
+      <div class="report-actions">
+        <button class="btn-primary" onclick="shareImage()" id="img-btn-text">截图下载</button>
+        <button class="btn-ghost" onclick="showTab('quiz');resetQuiz()" id="retry-btn-text">重新检测</button>
+      </div>
+      <div id="report-wrap">
+        <div class="report-logo-text" id="report-logo-text">中医九种体质检测报告</div>
+        <div class="report-hero">
+          <div class="report-type" id="r-type">—</div>
+          <div class="report-type-en" id="r-en">—</div>
+          <p class="report-desc" id="r-desc">—</p>
+        </div>
+        <div class="section-head"><div class="section-line"></div><div class="section-label" id="s-chart-text">体质占比</div><div class="section-line"></div></div>
+        <div id="r-chart"></div>
+        <div class="section-head" style="margin-top:2rem;"><div class="section-line"></div><div class="section-label" id="s-tips-text">调养建议</div><div class="section-line"></div></div>
+        <div class="tips-grid" id="r-tips"></div>
+        <div id="r-massage-tip" style="display:none;margin-top:.75rem;background:var(--ink2);border:1px solid var(--border2);border-left:2px solid var(--gold3);border-radius:2px;padding:1.25rem;"></div>
+        <div class="report-footer" id="r-footer">—</div>
+        <div style="margin-top:1.25rem;padding:1rem;background:rgba(201,168,76,.04);border:1px solid rgba(58,46,24,.5);border-radius:1px;font-size:11px;color:var(--text3);line-height:1.9;letter-spacing:.03em;text-align:center;" id="disclaimer-text">
+          ⚠ 本报告由 AI 根据中医理论生成，仅供健康参考，不构成医疗诊断或治疗建议。如有健康疑虑，请咨询持牌中医师或医疗专业人士。
+        </div>
+      </div>
+      <!-- AI 体质分析 -->
+      <div id="ai-result-box" style="display:none;margin-top:1.25rem;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));border:1px solid var(--border2);border-left:2px solid var(--gold3);border-radius:2px;padding:1.5rem;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.5s ease-in-out infinite;"></div>
+          <span id="ai-result-title" style="font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;">AI 体质分析</span>
+        </div>
+        <div id="ai-result-text" style="font-size:14px;color:var(--text2);line-height:2.1;letter-spacing:.03em;white-space:pre-wrap;"></div>
+      </div>
+
+      <!-- 舌诊增强区块（内嵌，折叠式） -->
+      <div id="tongue-enhance-section" class="tongue-enhance" style="display:none;">
+        <div class="tongue-enhance-header" onclick="toggleTongueEnhance()">
+          <div class="tongue-enhance-icon">✦</div>
+          <div class="tongue-enhance-meta">
+            <div class="tongue-enhance-title" id="enhance-title-text">深化分析 · 添加舌诊</div>
+            <div class="tongue-enhance-sub" id="enhance-sub-text">6 道题 · 约 2 分钟 · 获取更精准的综合报告</div>
+          </div>
+          <div class="tongue-enhance-arrow" id="tongue-enhance-arrow">▾</div>
+        </div>
+        <div class="tongue-enhance-body" id="tongue-enhance-body">
+          <div id="tongue-inline-questions"></div>
+          <div class="quiz-actions" style="margin-top:1.5rem;">
+            <button class="btn-ghost" onclick="resetInlineTongue()" id="inline-reset-btn">重置</button>
+            <button class="btn-primary" onclick="submitInlineTongue()" id="inline-submit-btn">✦ 生成综合报告</button>
+          </div>
+          <p class="error-note" id="tongue-inline-error"></p>
+        </div>
+      </div>
+
+      <!-- 综合 AI 报告（完成舌诊后替换体质 AI） -->
+      <div id="combined-ai-box" class="combined-ai-box" style="display:none;">
+        <div class="combined-ai-badge" id="combined-ai-badge">体质 + 舌象综合分析</div>
+        <div id="combined-ai-text" style="font-size:14px;color:var(--text2);line-height:2.1;letter-spacing:.03em;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+
+    <!-- 舌诊 Tab -->
+    <div id="tab-tongue" style="display:none;">
+      <div class="tongue-intro">
+        <div class="tongue-intro-icon">👅</div>
+        <div class="tongue-intro-title" id="tongue-tab-title">舌象自测</div>
+        <div class="tongue-intro-sub" id="tongue-tab-sub">舌诊是中医四诊之一，请在自然光线下观察舌头作答<br>共 6 题，约需 2 分钟</div>
+        <div style="margin-top:1.25rem;padding:.75rem 1rem;background:rgba(201,168,76,.04);border:1px solid rgba(58,46,24,.5);border-radius:1px;font-size:11px;color:var(--text3);line-height:1.9;letter-spacing:.03em;" id="tongue-disclaimer-text">
+          ⚠ 本测评由 AI 根据中医舌诊理论辅助分析，仅供健康参考，不构成医疗诊断。如有疑虑请咨询专业中医师。
+        </div>
+      </div>
+      <div id="tongue-questions"></div>
+      <div class="quiz-actions">
+        <button class="btn-ghost" onclick="renderTongue()" id="tongue-reset-btn">重置</button>
+        <button class="btn-primary" onclick="submitTongue()" id="tongue-submit-btn">获取舌诊分析</button>
+      </div>
+      <p class="error-note" id="tongue-error"></p>
+      <!-- 综合报告按钮行（有体质结果时显示） -->
+      <div id="tongue-combine-row" style="display:none;text-align:center;margin-top:1rem;">
+        <button class="btn-ghost" onclick="generateTongueAI(true)" id="tongue-combine-btn" style="border-color:var(--gold3);color:var(--gold2);">✦ 生成综合体质 + 舌诊报告</button>
+      </div>
+      <!-- AI 分析结果 -->
+      <div id="tongue-ai-box" class="tongue-ai-box" style="display:none;"></div>
+    </div>
+
+    <div id="tab-history" style="display:none;">
+      <div class="section-head"><div class="section-line"></div><div class="section-label" id="history-title-text">我的检测历史</div><div class="section-line"></div></div>
+      <div id="history-list"></div>
+    </div>
+
+    <div id="tab-compare" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;">
+        <div class="section-head" style="flex:1;margin-bottom:0;"><div class="section-line"></div><div class="section-label" id="compare-title-text">两次检测对比</div><div class="section-line"></div></div>
+        <button class="btn-ghost" onclick="downloadCompareReport()" id="dl-compare-btn" style="white-space:nowrap;font-size:11px;padding:8px 18px;">⬇ 下载对比报告</button>
+      </div>
+      <div class="compare-selects">
+        <select id="cmp-a" onchange="renderCompare()"><option id="cmp-a-opt">— 选择第一次 —</option></select>
+        <select id="cmp-b" onchange="renderCompare()"><option id="cmp-b-opt">— 选择第二次 —</option></select>
+      </div>
+      <div id="compare-result"></div>
+      <div id="ai-analysis-box" style="
+        margin-top:1.25rem;
+        background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));
+        border:1px solid var(--border2);
+        border-left:2px solid var(--gold3);
+        border-radius:2px;
+        padding:1.5rem;
+        display:none;
+      "></div>
+      <style>
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.4);}}
+      </style>
+    </div>
+
+    <div id="tab-export" style="display:none;">
+      <div class="section-head"><div class="section-line"></div><div class="section-label" id="export-title-text">数据管理</div><div class="section-line"></div></div>
+      <div class="data-card">
+        <div class="data-actions">
+          <button class="btn-primary" onclick="exportCSV()" id="export-csv-text">导出 CSV</button>
+          <button class="btn-ghost" onclick="exportJSON()" id="export-json-text">导出 JSON</button>
+          <button class="btn-ghost" onclick="document.getElementById('import-file').click()" id="import-json-text">导入 JSON</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)">
+        </div>
+        <div id="export-msg"></div>
+      </div>
+      <div class="data-card">
+        <div class="section-head"><div class="section-line"></div><div class="section-label" id="sync-title-label">跨设备同步</div><div class="section-line"></div></div>
+        <p style="font-size:12px;color:var(--text3);line-height:1.9;margin-bottom:1rem;" id="sync-desc-text">生成同步码后，在另一台设备上粘贴导入，即可同步数据。</p>
+        <div class="data-actions">
+          <button class="btn-primary" onclick="genSyncCode()" id="gen-sync-btn">📋 生成同步码</button>
+          <button class="btn-ghost" onclick="importSyncCode()" id="import-sync-btn">📥 从同步码导入</button>
+        </div>
+        <div id="sync-code-area" style="margin-top:1rem;"></div>
+      </div>
+      <div class="data-card">
+        <div class="section-head"><div class="section-line"></div><div class="section-label" id="all-records-text">所有记录</div><div class="section-line"></div></div>
+        <div class="data-table-wrap" id="export-table"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N={
+  zh:{seal:'体质',eyebrow:'传统中医体质学',t1:'体质',t2:'检测系统',sub:'九种体质 · 专业评估 · 个人化建议',desc:'根据中华中医药学会标准，透过33道题目精准评估您在九种体质中各自的比例，并给出专属调养建议。',nameLabel:'您的姓名',namePH:'请输入您的姓名',startBtn:'开始检测',startNote:'约需 5 分钟 · 请如实作答以获得准确结果',brand:'中医体质检测',logout:'退出',tHome:'首页',tQuiz:'开始检测',tTongue:'舌诊',tHistory:'历史记录',tCompare:'对比分析',tExport:'数据管理',progLabel:'检测进度',resetBtn:'重置',submitBtn:'查看结果',imgBtn:'下载报告',retryBtn:'重新检测',rLogo:'中医九种体质检测报告',sChart:'体质占比',sTips:'调养建议',histTitle:'我的检测历史',histEmpty:'暂无检测记录\n完成一次检测后将在此显示',cmpTitle:'两次检测对比',cmpA:'— 选择第一次 —',cmpB:'— 选择第二次 —',cmpHint:'请选择两次不同的检测记录进行对比',expTitle:'数据管理',expCSV:'导出 CSV',expJSON:'导出 JSON',impJSON:'导入 JSON',allRec:'所有记录',noData:'暂无数据',impOk:'成功导入',impFail:'导入失败：',colName:'姓名',colType:'体质',colDate:'时间',opts:['没有/很少','有时','经常','总是','非常符合'],scaleL:'完全不符合',scaleR:'非常符合',unanswered:'{n} 题未作答',tipFood:'饮食调养',tipLife:'生活起居',tipSport:'运动建议',tipAvoid:'注意事项',first:'第一次',second:'第二次',tongueTabTitle:'舌象自测',tongueTabSub:'舌诊是中医四诊之一，请在自然光线下观察舌头作答<br>共 6 题，约需 2 分钟',tongueReset:'重置',tongueSubmit:'获取舌诊分析',tongueCombine:'✦ 生成综合体质 + 舌诊报告',tongueInviteTitle:'🔍 深化分析 · 添加舌诊报告',tongueInviteDesc:'结合舌象可以更全面地了解您的体质，让 AI 分析更精准。',tongueInviteYes:'立即添加舌诊',tongueInviteNo:'暂时跳过'},
+  en:{seal:'TCM',eyebrow:'Traditional Chinese Medicine',t1:'Constitution',t2:'Assessment',sub:'9 Types · Professional Evaluation · Personalized Advice',desc:'Assess your constitution profile across 9 types through 33 questions and receive personalized wellness guidance based on Traditional Chinese Medicine standards.',nameLabel:'Your Name',namePH:'Enter your name',startBtn:'Begin Assessment',startNote:'Approx. 5 min · Please answer honestly for accurate results',brand:'TCM Constitution',logout:'Sign Out',tHome:'Home',tQuiz:'Assessment',tTongue:'Tongue Dx',tHistory:'History',tCompare:'Compare',tExport:'Data',progLabel:'Progress',resetBtn:'Reset',submitBtn:'View Results',imgBtn:'Download Report',retryBtn:'Retake',rLogo:'TCM Nine-Constitution Assessment Report',sChart:'Constitution Profile',sTips:'Wellness Recommendations',histTitle:'My Assessment History',histEmpty:'No records yet\nComplete an assessment to see your history',cmpTitle:'Comparative Analysis',cmpA:'— Select First Assessment —',cmpB:'— Select Second Assessment —',cmpHint:'Please select two different assessments to compare',expTitle:'Data Management',expCSV:'Export CSV',expJSON:'Export JSON',impJSON:'Import JSON',allRec:'All Records',noData:'No data available',impOk:'Successfully imported',impFail:'Import failed: ',colName:'Name',colType:'Constitution',colDate:'Date',opts:['Never','Rarely','Sometimes','Often','Always'],scaleL:'Never',scaleR:'Always',unanswered:'{n} questions unanswered',tipFood:'Diet',tipLife:'Lifestyle',tipSport:'Exercise',tipAvoid:'Precautions',first:'First',second:'Second',tongueTabTitle:'Tongue Diagnosis',tongueTabSub:'Tongue diagnosis is one of the four pillars of TCM. Observe in natural light.<br>6 questions · approx. 2 min',tongueReset:'Reset',tongueSubmit:'Get Tongue Analysis',tongueCombine:'✦ Generate Combined Constitution + Tongue Report',tongueInviteTitle:'🔍 Deeper Insight · Add Tongue Diagnosis',tongueInviteDesc:'Tongue signs can further validate your constitution for more accurate AI insights.',tongueInviteYes:'Add Tongue Diagnosis',tongueInviteNo:'Skip for now'},
+  es:{seal:'MTC',eyebrow:'Medicina China Tradicional',t1:'Evaluación de',t2:'Constitución',sub:'9 Tipos · Evaluación Profesional · Consejos Personalizados',desc:'Evalúe su perfil constitucional en 9 tipos a través de 33 preguntas y reciba orientación personalizada de bienestar basada en la Medicina China Tradicional.',nameLabel:'Su Nombre',namePH:'Ingrese su nombre',startBtn:'Iniciar Evaluación',startNote:'Aprox. 5 min · Responda honestamente para resultados precisos',brand:'Constitución MTC',logout:'Salir',tHome:'Inicio',tQuiz:'Evaluación',tTongue:'Lengua',tHistory:'Historial',tCompare:'Comparar',tExport:'Datos',progLabel:'Progreso',resetBtn:'Reiniciar',submitBtn:'Ver Resultados',imgBtn:'Descargar Informe',retryBtn:'Repetir',rLogo:'Informe de Evaluación Constitucional MTC',sChart:'Perfil Constitucional',sTips:'Recomendaciones',histTitle:'Mi Historial',histEmpty:'Sin registros\nComplete una evaluación para ver su historial',cmpTitle:'Análisis Comparativo',cmpA:'— Primera Evaluación —',cmpB:'— Segunda Evaluación —',cmpHint:'Seleccione dos evaluaciones diferentes para comparar',expTitle:'Gestión de Datos',expCSV:'Exportar CSV',expJSON:'Exportar JSON',impJSON:'Importar JSON',allRec:'Todos los Registros',noData:'Sin datos',impOk:'Importado exitosamente',impFail:'Error al importar: ',colName:'Nombre',colType:'Constitución',colDate:'Fecha',opts:['Nunca','Raramente','A veces','Frecuentemente','Siempre'],scaleL:'Nunca',scaleR:'Siempre',unanswered:'{n} preguntas sin responder',tipFood:'Alimentación',tipLife:'Estilo de Vida',tipSport:'Ejercicio',tipAvoid:'Precauciones',first:'Primera',second:'Segunda',tongueTabTitle:'Diagnóstico Lingual',tongueTabSub:'El diagnóstico lingual es uno de los cuatro pilares de la MTC. Observe bajo luz natural.<br>6 preguntas · aprox. 2 min',tongueReset:'Restablecer',tongueSubmit:'Obtener Análisis',tongueCombine:'✦ Generar Informe Combinado',tongueInviteTitle:'🔍 Análisis Profundo · Agregar Diagnóstico Lingual',tongueInviteDesc:'Los signos de la lengua pueden validar su constitución para un análisis más preciso.',tongueInviteYes:'Agregar Diagnóstico',tongueInviteNo:'Omitir por ahora'},
+  de:{seal:'TCM',eyebrow:'Traditionelle Chinesische Medizin',t1:'Konstitutions',t2:'Analyse',sub:'9 Typen · Professionelle Bewertung · Persönliche Empfehlungen',desc:'Bewerten Sie Ihr Konstitutionsprofil in 9 Typen durch 33 Fragen und erhalten Sie personalisierte Wellness-Empfehlungen basierend auf der Traditionellen Chinesischen Medizin.',nameLabel:'Ihr Name',namePH:'Namen eingeben',startBtn:'Analyse Starten',startNote:'Ca. 5 Min · Bitte antworten Sie ehrlich',brand:'TCM Konstitution',logout:'Abmelden',tHome:'Start',tQuiz:'Analyse',tTongue:'Zungendiag.',tHistory:'Verlauf',tCompare:'Vergleich',tExport:'Daten',progLabel:'Fortschritt',resetBtn:'Zurücksetzen',submitBtn:'Ergebnisse Anzeigen',imgBtn:'Bericht Herunterladen',retryBtn:'Wiederholen',rLogo:'TCM Konstitutionsanalyse Bericht',sChart:'Konstitutionsprofil',sTips:'Empfehlungen',histTitle:'Mein Verlauf',histEmpty:'Noch keine Einträge\nSchließen Sie eine Analyse ab',cmpTitle:'Vergleichsanalyse',cmpA:'— Erste Analyse —',cmpB:'— Zweite Analyse —',cmpHint:'Wählen Sie zwei verschiedene Analysen zum Vergleich',expTitle:'Datenverwaltung',expCSV:'CSV Exportieren',expJSON:'JSON Exportieren',impJSON:'JSON Importieren',allRec:'Alle Einträge',noData:'Keine Daten',impOk:'Erfolgreich importiert',impFail:'Import fehlgeschlagen: ',colName:'Name',colType:'Konstitution',colDate:'Datum',opts:['Nie','Selten','Manchmal','Oft','Immer'],scaleL:'Nie',scaleR:'Immer',unanswered:'{n} Fragen unbeantwortet',tipFood:'Ernährung',tipLife:'Lebensstil',tipSport:'Sport',tipAvoid:'Vorsichtsmaßnahmen',first:'Erste',second:'Zweite',tongueTabTitle:'Zungendiagnose',tongueTabSub:'Die Zungendiagnose ist eine der vier Säulen der TCM. Beobachten Sie bei natürlichem Licht.<br>6 Fragen · ca. 2 Min',tongueReset:'Zurücksetzen',tongueSubmit:'Analyse erhalten',tongueCombine:'✦ Kombinierten Bericht erstellen',tongueInviteTitle:'🔍 Tiefere Analyse · Zungendiagnose hinzufügen',tongueInviteDesc:'Zungensymptome können Ihre Konstitution validieren für präzisere Erkenntnisse.',tongueInviteYes:'Zungendiagnose hinzufügen',tongueInviteNo:'Überspringen'},
+  fr:{seal:'MTC',eyebrow:'Médecine Traditionnelle Chinoise',t1:'Analyse de la',t2:'Constitution',sub:'9 Types · Évaluation Professionnelle · Conseils Personnalisés',desc:'Évaluez votre profil constitutionnel en 9 types à travers 33 questions et recevez des conseils personnalisés basés sur la Médecine Traditionnelle Chinoise.',nameLabel:'Votre Nom',namePH:'Entrez votre nom',startBtn:"Commencer l'Analyse",startNote:'Environ 5 min · Répondez honnêtement pour des résultats précis',brand:'Constitution MTC',logout:'Déconnexion',tHome:'Accueil',tQuiz:'Analyse',tTongue:'Langue',tHistory:'Historique',tCompare:'Comparaison',tExport:'Données',progLabel:'Progression',resetBtn:'Réinitialiser',submitBtn:'Voir les Résultats',imgBtn:'Télécharger le Rapport',retryBtn:'Recommencer',rLogo:"Rapport d'Analyse Constitutionnelle MTC",sChart:'Profil Constitutionnel',sTips:'Recommandations',histTitle:'Mon Historique',histEmpty:'Aucun enregistrement\nEffectuez une analyse pour voir votre historique',cmpTitle:'Analyse Comparative',cmpA:'— Première Analyse —',cmpB:'— Deuxième Analyse —',cmpHint:'Sélectionnez deux analyses différentes à comparer',expTitle:'Gestion des Données',expCSV:'Exporter CSV',expJSON:'Exporter JSON',impJSON:'Importer JSON',allRec:'Tous les Enregistrements',noData:'Aucune donnée',impOk:'Importé avec succès',impFail:"Échec de l'importation: ",colName:'Nom',colType:'Constitution',colDate:'Date',opts:['Jamais','Rarement','Parfois','Souvent','Toujours'],scaleL:'Jamais',scaleR:'Toujours',unanswered:'{n} questions sans réponse',tipFood:'Alimentation',tipLife:'Mode de Vie',tipSport:'Exercice',tipAvoid:'Précautions',first:'Première',second:'Deuxième',tongueTabTitle:'Diagnostic Lingual',tongueTabSub:'Le diagnostic lingual est l\'un des quatre piliers de la MTC. Observez à la lumière naturelle.<br>6 questions · environ 2 min',tongueReset:'Réinitialiser',tongueSubmit:'Obtenir l\'analyse',tongueCombine:'✦ Générer un rapport combiné',tongueInviteTitle:'🔍 Analyse Approfondie · Ajouter le Diagnostic Lingual',tongueInviteDesc:'Les signes de la langue peuvent valider votre constitution pour une analyse plus précise.',tongueInviteYes:'Ajouter le diagnostic',tongueInviteNo:'Ignorer pour l\'instant'},
+  ja:{seal:'体質',eyebrow:'中国伝統医学',t1:'体質',t2:'チェック',sub:'9種の体質 · 専門的評価 · 個別アドバイス',desc:'中国中医薬学会の基準に基づき、33の質問を通じて9種の体質における割合を評価し、個別の養生アドバイスを提供します。',nameLabel:'お名前',namePH:'お名前を入力してください',startBtn:'チェックを始める',startNote:'約5分 · 正確な結果のために正直にお答えください',brand:'体質チェック',logout:'ログアウト',tHome:'ホーム',tQuiz:'チェック',tTongue:'舌診',tHistory:'履歴',tCompare:'比較',tExport:'データ',progLabel:'進捗',resetBtn:'リセット',submitBtn:'結果を見る',imgBtn:'レポートをダウンロード',retryBtn:'再チェック',rLogo:'中医九種体質チェックレポート',sChart:'体質プロフィール',sTips:'養生アドバイス',histTitle:'チェック履歴',histEmpty:'記録がありません\nチェックを完了すると履歴が表示されます',cmpTitle:'比較分析',cmpA:'— 1回目を選択 —',cmpB:'— 2回目を選択 —',cmpHint:'比較する2つの異なるチェック記録を選択してください',expTitle:'データ管理',expCSV:'CSVエクスポート',expJSON:'JSONエクスポート',impJSON:'JSONインポート',allRec:'全記録',noData:'データなし',impOk:'正常にインポートされました',impFail:'インポート失敗：',colName:'名前',colType:'体質',colDate:'日時',opts:['ない','まれに','時々','よくある','いつも'],scaleL:'全くない',scaleR:'いつも',unanswered:'{n}問未回答',tipFood:'食事',tipLife:'生活習慣',tipSport:'運動',tipAvoid:'注意事項',first:'1回目',second:'2回目',tongueTabTitle:'舌象セルフチェック',tongueTabSub:'舌診は中医四診の一つです。自然光の下で舌を観察してお答えください。<br>6問 · 約2分',tongueReset:'リセット',tongueSubmit:'舌診分析を取得',tongueCombine:'✦ 体質+舌診の総合レポートを生成',tongueInviteTitle:'🔍 より深い分析 · 舌診レポートを追加',tongueInviteDesc:'舌象を加えることで体質をより正確に把握し、AI分析の精度が上がります。',tongueInviteYes:'舌診を追加する',tongueInviteNo:'今はスキップ'}
+};
+
+const TYPE_NAMES={
+  zh:['平和体质','气虚体质','阳虚体质','阴虚体质','痰湿体质','湿热体质','血瘀体质','气郁体质','特禀体质'],
+  en:['Balanced','Qi Deficiency','Yang Deficiency','Yin Deficiency','Phlegm-Dampness','Damp-Heat','Blood Stasis','Qi Stagnation','Special Diathesis'],
+  es:['Equilibrada','Deficiencia de Qi','Deficiencia de Yang','Deficiencia de Yin','Flema-Humedad','Calor-Humedad','Estancamiento de Sangre','Estancamiento de Qi','Diátesis Especial'],
+  de:['Ausgewogen','Qi-Mangel','Yang-Mangel','Yin-Mangel','Schleim-Feuchtigkeit','Feuchte Hitze','Blutstagnation','Qi-Stagnation','Besondere Diathese'],
+  fr:['Équilibrée','Déficience du Qi','Déficience du Yang','Déficience du Yin','Glaire-Humidité','Chaleur-Humidité','Stase Sanguine','Stagnation du Qi','Diathèse Spéciale'],
+  ja:['平和質','気虚質','陽虚質','陰虚質','痰湿質','湿熱質','血瘀質','気鬱質','特稟質']
+};
+const TYPE_EN=['Balanced','Qi Deficiency','Yang Deficiency','Yin Deficiency','Phlegm-Dampness','Damp-Heat','Blood Stasis','Qi Stagnation','Special Diathesis'];
+
+const TD=[
+  {d:'阴阳气血调和，体态适中，面色红润，精力充沛，是最理想的体质状态。',dE:'Harmonious Yin-Yang balance; ideal body composition, ruddy complexion, and vigorous energy — the most desirable constitution.',f:'五谷杂粮均衡摄取，少食过寒过热食物，保持饮食多样性。',fE:'Balanced diet of whole grains; avoid extremes of hot and cold foods; maintain dietary variety.',l:'规律作息，适度运动，保持愉快心情，无需特别调理。',lE:'Regular sleep and exercise; positive mindset; no special adjustments needed.',s:'各类运动均适合，建议每周3–5次有氧运动。',sE:'All exercise types suitable; 3–5 aerobic sessions weekly recommended.',a:'避免过度劳累，防止偏食，保持心态平和。',aE:'Avoid overexertion; maintain dietary variety and emotional balance.'},
+  {d:'元气不足，容易疲乏，气短懒言，容易出汗，免疫力偏低，抵抗力较弱。',dE:'Insufficient vital energy; prone to fatigue, shortness of breath, easy sweating, and low immunity.',f:'山药、大枣、黄芪炖鸡、粳米粥，补气健脾为主。',fE:'Yam, red dates, astragalus chicken soup, rice congee; focus on tonifying Qi and strengthening the spleen.',l:'避免过劳，保证充足睡眠，不宜长期处于空调环境。',lE:'Avoid overwork; ensure adequate sleep; limit prolonged air-conditioning exposure.',s:'太极拳、八段锦、散步，避免大量出汗的剧烈运动。',sE:'Tai Chi, Baduanjin, walking; avoid intense exercise causing heavy sweating.',a:'避免过度思虑、悲伤，防止大量出汗。',aE:'Avoid excessive worry and sadness; prevent profuse perspiration.'},
+  {d:'阳气不足，畏寒怕冷，手足不温，精神不振，喜温热食物，大便溏薄。',dE:'Insufficient Yang energy; cold sensitivity, cold extremities, low energy, preference for warmth, loose stools.',f:'羊肉、韭菜、生姜、核桃、板栗，温阳散寒。',fE:'Lamb, leeks, ginger, walnuts, chestnuts; focus on warming Yang and dispelling cold.',l:'注意保暖，尤其是腰膝部位，夏天避免贪凉。',lE:'Keep warm, especially the waist and knees; avoid excessive air-conditioning in summer.',s:'以舒缓运动为主，如慢跑、瑜伽，夏季可适当户外活动。',sE:'Gentle exercise like jogging, yoga; outdoor activities in summer are beneficial.',a:'忌生冷食物，避免熬夜，避免受寒。',aE:'Avoid raw and cold foods; prevent late nights and exposure to cold.'},
+  {d:'阴液亏少，形体偏瘦，手足心热，口燥咽干，性情急躁，眠差多梦。',dE:'Yin fluid deficiency; tendency to be thin, warm palms, dry mouth and throat, irritability, poor sleep with vivid dreams.',f:'银耳、百合、枸杞、梨、蜂蜜，滋阴润燥为主。',fE:'Snow fungus, lily bulb, wolfberry, pear, honey; focus on nourishing Yin and moistening dryness.',l:'避免熬夜，保持充足睡眠，居住环境宜凉爽湿润。',lE:'Avoid late nights; ensure adequate sleep; live in cool, moist environments.',s:'游泳、瑜伽、太极，避免高温环境下大量出汗。',sE:'Swimming, yoga, Tai Chi; avoid heavy sweating in hot environments.',a:'忌辛辣燥热食物，避免情绪激动。',aE:'Avoid spicy and dry-hot foods; manage emotional excitement.'},
+  {d:'痰湿凝聚，体形偏胖，腹部肥满，肤色暗黄，易疲倦，大便偏烂。',dE:'Phlegm-dampness accumulation; tendency to be overweight, abdominal fullness, dull complexion, easy fatigue.',f:'冬瓜、薏仁、红豆、萝卜，健脾化湿为主，少糖少油。',fE:'Winter melon, coix seeds, red beans, radish; reduce sugar and oil; focus on strengthening the spleen.',l:'多户外活动，居住环境保持干燥通风，避免潮湿。',lE:'Stay active outdoors; maintain dry and well-ventilated living space; avoid damp environments.',s:'长跑、游泳、球类等有氧运动，坚持规律锻炼。',sE:'Long-distance running, swimming, ball sports; maintain regular aerobic exercise.',a:'忌甜腻肥厚食物，限制酒精，避免久坐不动。',aE:'Avoid sweet and greasy foods; limit alcohol; avoid prolonged sitting.'},
+  {d:'湿热内蕴，面垢油光，易生痤疮，口苦口干，身重困倦，大便黏滞。',dE:'Damp-heat accumulation; oily face prone to acne, bitter mouth, heavy sensation throughout the body, sticky stools.',f:'绿豆、苦瓜、黄瓜、莲藕，清热利湿为主。',fE:'Mung beans, bitter melon, cucumber, lotus root; focus on clearing heat and draining dampness.',l:'保持皮肤清洁，避免高温潮湿环境，戒烟限酒。',lE:'Keep skin clean; avoid hot and humid environments; quit smoking and limit alcohol.',s:'中等强度有氧运动，游泳、慢跑均适合。',sE:'Moderate aerobic exercise; swimming and jogging are both well-suited.',a:'忌辛辣油腻，少食烧烤，控制情绪。',aE:'Avoid spicy and greasy foods; limit barbecued foods; manage emotions.'},
+  {d:'血行不畅，面色晦暗，易有瘀斑，容易健忘，皮肤偏干，肌肤甲错。',dE:'Poor blood circulation; dark complexion, tendency to bruise, forgetfulness, dry and rough skin.',f:'山楂、黑木耳、黑豆、玫瑰花，活血化瘀为主。',fE:'Hawthorn, black wood ear fungus, black beans, rose petals; focus on activating blood circulation.',l:'保持情绪舒畅，避免久坐，注意保暖。',lE:'Maintain emotional well-being; avoid prolonged sitting; stay warm.',s:'太极拳、舞蹈、瑜伽，促进气血流通。',sE:'Tai Chi, dance, yoga; promote Qi and blood circulation.',a:'忌寒凉收涩食物，避免情绪抑郁，不宜滋腻。',aE:'Avoid cold and astringent foods; prevent emotional depression.'},
+  {d:'气机郁滞，忧郁脆弱，情感丰富，容易焦虑，胸胁胀痛，咽喉有异物感。',dE:'Qi stagnation; tendency to depression, emotional sensitivity, anxiety, chest tightness, and a sensation of something stuck in the throat.',f:'玫瑰花、佛手、陈皮、柑橘，疏肝理气为主。',fE:'Rose petals, finger citron, tangerine peel, citrus fruits; focus on soothing the liver and regulating Qi.',l:'培养兴趣爱好，多与朋友交流，保持情绪舒畅。',lE:'Cultivate hobbies; socialize regularly; maintain emotional openness and expression.',s:'八段锦、太极、慢跑、瑜伽，疏导气机。',sE:'Baduanjin, Tai Chi, jogging, yoga; guide Qi movement and release tension.',a:'避免独处思虑，减少刺激性新闻，保持规律作息。',aE:'Avoid solitary rumination; reduce stressful media; maintain regular daily routines.'},
+  {d:'先天失常，以过敏体质为主，容易对花粉、食物等过敏，患遗传性疾病。',dE:'Congenital abnormality; predominantly allergic constitution prone to pollen, food, and other allergies or inherited conditions.',f:'饮食清淡均衡，避免已知过敏原，多食蔬果。',fE:'Light, balanced diet; avoid known allergens; eat plenty of vegetables and fruits.',l:'居家保持清洁，减少接触过敏原，注意季节变化。',lE:'Keep home environment clean; minimize allergen exposure; monitor seasonal changes.',s:'适度运动增强体质，避免在花粉季节户外剧烈运动。',sE:'Moderate exercise to strengthen constitution; avoid outdoor exercise during pollen season.',a:'忌已知过敏食物，慎用药物，注意防护。',aE:'Avoid known allergenic foods; use medications cautiously; take protective measures.'}
+];
+
+const QS={
+  zh:[{t:1,q:'您精力充沛，感觉精神好吗？'},{t:1,q:'您面色、肤色润泽吗？'},{t:2,q:'您容易疲乏，感到疲倦吗？'},{t:2,q:'您说话声音低弱无力吗？'},{t:2,q:'您容易出虚汗，稍微活动就出汗吗？'},{t:3,q:'您手脚发凉、怕冷吗？'},{t:3,q:'您感到脊背或腰膝部发凉吗？'},{t:3,q:'您比一般人耐受不了寒冷吗？'},{t:4,q:'您感到手脚心发热吗？'},{t:4,q:'您感觉身体、脸上发热吗？'},{t:4,q:'您皮肤或口唇干燥吗？'},{t:5,q:'您感到胸闷或腹部胀满吗？'},{t:5,q:'您感到身体沉重不轻松或不爽快吗？'},{t:5,q:'您腹部肥满松软吗？'},{t:5,q:'您面部有油腻感或油亮发光吗？'},{t:6,q:'您容易长痤疮粉刺吗？'},{t:6,q:'您感到口苦或嘴里有异味吗？'},{t:6,q:'您大便黏滞不爽、有解不尽的感觉吗？'},{t:7,q:'您皮肤有时出现青紫色的瘀斑吗？'},{t:7,q:'您两颧部有细微红丝吗？'},{t:7,q:'您身体上有疼痛且痛处固定不移吗？'},{t:8,q:'您感到情绪低沉、郁闷，容易叹气吗？'},{t:8,q:'您容易感到害怕或受到惊吓吗？'},{t:8,q:'您无缘无故感到悲伤想哭吗？'},{t:8,q:'您感到胁肋部或乳房有胀痛感吗？'},{t:9,q:'您有过敏性鼻炎、皮肤湿疹或者哮喘吗？'},{t:9,q:'您的皮肤容易起荨麻疹吗？'},{t:9,q:'您吃某些食物就容易过敏吗？'},{t:1,q:'您适应外界环境变化的能力强吗？'},{t:2,q:'您说话时气不够用，容易气短吗？'},{t:4,q:'您容易失眠多梦，睡眠质量差吗？'},{t:6,q:'您皮肤容易生疮疖（小脓包）吗？'},{t:7,q:'您容易出现黑眼圈、眼睛干涩吗？'}],
+  en:[{t:1,q:'Do you feel energetic and mentally sharp?'},{t:1,q:'Is your complexion radiant and your skin moist?'},{t:2,q:'Do you tire easily or feel frequently fatigued?'},{t:2,q:'Is your voice weak or lacking strength?'},{t:2,q:'Do you sweat easily, even with minimal activity?'},{t:3,q:'Do your hands and feet feel cold, or are you sensitive to cold?'},{t:3,q:'Do you feel coldness in your back or knees?'},{t:3,q:'Are you more sensitive to cold than most people?'},{t:4,q:'Do your palms or soles of feet feel warm or hot?'},{t:4,q:'Do you feel heat sensations in your body or face?'},{t:4,q:'Is your skin or lips often dry?'},{t:5,q:'Do you experience chest tightness or abdominal bloating?'},{t:5,q:'Do you feel heavy or sluggish in your body?'},{t:5,q:'Is your abdomen soft and full?'},{t:5,q:'Does your face appear oily or shiny?'},{t:6,q:'Are you prone to acne or pimples?'},{t:6,q:'Do you experience a bitter taste or unusual mouth odor?'},{t:6,q:'Do you have difficulty with bowel movements, feeling incomplete?'},{t:7,q:'Do you develop dark bruises on your skin easily?'},{t:7,q:'Do you have fine red veins visible on your cheekbones?'},{t:7,q:'Do you have fixed, localized pain in your body?'},{t:8,q:'Do you frequently feel low-spirited or sigh often?'},{t:8,q:'Are you easily frightened or startled?'},{t:8,q:'Do you feel inexplicably sad or tearful?'},{t:8,q:'Do you experience distension or pain in your chest or breast area?'},{t:9,q:'Do you have allergic rhinitis, eczema, or asthma?'},{t:9,q:'Does your skin easily break out in hives?'},{t:9,q:'Do certain foods cause allergic reactions in you?'},{t:1,q:'Do you adapt well to changes in your environment?'},{t:2,q:'Do you feel short of breath when speaking?'},{t:4,q:'Do you have difficulty sleeping or experience vivid dreams?'},{t:6,q:'Do you easily develop skin boils or pustules?'},{t:7,q:'Do you frequently have dark circles or dry eyes?'}],
+  es:[{t:1,q:'¿Se siente lleno de energía y mentalmente alerta?'},{t:1,q:'¿Tiene un cutis radiante y piel hidratada?'},{t:2,q:'¿Se cansa fácilmente o se siente frecuentemente fatigado?'},{t:2,q:'¿Tiene voz débil o carente de fuerza?'},{t:2,q:'¿Suda fácilmente, incluso con actividad mínima?'},{t:3,q:'¿Sus manos y pies se sienten fríos o le disgusta el frío?'},{t:3,q:'¿Siente frío en su espalda o rodillas?'},{t:3,q:'¿Es más sensible al frío que la mayoría de las personas?'},{t:4,q:'¿Sus palmas o plantas de los pies se sienten calientes?'},{t:4,q:'¿Siente sensaciones de calor en su cuerpo o cara?'},{t:4,q:'¿Su piel o labios suelen estar secos?'},{t:5,q:'¿Experimenta opresión en el pecho o distensión abdominal?'},{t:5,q:'¿Se siente pesado o lento en su cuerpo?'},{t:5,q:'¿Su abdomen está blando y lleno?'},{t:5,q:'¿Su cara parece aceitosa o brillante?'},{t:6,q:'¿Es propenso al acné o granos?'},{t:6,q:'¿Experimenta sabor amargo o mal aliento?'},{t:6,q:'¿Tiene dificultad para ir al baño, sintiéndose incompleto?'},{t:7,q:'¿Le salen moretones oscuros fácilmente?'},{t:7,q:'¿Tiene venas rojas finas visibles en sus pómulos?'},{t:7,q:'¿Tiene dolor fijo y localizado en su cuerpo?'},{t:8,q:'¿Se siente frecuentemente deprimido o suspira a menudo?'},{t:8,q:'¿Se asusta o sobresalta fácilmente?'},{t:8,q:'¿Se siente inexplicablemente triste o lloroso?'},{t:8,q:'¿Experimenta distensión o dolor en el pecho o senos?'},{t:9,q:'¿Tiene rinitis alérgica, eczema o asma?'},{t:9,q:'¿Le salen ronchas o urticaria fácilmente?'},{t:9,q:'¿Ciertos alimentos le causan reacciones alérgicas?'},{t:1,q:'¿Se adapta bien a los cambios en su entorno?'},{t:2,q:'¿Se queda sin aliento al hablar?'},{t:4,q:'¿Tiene dificultad para dormir o sueños vívidos?'},{t:6,q:'¿Desarrolla fácilmente forúnculos o pústulas?'},{t:7,q:'¿Tiene frecuentemente ojeras o ojos secos?'}],
+  de:[{t:1,q:'Fühlen Sie sich energiegeladen und geistig fit?'},{t:1,q:'Ist Ihr Teint strahlend und Ihre Haut feucht?'},{t:2,q:'Ermüden Sie leicht oder fühlen Sie sich häufig erschöpft?'},{t:2,q:'Ist Ihre Stimme schwach oder kraftlos?'},{t:2,q:'Schwitzen Sie leicht, selbst bei minimaler Aktivität?'},{t:3,q:'Fühlen sich Ihre Hände und Füße kalt an oder mögen Sie keine Kälte?'},{t:3,q:'Spüren Sie Kälte in Ihrem Rücken oder Knien?'},{t:3,q:'Sind Sie kälteempfindlicher als die meisten Menschen?'},{t:4,q:'Fühlen sich Ihre Handflächen oder Fußsohlen warm an?'},{t:4,q:'Haben Sie Hitzegefühle in Ihrem Körper oder Gesicht?'},{t:4,q:'Sind Ihre Haut oder Lippen oft trocken?'},{t:5,q:'Haben Sie Engegefühl in der Brust oder Blähbauch?'},{t:5,q:'Fühlen Sie sich schwer oder träge im Körper?'},{t:5,q:'Ist Ihr Bauch weich und voll?'},{t:5,q:'Sieht Ihr Gesicht fettig oder glänzend aus?'},{t:6,q:'Neigen Sie zu Akne oder Pickeln?'},{t:6,q:'Haben Sie einen bitteren Geschmack oder Mundgeruch?'},{t:6,q:'Haben Sie Schwierigkeiten beim Stuhlgang?'},{t:7,q:'Bekommen Sie leicht dunkle Blutergüsse?'},{t:7,q:'Haben Sie feine rote Äderchen auf Ihren Wangenknochen?'},{t:7,q:'Haben Sie feste, lokalisierte Schmerzen?'},{t:8,q:'Fühlen Sie sich häufig niedergeschlagen oder seufzen Sie oft?'},{t:8,q:'Erschrecken oder überraschen Sie sich leicht?'},{t:8,q:'Fühlen Sie sich unerklärlich traurig oder weinerlich?'},{t:8,q:'Haben Sie Spannungen oder Schmerzen in der Brust?'},{t:9,q:'Haben Sie allergische Rhinitis, Ekzeme oder Asthma?'},{t:9,q:'Bekommen Sie leicht Nesselsucht?'},{t:9,q:'Verursachen bestimmte Lebensmittel allergische Reaktionen?'},{t:1,q:'Passen Sie sich gut an Veränderungen in Ihrer Umgebung an?'},{t:2,q:'Werden Sie beim Sprechen schnell außer Atem?'},{t:4,q:'Haben Sie Schlafprobleme oder lebhafte Träume?'},{t:6,q:'Entwickeln Sie leicht Furunkel oder Pusteln?'},{t:7,q:'Haben Sie häufig Augenringe oder trockene Augen?'}],
+  fr:[{t:1,q:'Vous sentez-vous énergique et mentalement alerte?'},{t:1,q:'Votre teint est-il radieux et votre peau hydratée?'},{t:2,q:'Vous fatiguez-vous facilement ou vous sentez-vous souvent épuisé?'},{t:2,q:'Avez-vous une voix faible ou sans force?'},{t:2,q:'Transpirez-vous facilement, même avec une activité minimale?'},{t:3,q:'Vos mains et pieds se sentent-ils froids ou détestez-vous le froid?'},{t:3,q:'Ressentez-vous de la froideur dans votre dos ou vos genoux?'},{t:3,q:'Êtes-vous plus sensible au froid que la plupart des gens?'},{t:4,q:'Vos paumes ou plantes des pieds se sentent-elles chaudes?'},{t:4,q:'Ressentez-vous des sensations de chaleur dans votre corps ou visage?'},{t:4,q:'Votre peau ou vos lèvres sont-elles souvent sèches?'},{t:5,q:"Ressentez-vous une oppression thoracique ou des ballonnements?"},{t:5,q:'Vous sentez-vous lourd ou lent dans votre corps?'},{t:5,q:'Votre abdomen est-il mou et plein?'},{t:5,q:'Votre visage semble-t-il gras ou brillant?'},{t:6,q:"Êtes-vous sujet à l'acné ou aux boutons?"},{t:6,q:'Ressentez-vous un goût amer ou une mauvaise haleine?'},{t:6,q:'Avez-vous des difficultés à aller aux toilettes?'},{t:7,q:'Développez-vous facilement des ecchymoses sombres?'},{t:7,q:'Avez-vous de fines veines rouges sur vos pommettes?'},{t:7,q:'Avez-vous des douleurs fixes et localisées?'},{t:8,q:'Vous sentez-vous fréquemment déprimé ou soupirez-vous souvent?'},{t:8,q:'Vous effrayez-vous ou vous surprenez-vous facilement?'},{t:8,q:'Vous sentez-vous inexplicablement triste ou larmoyant?'},{t:8,q:'Ressentez-vous des tensions ou douleurs dans la poitrine?'},{t:9,q:'Avez-vous une rhinite allergique, de l\'eczéma ou de l\'asthme?'},{t:9,q:"Développez-vous facilement de l'urticaire?"},{t:9,q:'Certains aliments vous causent-ils des réactions allergiques?'},{t:1,q:'Vous adaptez-vous bien aux changements de votre environnement?'},{t:2,q:'Êtes-vous essoufflé en parlant?'},{t:4,q:'Avez-vous du mal à dormir ou des rêves intenses?'},{t:6,q:'Développez-vous facilement des furoncles ou pustules?'},{t:7,q:'Avez-vous fréquemment des cernes ou les yeux secs?'}],
+  ja:[{t:1,q:'活力があり、精神的に元気ですか？'},{t:1,q:'顔色や肌のツヤは良いですか？'},{t:2,q:'疲れやすく、倦怠感を感じやすいですか？'},{t:2,q:'声が弱くて力がないですか？'},{t:2,q:'少し動いただけで汗をかきやすいですか？'},{t:3,q:'手足が冷えやすく、寒がりですか？'},{t:3,q:'背中や膝に冷えを感じますか？'},{t:3,q:'他の人より寒さに弱いですか？'},{t:4,q:'手のひらや足の裏が熱く感じますか？'},{t:4,q:'体や顔が熱く感じることがありますか？'},{t:4,q:'肌や唇が乾燥しやすいですか？'},{t:5,q:'胸が苦しくなったり、お腹が張ることがありますか？'},{t:5,q:'体が重くてスッキリしないことがありますか？'},{t:5,q:'お腹周りが太りやすく、たるんでいますか？'},{t:5,q:'顔がベタベタして脂ぎっていますか？'},{t:6,q:'ニキビや吹き出物ができやすいですか？'},{t:6,q:'口が苦く感じたり、口臭が気になりますか？'},{t:6,q:'便がベタついてすっきりしないことがありますか？'},{t:7,q:'皮膚に青紫色のあざができやすいですか？'},{t:7,q:'頬骨に細かい赤い血管が見えますか？'},{t:7,q:'体の特定の場所に固定した痛みがありますか？'},{t:8,q:'気分が落ち込んだり、ため息をよくつきますか？'},{t:8,q:'怖がったり驚いたりしやすいですか？'},{t:8,q:'理由もなく悲しくなったり泣きたくなりますか？'},{t:8,q:'脇腹や胸に張り感や痛みを感じますか？'},{t:9,q:'アレルギー性鼻炎、湿疹、または喘息がありますか？'},{t:9,q:'じんましんが出やすいですか？'},{t:9,q:'特定の食べ物でアレルギー反応が出やすいですか？'},{t:1,q:'環境の変化によく適応できますか？'},{t:2,q:'話すときに息が続かず、息切れしやすいですか？'},{t:4,q:'寝つきが悪く、夢が多いですか？'},{t:6,q:'おできや膿疱ができやすいですか？'},{t:7,q:'目の下にクマができやすく、目が乾燥しますか？'}]
+};
+
+// ── 舌诊问题数据 ──
+const TONGUE_QS={
+  zh:[
+    {q:'您的舌色（舌体颜色）更接近哪种？',opts:['淡白色','淡红色（正常）','偏红色','深红/暗红','紫色/蓝紫'],cols:5},
+    {q:'您舌苔的颜色是？（舌面上覆盖的薄层）',opts:['无苔/极少苔','薄白苔','厚白苔','黄色苔','灰/黑色苔'],cols:5},
+    {q:'您的舌苔质地是？',opts:['薄而湿润','厚腻（似豆腐渣）','干燥/少苔','地图舌（部分脱苔）'],cols:2},
+    {q:'您的舌形更接近哪种？',opts:['大小正常','胖大（有牙印）','偏瘦小','舌面有裂纹','有红点/突起'],cols:5},
+    {q:'您舌头的湿润程度？',opts:['湿润适中','偏干燥','津液多/湿滑'],cols:3},
+    {q:'翻起舌头，舌下血管的颜色？（舌底两条粗血管）',opts:['淡红色/正常','青紫/偏深/迂曲'],cols:2}
+  ],
+  en:[
+    {q:'Which best describes your tongue body color?',opts:['Pale white','Light pink (normal)','Reddish','Deep/dark red','Purple/bluish'],cols:5},
+    {q:'What color is the coating on your tongue?',opts:['No coating','Thin white','Thick white','Yellow','Grey/black'],cols:5},
+    {q:'Describe your tongue coating texture:',opts:['Thin & moist','Thick & greasy','Dry / scant coating','Geographic tongue (patchy)'],cols:2},
+    {q:'Which best describes your tongue shape?',opts:['Normal size','Swollen (teeth marks)','Thin/small','Cracked surface','Red dots/prickles'],cols:5},
+    {q:'How moist does your tongue feel?',opts:['Normally moist','Dry','Excessively wet/slippery'],cols:3},
+    {q:'Lift your tongue — what color are the veins underneath?',opts:['Light pink (normal)','Purple/dark/tortuous'],cols:2}
+  ],
+  ja:[
+    {q:'舌の色（舌体の色）はどれに近いですか？',opts:['淡白','淡紅（正常）','やや赤い','深紅/暗赤','紫/青紫'],cols:5},
+    {q:'舌苔の色は？（舌面を覆う薄い層）',opts:['苔なし/極薄','薄白苔','厚白苔','黄苔','灰/黒苔'],cols:5},
+    {q:'舌苔の質感は？',opts:['薄くて潤っている','厚くてべたつく','乾燥/苔が少ない','地図状（部分的に剥離）'],cols:2},
+    {q:'舌の形はどれに近いですか？',opts:['正常な大きさ','胖大（歯痕あり）','やや細小','亀裂あり','赤い点/突起'],cols:5},
+    {q:'舌の潤い具合は？',opts:['適度に潤っている','乾燥気味','津液多い/湿潤'],cols:3},
+    {q:'舌を裏返して、舌下の血管の色は？',opts:['淡紅色/正常','青紫/暗い/迂曲'],cols:2}
+  ],
+  es:[
+    {q:'¿Cuál describe mejor el color de su lengua?',opts:['Blanco pálido','Rosa claro (normal)','Rojizo','Rojo oscuro','Morado/azulado'],cols:5},
+    {q:'¿Qué color tiene la capa en su lengua?',opts:['Sin capa','Blanco fino','Blanco grueso','Amarilla','Gris/negra'],cols:5},
+    {q:'Describa la textura del revestimiento:',opts:['Fino y húmedo','Grueso y grasiento','Seco / escaso','Geográfico (parches)'],cols:2},
+    {q:'¿Cuál describe mejor la forma de su lengua?',opts:['Tamaño normal','Hinchada (marcas)','Delgada/pequeña','Superficie agrietada','Puntos rojos'],cols:5},
+    {q:'¿Cuán húmeda se siente su lengua?',opts:['Normalmente húmeda','Seca','Muy húmeda/resbaladiza'],cols:3},
+    {q:'Levante su lengua — ¿de qué color son las venas?',opts:['Rosa claro (normal)','Morado/oscuro/tortuoso'],cols:2}
+  ],
+  de:[
+    {q:'Welche Farbe hat Ihr Zungenkörper?',opts:['Blass-weiß','Hellrosa (normal)','Rötlich','Dunkelrot','Lila/bläulich'],cols:5},
+    {q:'Welche Farbe hat der Zungenbelag?',opts:['Kein Belag','Dünn weiß','Dick weiß','Gelb','Grau/schwarz'],cols:5},
+    {q:'Beschreiben Sie die Textur des Belags:',opts:['Dünn & feucht','Dick & fettig','Trocken / wenig','Geographisch (fleckig)'],cols:2},
+    {q:'Welche Form hat Ihre Zunge?',opts:['Normale Größe','Geschwollen (Zahnabdrücke)','Dünn/klein','Rissig','Rote Punkte'],cols:5},
+    {q:'Wie feucht ist Ihre Zunge?',opts:['Normal feucht','Trocken','Übermäßig nass'],cols:3},
+    {q:'Heben Sie Ihre Zunge — Farbe der Venen darunter?',opts:['Hellrosa (normal)','Lila/dunkel/gewunden'],cols:2}
+  ],
+  fr:[
+    {q:'Quelle décrit le mieux la couleur de votre langue?',opts:['Blanc pâle','Rose clair (normal)','Rougeâtre','Rouge foncé','Violet/bleuté'],cols:5},
+    {q:'Quelle est la couleur du dépôt sur votre langue?',opts:['Sans dépôt','Blanc fin','Blanc épais','Jaune','Gris/noir'],cols:5},
+    {q:'Décrivez la texture du dépôt:',opts:['Fin et humide','Épais et gras','Sec / peu','Géographique (plaques)'],cols:2},
+    {q:'Quelle forme décrit le mieux votre langue?',opts:['Taille normale','Gonflée (marques)','Fine/petite','Surface fissurée','Points rouges'],cols:5},
+    {q:'À quel point votre langue est-elle humide?',opts:['Normalement humide','Sèche','Trop humide/glissante'],cols:3},
+    {q:'Levez votre langue — couleur des veines?',opts:['Rose clair (normal)','Violet/foncé/tortueux'],cols:2}
+  ]
+};
+
+let lang='zh', userName='', answers=new Array(33).fill(0);
+let records=JSON.parse(localStorage.getItem('tcm_pro_v1')||'[]');
+let tongueAnswers=new Array(6).fill(0);
+let lastConstitutionResult=null; // 保存最近一次体质结果，供综合报告使用
+let tongueFromInvite=false; // 是否从邀请卡进入舌诊
+function L(k){return I18N[lang][k]||I18N.zh[k]||k;}
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    const map={zh:'中文',en:'EN',es:'ES',de:'DE',fr:'FR',ja:'日本語'};
+    b.classList.toggle('active',b.textContent.trim()===map[l]);
+  });
+  applyI18n();
+  if(document.getElementById('screen-main').style.display==='block'){
+    var tabResult=document.getElementById('tab-result');
+    var onResult=tabResult&&tabResult.style.display==='block';
+    if(onResult&&lastConstitutionResult){
+      // Re-render static result content only (no AI re-trigger)
+      showResult(lastConstitutionResult,true);
+    } else {
+      // Preserve quiz answers when switching language
+      updateQuizLang();
+    }
+    // Re-render inline tongue if visible and not done
+    var sec=document.getElementById('tongue-enhance-section');
+    if(sec&&sec.style.display!=='none'&&!sec.classList.contains('done')) renderInlineTongue();
+    // Re-render tongue tab if visible
+    var tabTongue=document.getElementById('tab-tongue');
+    if(tabTongue&&tabTongue.style.display==='block') renderTongue();
+  }
+}
+// Update quiz language without losing answers
+function updateQuizLang(){
+  var savedAnswers=[...answers];
+  renderQuiz();
+  savedAnswers.forEach(function(val,qi){
+    if(val>0){
+      answers[qi]=val;
+      var block=document.getElementById('qb-'+qi);
+      if(block){
+        block.classList.add('answered');
+        var opts=block.querySelectorAll('.opt-btn');
+        if(opts[val-1]) opts[val-1].classList.add('selected');
+      }
+    }
+  });
+  updateProg();
+}
+
+function applyI18n(){
+  const el=id=>document.getElementById(id);
+  el('seal-text').textContent=L('seal');
+  // Bug9: fix seal orientation for non-CJK languages
+  var sealEl=el('seal-text');
+  if(sealEl){var isCJK=(lang==='zh'||lang==='ja');sealEl.style.writingMode=isCJK?'vertical-rl':'horizontal-tb';sealEl.style.letterSpacing=isCJK?'6px':'1px';sealEl.style.fontSize=isCJK?'26px':'13px';sealEl.style.fontWeight='700';}
+  el('eyebrow-text').textContent=L('eyebrow');
+  el('title1-text').textContent=L('t1');
+  el('title2-text').textContent=L('t2');
+  el('subtitle-text').textContent=L('sub');
+  el('desc-text').textContent=L('desc');
+  el('name-label-text').textContent=L('nameLabel');
+  el('user-name-input').placeholder=L('namePH');
+  el('start-btn-text').textContent=L('startBtn');
+  el('start-note-text').textContent=L('startNote');
+  el('brand-text').textContent=L('brand');
+  el('logout-text').textContent=L('logout');
+  el('tab-home-label').textContent=L('tHome');
+  el('tab-quiz-label').textContent=L('tQuiz');
+  el('tab-tongue-label').textContent=L('tTongue');
+  el('tab-history-label').textContent=L('tHistory');
+  el('tab-compare-label').textContent=L('tCompare');
+  el('tab-export-label').textContent=L('tExport');
+  if(el('tongue-tab-title'))el('tongue-tab-title').textContent=L('tongueTabTitle');
+  if(el('tongue-tab-sub'))el('tongue-tab-sub').innerHTML=L('tongueTabSub');
+  if(el('tongue-reset-btn'))el('tongue-reset-btn').textContent=L('tongueReset');
+  if(el('tongue-submit-btn'))el('tongue-submit-btn').textContent=L('tongueSubmit');
+  if(el('tongue-combine-btn'))el('tongue-combine-btn').textContent=L('tongueCombine');
+  if(el('tongue-invite-title'))el('tongue-invite-title').textContent=L('tongueInviteTitle');
+  if(el('tongue-invite-desc'))el('tongue-invite-desc').textContent=L('tongueInviteDesc');
+  if(el('tongue-invite-yes'))el('tongue-invite-yes').textContent=L('tongueInviteYes');
+  if(el('tongue-invite-no'))el('tongue-invite-no').textContent=L('tongueInviteNo');
+  // 内嵌舌诊区块多语言
+  var enhTitleMap={zh:'深化分析 · 添加舌诊',ja:'深化分析 · 舌診追加',en:'Enhance · Add Tongue Reading',es:'Añadir Diagnóstico Lingual',de:'Erweitern · Zungendiagnose',fr:'Approfondir · Ajouter Langue'};
+  var enhSubMap={zh:'6 道题 · 约 2 分钟 · 获取更精准的综合报告',ja:'6問 · 約2分 · より精確な総合レポート',en:'6 questions · ~2 min · Get a more accurate combined report',es:'6 preguntas · ~2 min · Informe combinado más preciso',de:'6 Fragen · ~2 Min · Genauerer Gesamtbericht',fr:'6 questions · ~2 min · Rapport combiné plus précis'};
+  var enhResetMap={zh:'重置',ja:'リセット',en:'Reset',es:'Reiniciar',de:'Zurücksetzen',fr:'Réinitialiser'};
+  var enhSubmitMap={zh:'✦ 生成综合报告',ja:'✦ 総合レポート生成',en:'✦ Generate Combined Report',es:'✦ Generar Informe Combinado',de:'✦ Gesamtbericht erstellen',fr:'✦ Générer Rapport Combiné'};
+  if(el('enhance-title-text'))el('enhance-title-text').textContent=enhTitleMap[lang]||enhTitleMap.en;
+  if(el('enhance-sub-text')){var sec=document.getElementById('tongue-enhance-section');if(!sec||!sec.classList.contains('done'))el('enhance-sub-text').textContent=enhSubMap[lang]||enhSubMap.en;}
+  if(el('inline-reset-btn'))el('inline-reset-btn').textContent=enhResetMap[lang]||enhResetMap.en;
+  if(el('inline-submit-btn'))el('inline-submit-btn').textContent=enhSubmitMap[lang]||enhSubmitMap.en;
+  // 免责声明（多语言）
+  var disclaimerZh='⚠ 本报告由 AI 根据中医理论生成，仅供健康参考，不构成医疗诊断或治疗建议。如有健康疑虑，请咨询持牌中医师或医疗专业人士。';
+  var tongueDisclaimerZh='⚠ 本测评由 AI 根据中医舌诊理论辅助分析，仅供健康参考，不构成医疗诊断。如有疑虑请咨询专业中医师。';
+  var disclaimerMap={
+    zh:[disclaimerZh,tongueDisclaimerZh],
+    ja:['⚠ 本レポートはAIが中医学理論に基づき生成したものです。健康参考のみを目的としており、医療診断や治療の代わりにはなりません。健康上の懸念がある場合は、資格を持つ中医師または医療専門家にご相談ください。',
+        '⚠ 本測定はAIが中医学の舌診理論に基づき補助的に分析したものです。健康参考のみを目的としており、医療診断の代わりにはなりません。'],
+    en:['⚠ This report is generated by AI based on TCM theory for informational purposes only. It does not constitute medical diagnosis or treatment advice. Please consult a licensed TCM practitioner or healthcare professional if you have health concerns.',
+        '⚠ This assessment is AI-assisted based on TCM tongue diagnosis theory. For reference only — not a medical diagnosis. Consult a qualified TCM practitioner for professional advice.'],
+    es:['⚠ Este informe es generado por IA basado en la teoría MTC solo con fines informativos. No constituye diagnóstico médico. Consulte a un profesional de salud si tiene preocupaciones.',
+        '⚠ Esta evaluación es asistida por IA basada en la teoría de diagnóstico lingual MTC. Solo para referencia — no es un diagnóstico médico.'],
+    de:['⚠ Dieser Bericht wird von KI auf Basis der TCM-Theorie nur zu Informationszwecken erstellt. Er stellt keine medizinische Diagnose dar. Bitte konsultieren Sie einen Arzt bei gesundheitlichen Bedenken.',
+        '⚠ Diese Bewertung ist KI-gestützt basierend auf der TCM-Zungendiagnosetheorie. Nur zur Information — keine medizinische Diagnose.'],
+    fr:['⚠ Ce rapport est généré par l\'IA sur la base de la théorie MTC à titre informatif uniquement. Il ne constitue pas un diagnostic médical. Veuillez consulter un professionnel de santé si vous avez des préoccupations.',
+        '⚠ Cette évaluation est assistée par l\'IA sur la base de la théorie du diagnostic lingual MTC. À titre de référence uniquement — pas un diagnostic médical.']
+  };
+  var dm=disclaimerMap[lang]||disclaimerMap.en;
+  if(el('disclaimer-text'))el('disclaimer-text').textContent=dm[0];
+  if(el('tongue-disclaimer-text'))el('tongue-disclaimer-text').textContent=dm[1];
+  el('prog-label-text').textContent=L('progLabel');
+  el('reset-btn-text').textContent=L('resetBtn');
+  el('submit-btn-text').textContent=L('submitBtn');
+  el('img-btn-text').textContent=L('imgBtn');
+  el('retry-btn-text').textContent=L('retryBtn');
+  el('report-logo-text').textContent=L('rLogo');
+  el('s-chart-text').textContent=L('sChart');
+  el('s-tips-text').textContent=L('sTips');
+  el('history-title-text').textContent=L('histTitle');
+  el('compare-title-text').textContent=L('cmpTitle');
+  el('cmp-a-opt').textContent=L('cmpA');
+  el('cmp-b-opt').textContent=L('cmpB');
+  el('export-title-text').textContent=L('expTitle');
+  el('export-csv-text').textContent=L('expCSV');
+  el('export-json-text').textContent=L('expJSON');
+  el('import-json-text').textContent=L('impJSON');
+  el('all-records-text').textContent=L('allRec');
+}
+
+function enterMain(){
+  const n=document.getElementById('user-name-input').value.trim();
+  if(!n){document.getElementById('user-name-input').focus();return;}
+  userName=n;
+  document.getElementById('header-name').textContent=n;
+  document.getElementById('screen-intro').style.display='none';
+  document.getElementById('screen-main').style.display='block';
+  // 隐藏首页固定语言栏，改用导航栏内置语言选择
+  var lb=document.querySelector('.lang-bar');
+  if(lb){lb.style.opacity='0';lb.style.pointerEvents='none';}
+  renderQuiz();showTab('quiz');
+}
+function doLogout(){
+  document.getElementById('screen-main').style.display='none';
+  document.getElementById('screen-intro').style.display='flex';
+  // 恢复固定语言栏
+  var lb=document.querySelector('.lang-bar');
+  if(lb){lb.style.opacity='1';lb.style.pointerEvents='auto';}
+}
+function showTab(tab){
+  if(tab==='quiz'){
+    const resultEl=document.getElementById('tab-result');
+    if(resultEl&&resultEl.style.display==='block') resetQuiz();
+  }
+  ['quiz','result','tongue','history','compare','export'].forEach(t=>{
+    const e=document.getElementById('tab-'+t);
+    if(e)e.style.display=t===tab?'block':'none';
+  });
+  // nav-tab 对应顺序：首页(0), quiz(1), tongue(2), history(3), compare(4), export(5)
+  const tabOrder=['quiz','tongue','history','compare','export'];
+  document.querySelectorAll('.nav-tab').forEach((e,i)=>{
+    e.classList.toggle('active',i===tabOrder.indexOf(tab)+1); // +1 因为首页tab在index 0
+  });
+  if(tab==='history')renderHistory();
+  if(tab==='compare')loadCmpOpts();
+  if(tab==='export')renderExpTable();
+  if(tab==='tongue')renderTongue();
+}
+
+function renderQuiz(){
+  answers=new Array(33).fill(0);
+  const qs=QS[lang]||QS.zh;
+  const opts=L('opts');
+  const body=document.getElementById('quiz-questions');
+  body.innerHTML='';
+  qs.forEach((q,i)=>{
+    const div=document.createElement('div');
+    div.className='q-block';div.id='qb-'+i;
+    div.innerHTML=`<div class="q-num">Q${i+1} / ${qs.length}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${opts.map((o,j)=>`<button class="opt-btn" onclick="pick(${i},${j+1},this)">${o}</button>`).join('')}</div>
+      <div class="opt-scale"><span>${L('scaleL')}</span><span>${L('scaleR')}</span></div>`;
+    body.appendChild(div);
+  });
+  updateProg();
+}
+function pick(qi,val,el){
+  answers[qi]=val;
+  document.getElementById('qb-'+qi).querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('qb-'+qi).classList.add('answered');
+  updateProg();
+  document.getElementById('quiz-error').textContent='';
+  // 自动滚动到下一题
+  var next=document.getElementById('qb-'+(qi+1));
+  if(next){
+    setTimeout(function(){
+      next.scrollIntoView({behavior:'smooth',block:'center'});
+    },120);
+  }
+}
+function updateProg(){
+  const done=answers.filter(a=>a>0).length;
+  document.getElementById('q-count').textContent=`${done} / 33`;
+  document.getElementById('q-bar').style.width=(done/33*100)+'%';
+}
+function resetQuiz(){
+  answers=new Array(33).fill(0);
+  lastConstitutionResult=null;
+  renderQuiz();
+  // Hide result-page elements when returning to quiz
+  var enhSection=document.getElementById('tongue-enhance-section');
+  if(enhSection) enhSection.style.display='none';
+  var combinedBox=document.getElementById('combined-ai-box');
+  if(combinedBox){combinedBox.style.display='none';var ct=document.getElementById('combined-ai-text');if(ct)ct.textContent='';}
+}
+function submitQuiz(){
+  const un=answers.map((a,i)=>a===0?i+1:null).filter(Boolean);
+  if(un.length){
+    document.getElementById('quiz-error').textContent=L('unanswered').replace('{n}',un.length);
+    document.getElementById('qb-'+(un[0]-1)).scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  const result=calcScores();
+  saveRecord(result);
+  showResult(result);
+}
+function calcScores(){
+  const qs=QS[lang]||QS.zh;
+  const scores=new Array(9).fill(0),counts=new Array(9).fill(0);
+  qs.forEach((q,i)=>{const idx=q.t-1;scores[idx]+=answers[i];counts[idx]++;});
+  const pcts=scores.map((s,i)=>{const max=counts[i]*5,min=counts[i];return Math.round((s-min)/(max-min)*100);});
+  const nonPing=pcts.slice(1);
+  const primaryIdx=nonPing.indexOf(Math.max(...nonPing))+1;
+  return{pcts,primaryIdx,answers:[...answers]};
+}
+function saveRecord(result){
+  const names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  const rec={id:Date.now(),name:userName,lang,primaryType:names[result.primaryIdx],primaryZh:TYPE_NAMES.zh[result.primaryIdx],scores:result.pcts,answers:result.answers,date:new Date().toISOString()};
+  records.push(rec);
+  localStorage.setItem('tcm_pro_v1',JSON.stringify(records));
+}
+// 日语版调养建议
+const TD_JA=[
+  {d:'陰陽気血が調和し、体型が適切で、顔色が良く、精力旺盛な最も理想的な体質です。',f:'五穀雑穀をバランスよく摂り、極端に冷たいまたは熱い食べ物を避け、食事の多様性を保ちましょう。',l:'規則正しい生活リズムと適度な運動を心がけ、前向きな気持ちを保ちましょう。',s:'あらゆる種類の運動が適しています。週3〜5回の有酸素運動をお勧めします。',a:'過労を避け、偏食を防ぎ、穏やかな心を保ちましょう。'},
+  {d:'元気不足で疲れやすく、息切れ、無気力、発汗しやすく、免疫力が低い体質です。',f:'山芋、なつめ、黄耆の鶏スープ、お粥など、気を補い脾臓を強化する食べ物を中心に。',l:'過労を避け、十分な睡眠を確保し、長時間のエアコン環境は避けましょう。',s:'太極拳、八段錦、散歩など。大量の発汗を伴う激しい運動は避けましょう。',a:'過度な心配や悲しみを避け、大量の発汗を防ぎましょう。'},
+  {d:'陽気不足で寒がりで、手足が冷たく、無気力で、温かい食べ物を好み、便が軟らかい体質です。',f:'羊肉、ニラ、生姜、くるみ、栗など、陽を温め寒を散らす食べ物を中心に。',l:'特に腰と膝を温かくし、夏でも冷やしすぎないよう注意しましょう。',s:'ゆっくりとしたジョギング、ヨガなどが適しています。夏は屋外活動も良いでしょう。',a:'生冷たい食べ物を避け、夜更かしや寒さへの暴露を防ぎましょう。'},
+  {d:'陰液不足で痩せ型、手のひらや足の裏が熱く、口や喉が乾き、イライラしやすく、眠りが浅い体質です。',f:'白キクラゲ、百合根、クコの実、梨、はちみつなど、陰を養い潤す食べ物を中心に。',l:'夜更かしを避け、十分な睡眠を確保し、涼しく湿度のある環境で過ごしましょう。',s:'水泳、ヨガ、太極拳など。高温環境での大量発汗は避けましょう。',a:'辛くて乾燥した食べ物を避け、感情の高ぶりを抑えましょう。'},
+  {d:'痰湿が凝集し、太りやすく、腹部が膨れ、顔色が暗黄色で、疲れやすく、便が軟らかい体質です。',f:'冬瓜、ハトムギ、小豆、大根など。糖分と油脂を控え、脾臓を強化し湿を取り除く食べ物を。',l:'屋外活動を増やし、乾燥した風通しの良い環境で過ごし、湿気を避けましょう。',s:'長距離走、水泳、球技などの有酸素運動を規則的に続けましょう。',a:'甘くて油っこい食べ物を避け、アルコールを制限し、長時間座り続けないようにしましょう。'},
+  {d:'湿熱が内蕴し、顔が油っぽく、ニキビができやすく、口が苦く、体が重だるく、便が粘り気のある体質です。',f:'緑豆、ゴーヤ、きゅうり、れんこんなど、熱を清め湿を利する食べ物を中心に。',l:'肌を清潔に保ち、高温多湿の環境を避け、禁煙・節酒を心がけましょう。',s:'中程度の有酸素運動が適しています。水泳やゆっくりとしたジョギングがお勧めです。',a:'辛くて油っこい食べ物や焼き肉を避け、感情をコントロールしましょう。'},
+  {d:'血行不良で顔色が暗く、あざができやすく、物忘れしやすく、肌が乾燥しがちな体質です。',f:'山査子、黒きくらげ、黒豆、バラの花びらなど、血行を促進する食べ物を中心に。',l:'感情を穏やかに保ち、長時間座り続けることを避け、温かくしましょう。',s:'太極拳、ダンス、ヨガなど、気血の流れを促進する運動がお勧めです。',a:'冷たく収斂性のある食べ物を避け、感情的な抑圧を防ぎましょう。'},
+  {d:'気の流れが滞り、憂鬱になりやすく、感情豊かで不安を感じやすく、胸や脇腹が張り、喉に何か詰まった感じがする体質です。',f:'バラの花、仏手柑、陳皮、柑橘類など、肝を疏し気を調える食べ物を中心に。',l:'趣味を持ち、友人との交流を増やし、感情を開放的に保ちましょう。',s:'八段錦、太極拳、ゆっくりとしたジョギング、ヨガなど、気の流れを促す運動を。',a:'一人で考え込むことを避け、刺激的なニュースを減らし、規則正しい生活を送りましょう。'},
+  {d:'先天的な異常で、主にアレルギー体質です。花粉、食べ物などにアレルギーが出やすく、遺伝性疾患を患いやすい体質です。',f:'淡白でバランスの取れた食事を心がけ、既知のアレルゲンを避け、野菜や果物を多く摂りましょう。',l:'室内を清潔に保ち、アレルゲンへの接触を最小限にし、季節の変化に注意しましょう。',s:'適度な運動で体質を強化しましょう。花粉シーズンの屋外での激しい運動は避けましょう。',a:'既知のアレルギー食品を避け、薬の使用は慎重に、防護対策を取りましょう。'}
+];
+
+const TD_ES=[
+  {d:'Armonía entre Yin-Yang y Qi-Sangre, constitución ideal con tez radiante y energía abundante.',f:'Dieta equilibrada de cereales integrales; evite extremos de alimentos fríos y calientes; mantenga variedad alimentaria.',l:'Horario regular de sueño y ejercicio; actitud positiva; no se requieren ajustes especiales.',s:'Todos los tipos de ejercicio son adecuados. Se recomiendan 3-5 sesiones aeróbicas semanales.',a:'Evite el exceso de trabajo; mantenga variedad dietética y equilibrio emocional.'},
+  {d:'Energía vital insuficiente; propenso a fatiga, falta de aliento, sudoración fácil y baja inmunidad.',f:'Ñame, dátiles rojos, sopa de pollo con astrágalo, congee de arroz; enfocarse en tonificar el Qi y fortalecer el bazo.',l:'Evite el exceso de trabajo; asegure sueño adecuado; limite la exposición prolongada al aire acondicionado.',s:'Tai Chi, Baduanjin, caminata; evite ejercicio intenso que cause sudoración abundante.',a:'Evite la preocupación y tristeza excesivas; prevenga la transpiración profusa.'},
+  {d:'Energía Yang insuficiente; sensibilidad al frío, extremidades frías, baja energía, preferencia por el calor.',f:'Cordero, cebollín, jengibre, nueces, castañas; enfocarse en calentar el Yang y disipar el frío.',l:'Manténgase abrigado, especialmente en cintura y rodillas; evite el exceso de aire acondicionado en verano.',s:'Ejercicio suave como jogging lento y yoga; actividades al aire libre en verano son beneficiosas.',a:'Evite alimentos crudos y fríos; prevenga el desvelo y la exposición al frío.'},
+  {d:'Deficiencia de fluido Yin; tendencia a ser delgado, palmas calientes, boca seca, irritabilidad, sueño deficiente.',f:'Hongo de nieve, bulbo de lirio, baya goji, pera, miel; enfocarse en nutrir el Yin y humectar la sequedad.',l:'Evite el desvelo; asegure sueño adecuado; habite en entornos frescos y húmedos.',s:'Natación, yoga, Tai Chi; evite sudar abundantemente en ambientes calurosos.',a:'Evite alimentos picantes y secos; controle la excitación emocional.'},
+  {d:'Acumulación de flema-humedad; tendencia al sobrepeso, plenitud abdominal, tez opaca, fatiga fácil.',f:'Melón de invierno, semillas de coix, frijoles rojos, rábano; reduzca azúcar y aceite; fortalezca el bazo.',l:'Manténgase activo al aire libre; entorno seco y bien ventilado; evite la humedad.',s:'Carrera de larga distancia, natación, deportes de pelota; mantenga ejercicio aeróbico regular.',a:'Evite alimentos dulces y grasosos; limite el alcohol; evite sentarse por períodos prolongados.'},
+  {d:'Acumulación de calor-humedad; cara grasosa, propensa al acné, boca amarga, sensación de pesadez, heces pegajosas.',f:'Frijoles mungo, melón amargo, pepino, raíz de loto; enfocarse en eliminar el calor y drenar la humedad.',l:'Mantenga la piel limpia; evite ambientes calurosos y húmedos; no fume y limite el alcohol.',s:'Ejercicio aeróbico moderado; la natación y el jogging lento son adecuados.',a:'Evite alimentos picantes y grasosos; limite los alimentos a la parrilla; controle las emociones.'},
+  {d:'Circulación sanguínea deficiente; tez oscura, tendencia a hematomas, olvidos, piel seca y áspera.',f:'Espino, hongo de madera negro, frijoles negros, pétalos de rosa; enfocarse en activar la circulación.',l:'Mantenga el bienestar emocional; evite sentarse por períodos prolongados; manténgase abrigado.',s:'Tai Chi, danza, yoga; promueva la circulación de Qi y sangre.',a:'Evite alimentos fríos y astringentes; prevenga la depresión emocional.'},
+  {d:'Estancamiento del Qi; tendencia a la depresión, sensibilidad emocional, ansiedad, opresión en el pecho, sensación de algo atascado en la garganta.',f:'Pétalos de rosa, cidra Buddha, piel de mandarina, cítricos; enfocarse en suavizar el hígado y regular el Qi.',l:'Cultive pasatiempos; socialice regularmente; mantenga apertura emocional y expresión.',s:'Baduanjin, Tai Chi, jogging lento, yoga; guíe el movimiento del Qi y libere la tensión.',a:'Evite la rumia solitaria; reduzca los medios estresantes; mantenga rutinas diarias regulares.'},
+  {d:'Anomalía congénita; constitución principalmente alérgica, propensa a alergias al polen, alimentos y otras condiciones hereditarias.',f:'Dieta ligera y equilibrada; evite alérgenos conocidos; consuma abundantes verduras y frutas.',l:'Mantenga el hogar limpio; minimice la exposición a alérgenos; monitoree los cambios estacionales.',s:'Ejercicio moderado para fortalecer la constitución; evite ejercicio intenso al aire libre durante la temporada de polen.',a:'Evite alimentos alergénicos conocidos; use medicamentos con precaución; tome medidas de protección.'}
+];
+
+const TD_DE=[
+  {d:'Harmonisches Gleichgewicht von Yin-Yang und Qi-Blut; ideale Konstitution mit frischem Teint und viel Energie.',f:'Ausgewogene Ernährung mit Vollkornprodukten; vermeiden Sie extreme heiße oder kalte Speisen; erhalten Sie Vielfalt in der Ernährung.',l:'Regelmäßiger Schlaf und Bewegung; positive Einstellung; keine besonderen Anpassungen erforderlich.',s:'Alle Sportarten sind geeignet. 3-5 Aerobic-Einheiten pro Woche werden empfohlen.',a:'Vermeiden Sie Überanstrengung; erhalten Sie Ernährungsvielfalt und emotionales Gleichgewicht.'},
+  {d:'Unzureichende Lebensenergie; neigt zu Müdigkeit, Kurzatmigkeit, leichtem Schwitzen und schwachem Immunsystem.',f:'Yamswurzel, rote Datteln, Astragalus-Hühnersuppe, Reisgrütze; Fokus auf Qi-Tonikum und Stärkung der Milz.',l:'Vermeiden Sie Überarbeitung; sorgen Sie für ausreichend Schlaf; begrenzen Sie längere Klimaanlagen-Exposition.',s:'Tai Chi, Baduanjin, Spazierengehen; vermeiden Sie intensives Training mit starkem Schwitzen.',a:'Vermeiden Sie übermäßige Sorgen und Traurigkeit; verhindern Sie starkes Schwitzen.'},
+  {d:'Unzureichende Yang-Energie; Kälteempfindlichkeit, kalte Extremitäten, niedrige Energie, Vorliebe für Wärme.',f:'Lamm, Schnittlauch, Ingwer, Walnüsse, Kastanien; Fokus auf Yang-Wärme und Kältevertreibung.',l:'Halten Sie sich warm, besonders Taille und Knie; vermeiden Sie übermäßige Klimaanlage im Sommer.',s:'Sanfte Übungen wie leichtes Joggen und Yoga; Outdoor-Aktivitäten im Sommer sind vorteilhaft.',a:'Vermeiden Sie rohe und kalte Speisen; verhindern Sie Nachtschwärmerei und Kälteexposition.'},
+  {d:'Yin-Flüssigkeitsmangel; Neigung zu Schlankheit, warme Handflächen, trockener Mund, Reizbarkeit, schlechter Schlaf.',f:'Schnee-Pilz, Lilienzwiebel, Goji-Beere, Birne, Honig; Fokus auf Yin-Nährung und Feuchtigkeitspflege.',l:'Vermeiden Sie Nachtschwärmerei; sorgen Sie für ausreichend Schlaf; bewohnen Sie kühle, feuchte Umgebungen.',s:'Schwimmen, Yoga, Tai Chi; vermeiden Sie starkes Schwitzen in heißen Umgebungen.',a:'Vermeiden Sie würzige und trockene Speisen; kontrollieren Sie emotionale Aufregung.'},
+  {d:'Schleim-Feuchtigkeitsansammlung; Neigung zu Übergewicht, Bauchfülle, matter Teint, leichte Erschöpfung.',f:'Wintermelone, Coix-Samen, rote Bohnen, Rettich; Zucker und Öl reduzieren; Milz stärken.',l:'Bleiben Sie im Freien aktiv; trockene und gut belüftete Wohnumgebung; Feuchtigkeit vermeiden.',s:'Langstreckenlauf, Schwimmen, Ballsport; regelmäßige Aerobic-Übungen beibehalten.',a:'Vermeiden Sie süße und fettige Speisen; begrenzen Sie Alkohol; vermeiden Sie langes Sitzen.'},
+  {d:'Feuchte-Hitze-Ansammlung; fettige Haut, Neigung zu Akne, bitterer Mund, Schweregefühl, klebrige Stühle.',f:'Mungobohnen, Bittermelone, Gurke, Lotuswurzel; Fokus auf Wärmeablassung und Feuchtigkeitsdrainage.',l:'Halten Sie die Haut sauber; vermeiden Sie heiße und feuchte Umgebungen; Rauchen aufhören und Alkohol einschränken.',s:'Moderates Aerobic-Training; Schwimmen und leichtes Joggen sind geeignet.',a:'Vermeiden Sie würzige und fettige Speisen; begrenzen Sie Grillspeisen; kontrollieren Sie Emotionen.'},
+  {d:'Schlechte Blutgefäße; dunkler Teint, Neigung zu Blutergüssen, Vergesslichkeit, trockene und raue Haut.',f:'Weißdorn, schwarzes Holzohr-Pilz, schwarze Bohnen, Rosenblütenblätter; Fokus auf Blutkreislauf-Aktivierung.',l:'Erhalten Sie emotionales Wohlbefinden; vermeiden Sie langes Sitzen; halten Sie sich warm.',s:'Tai Chi, Tanz, Yoga; fördern Sie den Qi- und Blutkreislauf.',a:'Vermeiden Sie kalte und zusammenziehende Speisen; verhindern Sie emotionale Depression.'},
+  {d:'Qi-Stagnation; Neigung zur Depression, emotionale Sensibilität, Angst, Brustenge, Gefühl von etwas im Hals.',f:'Rosenblütenblätter, Buddha-Hand-Zitrone, Mandarinendrüse, Zitrusfrüchte; Fokus auf Leber-Beruhigung und Qi-Regulierung.',l:'Pflegen Sie Hobbys; sozialisieren Sie regelmäßig; bewahren Sie emotionale Offenheit.',s:'Baduanjin, Tai Chi, leichtes Joggen, Yoga; lenken Sie Qi-Bewegung und lösen Sie Spannungen.',a:'Vermeiden Sie einsames Grübeln; reduzieren Sie stressige Medien; erhalten Sie regelmäßige Tagesroutinen.'},
+  {d:'Angeborene Anomalie; hauptsächlich allergische Konstitution, anfällig für Pollen-, Lebensmittelallergien und Erbkrankheiten.',f:'Leichte, ausgewogene Ernährung; bekannte Allergene vermeiden; viel Gemüse und Obst essen.',l:'Halten Sie die Wohnumgebung sauber; minimieren Sie Allergenkontakt; beobachten Sie jahreszeitliche Veränderungen.',s:'Moderate Bewegung zur Stärkung der Konstitution; intensive Outdoor-Aktivitäten während der Pollensaison vermeiden.',a:'Bekannte Allergene vermeiden; Medikamente vorsichtig verwenden; Schutzmaßnahmen ergreifen.'}
+];
+
+const TD_FR=[
+  {d:"Harmonie entre Yin-Yang et Qi-Sang; constitution idéale avec teint radieux et énergie abondante.",f:"Alimentation équilibrée en céréales complètes; évitez les extrêmes chauds et froids; maintenez la variété alimentaire.",l:"Sommeil et exercice réguliers; attitude positive; aucun ajustement particulier nécessaire.",s:"Tous les types d'exercice conviennent. 3 à 5 séances d'aérobie hebdomadaires sont recommandées.",a:"Évitez la surcharge; maintenez la variété alimentaire et l'équilibre émotionnel."},
+  {d:"Énergie vitale insuffisante; sujet à la fatigue, l'essoufflement, la transpiration facile et une faible immunité.",f:"Igname, dattes rouges, soupe de poulet à l'astragale, congee de riz; se concentrer sur la tonification du Qi.",l:"Évitez la surcharge; assurez un sommeil adéquat; limitez l'exposition prolongée à la climatisation.",s:"Tai Chi, Baduanjin, marche; évitez l'exercice intense causant une transpiration abondante.",a:"Évitez l'inquiétude et la tristesse excessives; prévenez la transpiration profuse."},
+  {d:"Énergie Yang insuffisante; sensibilité au froid, extrémités froides, faible énergie, préférence pour la chaleur.",f:"Agneau, ciboulette, gingembre, noix, châtaignes; se concentrer sur le réchauffement du Yang.",l:"Restez au chaud, surtout la taille et les genoux; évitez l'excès de climatisation en été.",s:"Exercice doux comme le jogging lent et le yoga; les activités en plein air en été sont bénéfiques.",a:"Évitez les aliments crus et froids; prévenez les nuits tardives et l'exposition au froid."},
+  {d:"Déficience en fluide Yin; tendance à être mince, paumes chaudes, bouche sèche, irritabilité, mauvais sommeil.",f:"Champignon des neiges, bulbe de lys, baie goji, poire, miel; se concentrer sur la nutrition du Yin.",l:"Évitez les nuits tardives; assurez un sommeil adéquat; habitez dans des environnements frais et humides.",s:"Natation, yoga, Tai Chi; évitez de transpirer abondamment dans des environnements chauds.",a:"Évitez les aliments épicés et secs; gérez l'excitation émotionnelle."},
+  {d:"Accumulation de glaire-humidité; tendance au surpoids, plénitude abdominale, teint terne, fatigue facile.",f:"Melon d'hiver, graines de coix, haricots rouges, radis; réduisez sucre et huile; renforcez la rate.",l:"Restez actif en plein air; environnement sec et bien ventilé; évitez l'humidité.",s:"Course de fond, natation, sports de balle; maintenez un exercice aérobie régulier.",a:"Évitez les aliments sucrés et gras; limitez l'alcool; évitez de rester assis longtemps."},
+  {d:"Accumulation de chaleur-humidité; visage gras, sujet à l'acné, bouche amère, sensation de lourdeur, selles collantes.",f:"Haricots mungo, melon amer, concombre, racine de lotus; se concentrer sur l'élimination de la chaleur.",l:"Maintenez la peau propre; évitez les environnements chauds et humides; arrêtez de fumer et limitez l'alcool.",s:"Exercice aérobie modéré; la natation et le jogging lent sont adaptés.",a:"Évitez les aliments épicés et gras; limitez les aliments grillés; contrôlez les émotions."},
+  {d:"Mauvaise circulation sanguine; teint sombre, tendance aux ecchymoses, oublis, peau sèche et rugueuse.",f:"Aubépine, champignon noir, haricots noirs, pétales de rose; se concentrer sur l'activation de la circulation.",l:"Maintenez le bien-être émotionnel; évitez de rester assis longtemps; gardez-vous au chaud.",s:"Tai Chi, danse, yoga; favorisez la circulation du Qi et du sang.",a:"Évitez les aliments froids et astringents; prévenez la dépression émotionnelle."},
+  {d:"Stagnation du Qi; tendance à la dépression, sensibilité émotionnelle, anxiété, oppression thoracique, sensation de quelque chose coincé dans la gorge.",f:"Pétales de rose, cédrat Buddha, peau de mandarine, agrumes; se concentrer sur l'apaisement du foie.",l:"Cultivez des loisirs; socialisez régulièrement; maintenez l'ouverture et l'expression émotionnelles.",s:"Baduanjin, Tai Chi, jogging lent, yoga; guidez le mouvement du Qi et libérez les tensions.",a:"Évitez les ruminations solitaires; réduisez les médias stressants; maintenez des routines quotidiennes régulières."},
+  {d:"Anomalie congénitale; constitution principalement allergique, sujette aux allergies au pollen, aux aliments et aux maladies héréditaires.",f:"Alimentation légère et équilibrée; évitez les allergènes connus; mangez beaucoup de légumes et de fruits.",l:"Gardez l'environnement domestique propre; minimisez l'exposition aux allergènes; surveillez les changements saisonniers.",s:"Exercice modéré pour renforcer la constitution; évitez l'exercice intense en plein air pendant la saison des pollens.",a:"Évitez les aliments allergènes connus; utilisez les médicaments avec précaution; prenez des mesures de protection."}
+];
+
+// ── 穴位调养数据（Bug4）──
+const MASSAGE_TIPS=[
+  {zh:'足三里（膝下三寸）、关元（肚脐下三寸），每日按揉各3分钟，增强气血、强身健体。',
+   ja:'足三里（膝下3寸）・関元（へそ下3寸）を毎日各3分押して、気血を高めましょう。',
+   en:'Zusanli (ST36) and Guanyuan (CV4) — 3 min each daily to boost Qi, blood, and overall vitality.'},
+  {zh:'气海（肚脐下1.5寸）、足三里（膝下三寸）、脾俞（背第11胸椎旁），每穴按揉3–5分钟，每日1–2次，补气健脾效果显著。',
+   ja:'気海（へそ下1.5寸）・足三里・脾兪を各3〜5分、毎日1〜2回押して気を補いましょう。',
+   en:'Qihai (CV6), Zusanli (ST36), Pishu (BL20) — 3–5 min each, 1–2× daily to tonify Qi and strengthen the spleen.'},
+  {zh:'命门（腰第2椎棘突下）、肾俞（命门旁1.5寸）、关元，每穴温热按揉5分钟，配合艾灸效果更佳，温阳散寒。',
+   ja:'命門・腎兪・関元を各5分温めながら押しましょう。お灸と組み合わせると陽を温めとても効果的です。',
+   en:'Mingmen (GV4), Shenshu (BL23), Guanyuan (CV4) — warm massage 5 min each; moxa is highly recommended to warm Yang.'},
+  {zh:'太溪（内踝与跟腱之间）、三阴交（内踝上三寸）、涌泉（足底前1/3凹处），睡前按揉各5分钟，滋阴降火安神。',
+   ja:'太渓・三陰交・湧泉を就寝前に各5分押しましょう。陰を養い、虚熱を鎮め、睡眠を助けます。',
+   en:'Taixi (KD3), Sanyinjiao (SP6), Yongquan (KD1) — 5 min each before bed to nourish Yin, clear heat, and improve sleep.'},
+  {zh:'丰隆（小腿外侧外踝上8寸）、阴陵泉（胫骨内侧髁下方）、中脘（肚脐上4寸），每穴按揉5分钟，化痰祛湿健脾。',
+   ja:'豊隆・陰陵泉・中脘を各5分押して痰湿を化かし、脾を強化しましょう。',
+   en:'Fenglong (ST40), Yinlingquan (SP9), Zhongwan (CV12) — 5 min each to resolve phlegm-damp and strengthen the spleen.'},
+  {zh:'曲池（肘横纹外端）、阴陵泉（胫骨内侧髁下方）、委中（膝窝中央），每穴按揉3–5分钟，清热利湿排毒。',
+   ja:'曲池・陰陵泉・委中を各3〜5分押して熱を冷まし湿を取り除き、デトックスしましょう。',
+   en:'Quchi (LI11), Yinlingquan (SP9), Weizhong (BL40) — 3–5 min each to clear damp-heat and aid detoxification.'},
+  {zh:'血海（髌骨内上缘上2寸）、膈俞（背第7胸椎旁1.5寸）、合谷（手背虎口），每穴按揉5分钟，活血化瘀，改善肤色。',
+   ja:'血海・膈兪・合谷を各5分押して血行を促進し、瘀血を解消し肌ツヤを改善しましょう。',
+   en:'Xuehai (SP10), Geshu (BL17), Hegu (LI4) — 5 min each to invigorate blood, resolve stasis, and brighten complexion.'},
+  {zh:'太冲（足背第1–2跖骨间后方）、膻中（两乳头连线中点）、期门（乳头直下第6肋间），每穴按揉3–5分钟，疏肝理气、舒缓郁闷。',
+   ja:'太衝・膻中・期門を各3〜5分押して肝気を疏通し、気鬱・ストレスを解消しましょう。',
+   en:'Taichong (LR3), Danzhong (CV17), Qimen (LR14) — 3–5 min each to soothe the Liver, regulate Qi, and relieve emotional tension.'},
+  {zh:'肺俞（背第3胸椎旁1.5寸）、大椎（第7颈椎棘突下）、迎香（鼻翼外缘），每穴按揉3分钟，增强肺卫，减轻过敏反应。',
+   ja:'肺兪・大椎・迎香を各3分押して肺の防衛機能を高め、アレルギー症状を緩和しましょう。',
+   en:'Feishu (BL13), Dazhui (GV14), Yingxiang (LI20) — 3 min each to strengthen lung defense and reduce allergic reactions.'}
+];
+
+function showResult(result, skipAI){
+  var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  var d=TD[result.primaryIdx];
+  var dJa=TD_JA[result.primaryIdx];
+  var isZh=lang==='zh';
+  var isJa=lang==='ja';
+
+  document.getElementById('r-type').textContent=names[result.primaryIdx];
+  document.getElementById('r-en').textContent=TYPE_EN[result.primaryIdx];
+  document.getElementById('r-desc').textContent=
+    isZh?d.d:isJa?dJa.d:
+    lang==='es'?TD_ES[result.primaryIdx].d:
+    lang==='de'?TD_DE[result.primaryIdx].d:
+    lang==='fr'?TD_FR[result.primaryIdx].d:d.dE;
+  document.getElementById('r-footer').textContent=userName+' · '+new Date().toLocaleDateString()+' · TCM Constitution Assessment';
+
+  var sorted=TYPE_NAMES.zh.map(function(n,i){return {name:(TYPE_NAMES[lang]||TYPE_NAMES.zh)[i],pct:result.pcts[i],i};}).sort(function(a,b){return b.pct-a.pct;});
+  var chartEl=document.getElementById('r-chart');chartEl.innerHTML='';
+  sorted.forEach(function(tp,ri){
+    var row=document.createElement('div');row.className='chart-row';
+    row.innerHTML='<div class="chart-name">'+tp.name.replace(/体质|体質|質$/,'').substring(0,6)+'</div>'+
+      '<div class="chart-track"><div class="chart-fill'+(ri===0?' top':'')+'" id="cf-'+tp.i+'" style="width:0%"></div></div>'+
+      '<div class="chart-pct">'+tp.pct+'%</div>';
+    chartEl.appendChild(row);
+    setTimeout(function(){var e=document.getElementById('cf-'+tp.i);if(e)e.style.width=tp.pct+'%';},150+ri*60);
+  });
+
+  var dEs=TD_ES[result.primaryIdx];
+  var dDe=TD_DE[result.primaryIdx];
+  var dFr=TD_FR[result.primaryIdx];
+  var tipData=isZh?
+    [[L('tipFood'),d.f],[L('tipLife'),d.l],[L('tipSport'),d.s],[L('tipAvoid'),d.a]]:
+    isJa?[[L('tipFood'),dJa.f],[L('tipLife'),dJa.l],[L('tipSport'),dJa.s],[L('tipAvoid'),dJa.a]]:
+    lang==='es'?[[L('tipFood'),dEs.f],[L('tipLife'),dEs.l],[L('tipSport'),dEs.s],[L('tipAvoid'),dEs.a]]:
+    lang==='de'?[[L('tipFood'),dDe.f],[L('tipLife'),dDe.l],[L('tipSport'),dDe.s],[L('tipAvoid'),dDe.a]]:
+    lang==='fr'?[[L('tipFood'),dFr.f],[L('tipLife'),dFr.l],[L('tipSport'),dFr.s],[L('tipAvoid'),dFr.a]]:
+    [[L('tipFood'),d.fE],[L('tipLife'),d.lE],[L('tipSport'),d.sE],[L('tipAvoid'),d.aE]];
+
+  document.getElementById('r-tips').innerHTML=tipData.map(function(arr){
+    return '<div class="tip-card"><div class="tip-title">'+arr[0]+'</div><div class="tip-body">'+arr[1]+'</div></div>';
+  }).join('');
+
+  // Bug4: massage tip card
+  var mt=MASSAGE_TIPS[result.primaryIdx];
+  var massageEl=document.getElementById('r-massage-tip');
+  if(mt&&massageEl){
+    var mtContent=lang==='zh'?mt.zh:lang==='ja'?mt.ja:mt.en;
+    var mtLabel=lang==='zh'?'👐 穴位调养':lang==='ja'?'👐 ツボ按摩':lang==='es'?'👐 Acupresión':lang==='de'?'👐 Akupressur':lang==='fr'?'👐 Acupression':'👐 Acupressure';
+    massageEl.innerHTML='<div class="tip-title">'+mtLabel+'</div><div class="tip-body">'+mtContent+'</div>';
+    massageEl.style.display='block';
+  }
+
+  if(skipAI){
+    // Language switch: only update static content, preserve tongue state
+    return;
+  }
+
+  showTab('result');
+  document.getElementById('tab-result').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  lastConstitutionResult=result;
+  // Reset tongue section (Bug1)
+  tongueAnswers=new Array(6).fill(0);
+  var enhSection=document.getElementById('tongue-enhance-section');
+  var enhBody=document.getElementById('tongue-enhance-body');
+  var enhArrow=document.getElementById('tongue-enhance-arrow');
+  var combinedBox=document.getElementById('combined-ai-box');
+  if(enhSection){
+    enhSection.style.display='block';
+    enhSection.className='tongue-enhance';
+    if(enhBody) enhBody.className='tongue-enhance-body';
+    if(enhArrow) enhArrow.className='tongue-enhance-arrow';
+  }
+  if(combinedBox){
+    combinedBox.style.display='none';
+    var ct=document.getElementById('combined-ai-text');
+    if(ct) ct.textContent='';
+    // Remove any dynamically appended retry buttons (Bug1)
+    Array.from(combinedBox.querySelectorAll('button')).forEach(function(b){b.remove();});
+  }
+  renderInlineTongue();
+  // Trigger AI
+  var arbox=document.getElementById('ai-result-box');
+  var arTitle=document.getElementById('ai-result-title');
+  if(arbox){
+    arbox.style.display='block';
+    var titleMap={zh:'AI 体质分析',ja:'AI 体質インサイト',en:'AI Constitution Insights',es:'Análisis AI Personalizado',de:'KI Konstitutionsanalyse',fr:'Analyse IA Personnalisée'};
+    if(arTitle) arTitle.textContent=titleMap[lang]||'AI Constitution Insights';
+    generateResultAI(result);
+  }
+}
+
+
+// ── 截图下载（用打印窗口截图方式）──
+async function shareImage(){
+  const btn=document.getElementById('img-btn-text');
+  const orig=btn.textContent;
+  btn.textContent='⏳ 生成中...';
+  try{
+    const rw=document.getElementById('report-wrap');
+    // 强制把 CSS 变量写成内联色彩，再抓图
+    const clone=rw.cloneNode(true);
+    clone.style.cssText='background:#1A1508;padding:2.5rem;width:700px;position:fixed;top:-9999px;left:-9999px;border:1px solid #3A2E18;';
+    document.body.appendChild(clone);
+
+    // 对 clone 内所有元素写内联颜色
+    const applyStyle=(sel,css)=>clone.querySelectorAll(sel).forEach(e=>Object.assign(e.style,css));
+    applyStyle('.report-logo-text',{color:'#8B6914',fontSize:'11px',letterSpacing:'.4em',textAlign:'center',marginBottom:'2rem',textTransform:'uppercase'});
+    applyStyle('.report-type',{color:'#F0D98A',fontSize:'48px',fontWeight:'300',letterSpacing:'.06em',textAlign:'center'});
+    applyStyle('.report-type-en',{color:'#8A7A5C',fontStyle:'italic',fontSize:'15px',letterSpacing:'.15em',textAlign:'center'});
+    applyStyle('.report-hero',{borderBottom:'1px solid #3A2E18',paddingBottom:'2rem',marginBottom:'2rem',textAlign:'center'});
+    applyStyle('.report-desc',{color:'#C8B898',fontSize:'14px',lineHeight:'2'});
+    applyStyle('.section-head',{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1rem'});
+    applyStyle('.section-line',{background:'#3A2E18',height:'1px',flex:'1'});
+    applyStyle('.section-label',{color:'#8B6914',fontSize:'10px',letterSpacing:'.25em',textTransform:'uppercase'});
+    applyStyle('.chart-row',{display:'flex',alignItems:'center',gap:'12px',marginBottom:'10px'});
+    applyStyle('.chart-name',{color:'#8A7A5C',fontSize:'12px',width:'72px',textAlign:'right',flexShrink:'0'});
+    applyStyle('.chart-track',{background:'#3A2E18',flex:'1',height:'3px',position:'relative'});
+    applyStyle('.chart-fill',{background:'#4A3C22'});
+    applyStyle('.chart-fill.top',{background:'#C9A84C'});
+    applyStyle('.chart-pct',{color:'#8A7A5C',fontSize:'15px',width:'38px',textAlign:'right'});
+    applyStyle('.tips-grid',{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginTop:'.5rem'});
+    applyStyle('.tip-card',{background:'#1C1710',border:'1px solid #3A2E18',borderRadius:'2px',padding:'1.25rem'});
+    applyStyle('.tip-title',{color:'#8B6914',fontSize:'10px',letterSpacing:'.2em',textTransform:'uppercase',marginBottom:'.75rem'});
+    applyStyle('.tip-body',{color:'#C8B898',fontSize:'13px',lineHeight:'1.9'});
+    applyStyle('.report-footer',{color:'#8A7A5C',fontSize:'10px',textAlign:'center',marginTop:'2rem',paddingTop:'1.25rem',borderTop:'1px solid #3A2E18',letterSpacing:'.1em'});
+
+    await new Promise(r=>setTimeout(r,200));
+    const canvas=await html2canvas(clone,{
+      scale:2,backgroundColor:'#1A1508',
+      useCORS:true,allowTaint:true,logging:false,
+      onclone:(clonedDoc)=>{
+        const root=clonedDoc.documentElement;
+        const vars={'--ink':'#0F0C07','--ink2':'#1C1710','--ink3':'#2A2318','--gold':'#C9A84C','--gold2':'#F0D98A','--gold3':'#8B6914','--ivory':'#F5EDD8','--ivory2':'#EDE0C4','--ivory3':'#D4C49A','--text':'#F5EDD8','--text2':'#C8B898','--text3':'#8A7A5C','--card':'#1A1508','--card2':'#221C0D','--border':'#3A2E18','--border2':'#4A3C22','--red':'#E05040','--green':'#5A9A6A'};
+        Object.entries(vars).forEach(([k,v])=>root.style.setProperty(k,v));
+      }
+    });
+    document.body.removeChild(clone);
+
+    canvas.toBlob(blob=>{
+      if(!blob){alert('截图失败，请重试');return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`${userName}_TCM_Report.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+    },'image/png',1.0);
+  }catch(e){alert('截图失败：'+e.message);}
+  btn.textContent=orig;
+}
+function renderHistory(){
+  const el=document.getElementById('history-list');
+  const my=records.filter(r=>r.name===userName).reverse();
+  if(!my.length){el.innerHTML=`<div class="history-empty">${L('histEmpty').replace('\\n','<br>')}</div>`;return;}
+  el.innerHTML='';
+  my.forEach(rec=>{
+    const scores=rec.scores||[];
+    const sorted=[...scores].map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s);
+    const maxS=Math.max(sorted[0].s,1);
+    const bars=sorted.map((x,ri)=>`<div class="hc-bar${ri===0?' top':''}" style="height:${Math.max(3,Math.round(x.s/maxS*36))}px"></div>`).join('');
+    const div=document.createElement('div');div.className='history-card';
+    div.innerHTML=`<div><div class="hc-type">${rec.primaryType||'—'}</div><div class="hc-date">${new Date(rec.date).toLocaleDateString()}</div></div><div class="hc-bars">${bars}</div><span style="color:var(--text3);font-size:18px;">›</span>`;
+    div.onclick=()=>{const pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});};
+    el.appendChild(div);
+  });
+}
+function loadCmpOpts(){
+  const my=records.filter(r=>r.name===userName).reverse();
+  const sA=document.getElementById('cmp-a'),sB=document.getElementById('cmp-b');
+  sA.innerHTML=`<option value="">${L('cmpA')}</option>`;
+  sB.innerHTML=`<option value="">${L('cmpB')}</option>`;
+  my.forEach((rec,i)=>{
+    const label=`${new Date(rec.date).toLocaleDateString()} · ${rec.primaryType}`;
+    sA.innerHTML+=`<option value="${i}">${label}</option>`;
+    sB.innerHTML+=`<option value="${i}">${label}</option>`;
+  });
+  document.getElementById('compare-result').innerHTML='';
+  const aiBox=document.getElementById('ai-analysis-box');
+  if(aiBox){aiBox.style.display='none';aiBox.innerHTML='';}
+}
+function renderCompare(){
+  const my=records.filter(r=>r.name===userName).reverse();
+  const ai=document.getElementById('cmp-a').value,bi=document.getElementById('cmp-b').value;
+  if(ai===''||bi===''||ai===bi){
+    document.getElementById('compare-result').innerHTML=
+      '<p style="color:var(--text3);font-size:13px;text-align:center;padding:2rem;letter-spacing:.05em;">'+L('cmpHint')+'</p>';
+    return;
+  }
+  const rA=my[ai],rB=my[bi];
+  const sA=rA.scores||[],sB=rB.scores||[];
+  const names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+
+  // ── 计算变化 ──
+  const changes=names.map((n,i)=>({name:n,i,a:sA[i]||0,b:sB[i]||0,diff:(sB[i]||0)-(sA[i]||0)}));
+  const improved=changes.filter(c=>c.diff<-5).sort((a,b)=>a.diff-b.diff);   // 改善（分数下降=偏颇减少）
+  const worsen  =changes.filter(c=>c.diff>5).sort((a,b)=>b.diff-a.diff);    // 恶化（分数上升=偏颇加重）
+  const primaryBIdx=changes.slice(1).reduce((m,c)=>c.b>m.b?c:m,changes[1]).i; // 第二次主体质
+  const primaryAIdx=changes.slice(1).reduce((m,c)=>c.a>m.a?c:m,changes[1]).i; // 第一次主体质
+
+  // ── 养生建议数据库 ──
+  const ADVICE={
+    0:{// 平和
+      food:lang==='zh'?'继续保持均衡饮食，五谷杂粮为主，搭配蔬果。':lang==='ja'?'バランスの良い食事を続けましょう。五穀雑穀を主食に野菜と果物を合わせて。':'Continue balanced diet with whole grains, vegetables and fruits.',
+      life:lang==='zh'?'保持规律作息，早睡早起，保持心情愉快。':lang==='ja'?'規則正しい生活を続け、早寝早起きを心がけましょう。':'Maintain regular schedule; early to bed and early to rise.',
+      sport:lang==='zh'?'各类运动均适合，建议每周5次有氧运动30分钟。':lang==='ja'?'あらゆる運動が適しています。週5回30分の有酸素運動を推奨します。':'All exercises suitable; aim for 5 sessions of 30-min aerobic weekly.',
+      massage:lang==='zh'?'足三里（膝下三寸）、关元（肚脐下三寸），每日按揉各3分钟，强身健体。':lang==='ja'?'足三里（膝の下3寸）・関元（へそ下3寸）を毎日各3分押しましょう。':'Zusanli (ST36) and Guanyuan (CV4), 3 min each daily for general wellness.'},
+    1:{// 气虚
+      food:lang==='zh'?'多吃山药、大枣、黄芪、党参炖汤，补气健脾。少食生冷、油腻。':lang==='ja'?'山芋、なつめ、黄耆、党参のスープをよく飲みましょう。生冷・油っこい食べ物は控えて。':'Eat yam, red dates, astragalus soup. Avoid raw, cold and greasy foods.',
+      life:lang==='zh'?'避免熬夜和过度劳累，午后可小憩15-30分钟，保证睡眠充足。':lang==='ja'?'夜更かしや過労を避け、午後に15〜30分の昼寝を取りましょう。':'Avoid overwork; take a 15-30 min afternoon nap; ensure 7-8 hrs sleep.',
+      sport:lang==='zh'?'太极拳、八段锦、散步为主，避免大汗淋漓的剧烈运动，运动后注意保暖。':lang==='ja'?'太極拳、八段錦、散歩を中心に。大量発汗を伴う激しい運動は避けましょう。':'Tai Chi, Baduanjin, walking. Avoid sweating heavily; keep warm after.',
+      massage:lang==='zh'?'气海（肚脐下1.5寸）、足三里（膝下三寸）、脾俞（背部第11胸椎旁）。每穴按揉3-5分钟，每日1-2次，补气健脾。':lang==='ja'?'気海（へそ下1.5寸）・足三里・脾兪を各3〜5分、毎日1〜2回押しましょう。':'Qihai (CV6), Zusanli (ST36), Pishu (BL20). 3-5 min each, 1-2x daily.'},
+    2:{// 阳虚
+      food:lang==='zh'?'羊肉、韭菜、核桃、姜汤、桂圆温补阳气。忌生冷、冰饮、苦寒之物。':lang==='ja'?'羊肉、ニラ、くるみ、生姜湯、竜眼で陽気を補いましょう。生冷・氷飲料は禁物。':'Lamb, leeks, walnuts, ginger tea. Avoid cold drinks, ice, bitter foods.',
+      life:lang==='zh'?'注意全身保暖，尤其腰腹部，睡前泡脚20分钟（水温42℃），避免露宿或吹冷风。':lang==='ja'?'全身、特に腰腹部を温かくし、就寝前に42℃のお湯で20分足湯をしましょう。':'Keep warm especially waist/abdomen; soak feet in 42°C water 20min nightly.',
+      sport:lang==='zh'?'选择日晒充足时段户外运动，慢跑、广场舞、拉伸操，每次30分钟，微微出汗即可。':lang==='ja'?'日光の多い時間帯に屋外運動を。ゆっくりジョギング・ストレッチ、30分程度。':'Exercise outdoors in sunlight; slow jogging or stretching, 30 min, mild sweat.',
+      massage:lang==='zh'?'命门（腰部第2腰椎棘突下）、肾俞（命门旁1.5寸）、关元（肚脐下三寸）。每穴温热按揉5分钟，可配合艾灸效果更佳。':lang==='ja'?'命門・腎兪・関元を各5分温めながら押しましょう。お灸と併用するとより効果的です。':'Mingmen (GV4), Shenshu (BL23), Guanyuan (CV4). 5 min warm massage each; moxa is ideal.',},
+    3:{// 阴虚
+      food:lang==='zh'?'银耳莲子羹、百合粥、枸杞茶、雪梨汤滋阴润燥。忌辛辣、煎炸、酒类。':lang==='ja'?'白キクラゲと蓮の実のスープ、百合根粥、クコ茶、梨スープで陰を養いましょう。辛い・揚げ物・酒は禁物。':'Snow fungus soup, lily congee, wolfberry tea, pear soup. No spicy, fried or alcohol.',
+      life:lang==='zh'?'保持睡眠环境凉爽，22-24℃最佳，睡前避免使用电子产品，减少情绪波动。':lang==='ja'?'睡眠環境は22〜24℃に保ちましょう。就寝前の電子機器使用を避け、感情の起伏を減らして。':'Keep bedroom cool (22-24°C); avoid screens before bed; manage emotions.',
+      sport:lang==='zh'?'游泳、瑜伽、太极为佳，避免高温环境及大量出汗，运动时间以清晨或傍晚为宜。':lang==='ja'?'水泳・ヨガ・太極拳が最適。高温環境と大量発汗を避け、早朝か夕方に運動しましょう。':'Swimming, yoga, Tai Chi. Avoid heat and heavy sweating; exercise at dawn or dusk.',
+      massage:lang==='zh'?'太溪（内踝尖与跟腱之间）、三阴交（内踝上三寸）、涌泉（足底前1/3凹陷处）。睡前按揉各5分钟，滋阴降火。':lang==='ja'?'太渓・三陰交・湧泉を就寝前に各5分押しましょう。陰を養い虚火を鎮めます。':'Taixi (KD3), Sanyinjiao (SP6), Yongquan (KD1). 5 min each before bed to nourish Yin.',},
+    4:{// 痰湿
+      food:lang==='zh'?'薏仁红豆粥、冬瓜汤、陈皮茶化湿。控制甜食、奶制品、酒类，少食多餐。':lang==='ja'?'ハトムギ小豆粥・冬瓜スープ・陳皮茶で湿を取り除きましょう。甘い物・乳製品・酒は控えて。':'Coix-red bean congee, winter melon soup, tangerine peel tea. Limit sweets and dairy.',
+      life:lang==='zh'?'居住环境保持干燥通风，定期开窗换气，避免久居潮湿环境，衣物保持干爽。':lang==='ja'?'住環境を乾燥・通風に保ち、定期的に換気しましょう。湿気のある場所は避けて。':'Keep home dry and ventilated; air regularly; avoid damp environments.',
+      sport:lang==='zh'?'坚持每日有氧运动45-60分钟，以出汗为目标，快走、游泳、跳绳均可，循序渐进增加强度。':lang==='ja'?'毎日45〜60分の有酸素運動を続けましょう。発汗を目標に、ウォーキング・水泳・縄跳びなど。':'45-60 min aerobic daily targeting sweat; brisk walk, swim or jump rope; gradually increase.',
+      massage:lang==='zh'?'丰隆（小腿外侧，外踝上8寸）、阴陵泉（胫骨内侧髁下方）、中脘（肚脐上4寸）。每穴按揉5分钟，化痰祛湿。':lang==='ja'?'豊隆・陰陵泉・中脘を各5分押して痰湿を取り除きましょう。':'Fenglong (ST40), Yinlingquan (SP9), Zhongwan (CV12). 5 min each to resolve phlegm-damp.',},
+    5:{// 湿热
+      food:lang==='zh'?'绿豆薏仁汤、苦瓜炒鸡蛋、菊花茶清热利湿。禁酒、禁辣、禁烧烤，饮食宜清淡。':lang==='ja'?'緑豆ハトムギスープ・ゴーヤ炒め・菊花茶で熱を冷ましましょう。酒・辛い物・焼き肉は禁止。':'Mung bean-coix soup, bitter melon, chrysanthemum tea. No alcohol, spicy or grilled foods.',
+      life:lang==='zh'?'保持皮肤清洁，每日洗澡，衣物选择透气棉质，避免高温潮湿场所，减少熬夜。':lang==='ja'?'毎日入浴して肌を清潔に保ち、通気性の良い綿の衣類を選びましょう。':'Shower daily; wear breathable cotton; avoid humid/hot places; no late nights.',
+      sport:lang==='zh'?'游泳、慢跑、骑车，中等强度为主，出汗有助排毒。避免桑拿和高温瑜伽加重湿热。':lang==='ja'?'水泳・ジョギング・サイクリングなど中程度の運動を。発汗は解毒に役立ちます。':'Swimming, jogging, cycling at moderate intensity. Avoid sauna or hot yoga.',
+      massage:lang==='zh'?'曲池（肘横纹外端）、阴陵泉（胫骨内侧髁下方）、委中（膝窝中央）。每穴按揉3-5分钟，清热利湿排毒。':lang==='ja'?'曲池・陰陵泉・委中を各3〜5分押して熱を冷まし湿を取り除きましょう。':'Quchi (LI11), Yinlingquan (SP9), Weizhong (BL40). 3-5 min each to clear heat and damp.',},
+    6:{// 血瘀
+      food:lang==='zh'?'山楂玫瑰茶、黑木耳炒菜、三七粉活血。忌寒凉生冷，适量红酒（每日不超过150ml）。':lang==='ja'?'山査子バラ茶・黒きくらげ・三七粉で血行を促しましょう。冷たい食べ物は避けて。':'Hawthorn-rose tea, black fungus, notoginseng powder. Avoid cold foods; moderate red wine.',
+      life:lang==='zh'?'保持情绪舒畅，避免长时间久坐，每小时起身活动5分钟，注意保暖防寒。':lang==='ja'?'感情を穏やかに保ち、長時間の座位を避け、1時間ごとに5分立ち上がりましょう。':'Stay emotionally balanced; stand up every hour; keep warm.',
+      sport:lang==='zh'?'太极拳、八段锦、慢跑、舞蹈，每日30-45分钟，持续规律运动促进气血流通。':lang==='ja'?'太極拳・八段錦・ジョギング・ダンスを毎日30〜45分行い、気血の流れを促しましょう。':'Tai Chi, Baduanjin, jogging, dance 30-45 min daily to promote circulation.',
+      massage:lang==='zh'?'血海（髌骨内上缘上2寸）、膈俞（背部第7胸椎旁1.5寸）、合谷（手背虎口处）。每穴按揉5分钟，活血化瘀。':lang==='ja'?'血海・膈兪・合谷を各5分押して血行を促進しましょう。':'Xuehai (SP10), Geshu (BL17), Hegu (LI4). 5 min each to invigorate blood.',},
+    7:{// 气郁
+      food:lang==='zh'?'玫瑰花茶、柑橘、佛手瓜、百合莲子汤疏肝解郁。少食咖啡、浓茶、辛辣刺激之物。':lang==='ja'?'バラ茶・柑橘・仏手柑・百合根蓮の実スープで気の滞りを解消しましょう。':'Rose tea, citrus, lily-lotus soup. Reduce coffee, strong tea and spicy foods.',
+      life:lang==='zh'?'培养艺术类爱好（绘画、音乐、书法），多与朋友交流倾诉，学习冥想或正念减压。':lang==='ja'?'絵画・音楽・書道などの趣味を持ち、友人に気持ちを打ち明け、瞑想を学びましょう。':'Cultivate art hobbies; talk with friends; learn meditation or mindfulness.',
+      sport:lang==='zh'?'户外有氧运动为首选，爬山、骑行、跑步，呼吸新鲜空气，每次40分钟以上，舒展心胸。':lang==='ja'?'登山・サイクリング・ランニングなど屋外の有酸素運動を40分以上行いましょう。':'Outdoor aerobics: hiking, cycling, running 40+ min in fresh air to uplift mood.',
+      massage:lang==='zh'?'太冲（足背第1-2跖骨间隙后方）、膻中（两乳头连线中点）、期门（乳头直下第6肋间）。每穴按揉3-5分钟，疏肝理气解郁。':lang==='ja'?'太衝・膻中・期門を各3〜5分押して肝気の滞りを解消しましょう。':'Taichong (LR3), Danzhong (CV17), Qimen (LR14). 3-5 min each to relieve Qi stagnation.',},
+    8:{// 特禀
+      food:lang==='zh'?'饮食清淡，记录过敏食物日记，逐步排除致敏原。多食益生菌食品增强肠道免疫。':lang==='ja'?'淡白な食事を心がけ、アレルギー食品日記をつけて原因を特定しましょう。':'Keep food diary to identify allergens; eat probiotic foods to boost gut immunity.',
+      life:lang==='zh'?'定期清洁家居，使用防螨寝具，花粉季外出戴口罩，避免接触宠物毛发及化学清洁剂。':lang==='ja'?'定期的に掃除し、防ダニ寝具を使い、花粉シーズンはマスクをしましょう。':'Regular cleaning; anti-mite bedding; mask during pollen season; avoid pet dander.',
+      sport:lang==='zh'?'在空气质量良好时适度运动，游泳须确认水质，避免过敏原浓度高的环境运动。':lang==='ja'?'空気質の良い日に適度に運動しましょう。水泳は水質を確認してから。':'Exercise in good air quality; confirm pool quality before swimming; avoid high-allergen areas.',
+      massage:lang==='zh'?'肺俞（背部第3胸椎旁1.5寸）、大椎（第7颈椎棘突下）、迎香（鼻翼外缘）。每穴按揉3分钟，增强肺卫功能，改善过敏体质。':lang==='ja'?'肺兪・大椎・迎香を各3分押して肺の防衛機能を高め、アレルギー体質を改善しましょう。':'Feishu (BL13), Dazhui (GV14), Yingxiang (LI20). 3 min each to strengthen lung defense.'}
+  };
+
+  // ── 根据变化生成智能建议 ──
+  function genAdvice(primaryIdx, changes, worsen){
+    const base = ADVICE[primaryIdx] || ADVICE[0];
+    const isZh = lang==='zh', isJa = lang==='ja';
+
+    // 找出最需要关注的体质（恶化最多的）
+    let focusIdx = primaryIdx;
+    if(worsen.length > 0) focusIdx = worsen[0].i;
+    const focus = ADVICE[focusIdx] || base;
+
+    const labels = {
+      zh:{food:"饮食调养",life:"作息建议",sport:"运动方案",massage:"穴位按摩",change:"体质变化分析",improve:"改善方向",warn:"需要关注"},
+      ja:{food:"食事調養",life:"生活習慣",sport:"運動プラン",massage:"ツボ按摩",change:"体質変化分析",improve:"改善方向",warn:"要注意"},
+      en:{food:"Diet",life:"Lifestyle",sport:"Exercise",massage:"Acupressure",change:"Constitution Change Analysis",improve:"Positive Changes",warn:"Areas Needing Attention"},
+      es:{food:"Alimentación",life:"Estilo de Vida",sport:"Ejercicio",massage:"Acupresión",change:"Análisis de Cambios",improve:"Mejoras Positivas",warn:"Áreas de Atención"},
+      de:{food:"Ernährung",life:"Lebensstil",sport:"Bewegung",massage:"Akupressur",change:"Konstitutionsanalyse",improve:"Positive Veränderungen",warn:"Bereiche mit Aufmerksamkeit"},
+      fr:{food:"Alimentation",life:"Style de Vie",sport:"Exercice",massage:"Acupression",change:"Analyse des Changements",improve:"Améliorations",warn:"Points d’Attention"}
+    };
+    const lb = labels[lang] || labels.en;
+
+    return {base, focus, focusIdx, lb};
+  }
+
+  const {base, focus, focusIdx, lb} = genAdvice(primaryBIdx, changes, worsen);
+
+  // ── 渲染 ──
+  let html = '';
+
+  // 对比卡片
+  html += '<div class="compare-header-grid">' +
+    '<div class="compare-type-card"><div class="compare-type-name">'+rA.primaryType+'</div><div class="compare-type-date">'+new Date(rA.date).toLocaleDateString()+'</div></div>' +
+    '<div class="compare-type-card"><div class="compare-type-name">'+rB.primaryType+'</div><div class="compare-type-date">'+new Date(rB.date).toLocaleDateString()+'</div></div>' +
+  '</div>';
+
+  // 图例
+  html += '<div class="compare-legend">' +
+    '<span><span class="legend-dot" style="background:var(--gold)"></span>'+L('first')+'</span>' +
+    '<span><span class="legend-dot" style="background:#7B6BBE"></span>'+L('second')+'</span>' +
+  '</div>';
+
+  // 对比条形图
+  html += '<div class="compare-rows">';
+  names.forEach((n,i)=>{
+    const a=sA[i]||0,b=sB[i]||0,diff=b-a;
+    const arrow=diff>3?'<span style="color:var(--green)">▲'+diff+'%</span>':diff<-3?'<span style="color:var(--red)">▼'+Math.abs(diff)+'%</span>':'<span style="color:var(--text3)">—</span>';
+    html+='<div class="cmp-row">'+
+      '<div class="cmp-label">'+n.replace(/体质|体質|質$/,'').substring(0,6)+'</div>'+
+      '<div class="cmp-tracks">'+
+        '<div class="cbar a" id="ca-'+i+'" style="width:0%"></div>'+
+        '<div class="cbar b" id="cb-'+i+'" style="width:0%"></div>'+
+      '</div>'+
+      '<div class="cmp-diff">'+a+'%→'+b+'% '+arrow+'</div>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  // ── 变化小结 ──
+  html += '<div style="margin-top:1.5rem;">';
+
+  if(improved.length > 0 || worsen.length > 0){
+    html += '<div class="section-head"><div class="section-line"></div><div class="section-label">'+lb.change+'</div><div class="section-line"></div></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;">';
+
+    // 改善项
+    html += '<div style="background:rgba(90,154,106,.08);border:1px solid rgba(90,154,106,.25);border-radius:2px;padding:1rem;">';
+    html += '<div style="font-size:10px;letter-spacing:.15em;color:#5A9A6A;margin-bottom:.75rem;text-transform:uppercase;">✦ '+lb.improve+'</div>';
+    if(improved.length > 0){
+      improved.slice(0,3).forEach(c=>{
+        html += '<div style="font-size:13px;color:var(--text2);margin-bottom:.4rem;">'+c.name.replace(/体质|体質|質$/,'')+'  <span style="color:#5A9A6A">▼'+Math.abs(c.diff)+'%</span></div>';
+      });
+    } else {
+      html += '<div style="font-size:12px;color:var(--text3);">—</div>';
+    }
+    html += '</div>';
+
+    // 需关注项
+    html += '<div style="background:rgba(224,80,64,.06);border:1px solid rgba(224,80,64,.2);border-radius:2px;padding:1rem;">';
+    html += '<div style="font-size:10px;letter-spacing:.15em;color:var(--red);margin-bottom:.75rem;text-transform:uppercase;">⚠ '+lb.warn+'</div>';
+    if(worsen.length > 0){
+      worsen.slice(0,3).forEach(c=>{
+        html += '<div style="font-size:13px;color:var(--text2);margin-bottom:.4rem;">'+c.name.replace(/体质|体質|質$/,'')+'  <span style="color:var(--red)">▲'+c.diff+'%</span></div>';
+      });
+    } else {
+      html += '<div style="font-size:12px;color:var(--text3);">—</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // ── 养生建议区块 ──
+  html += '<div class="section-head"><div class="section-line"></div><div class="section-label" style="white-space:nowrap">'+
+    (lang==='zh'?'个人化养生建议':lang==='ja'?'個別養生アドバイス':lang==='es'?'Recomendaciones Personalizadas':lang==='de'?'Personalisierte Empfehlungen':'Personalized Wellness Advice')+
+  '</div><div class="section-line"></div></div>';
+
+  const adviceCards = [
+    {icon:'🥗', label:lb.food,  content: worsen.length>0 ? focus.food  : base.food},
+    {icon:'🌙', label:lb.life,  content: worsen.length>0 ? focus.life  : base.life},
+    {icon:'🏃', label:lb.sport, content: worsen.length>0 ? focus.sport : base.sport},
+    {icon:'👐', label:lb.massage,content: worsen.length>0 ? focus.massage: base.massage}
+  ];
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  adviceCards.forEach(card=>{
+    html += '<div style="background:var(--card);border:1px solid var(--border2);border-radius:2px;padding:1.25rem;">'+
+      '<div style="font-size:10px;letter-spacing:.15em;color:var(--gold3);text-transform:uppercase;margin-bottom:.6rem;">'+card.icon+' '+card.label+'</div>'+
+      '<div style="font-size:13px;color:var(--text2);line-height:1.9;">'+card.content+'</div>'+
+    '</div>';
+  });
+  html += '</div>';
+  html += '</div>';
+
+  // Bug3: tongue diagnosis comparison
+  if(rA.tongueAnswers || rB.tongueAnswers){
+    var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
+    var tongueLabel=lang==='zh'?'舌诊对比':lang==='ja'?'舌診比較':lang==='es'?'Comparación Lingual':lang==='de'?'Zungendiagnose-Vergleich':'Tongue Diagnosis Comparison';
+    html+='<div class="section-head" style="margin-top:1.5rem;"><div class="section-line"></div><div class="section-label">'+tongueLabel+'</div><div class="section-line"></div></div>';
+    function renderTD(ta){
+      if(!ta) return '<div style="color:var(--text3);font-size:12px;padding:.5rem;">'+(lang==='zh'?'暂无舌诊数据':'No tongue data')+'</div>';
+      return qs.map(function(q,i){
+        return '<div style="font-size:12px;color:var(--text2);margin-bottom:.4rem;line-height:1.7;">'+
+          '<span style="color:var(--gold3);">'+q.q.replace(/[？?].*$/,'')+':</span> '+(q.opts[ta[i]-1]||'—')+'</div>';
+      }).join('');
+    }
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.25rem;"><div style="font-size:10px;color:var(--gold3);letter-spacing:.12em;margin-bottom:.75rem;">'+L('first')+'</div>'+renderTD(rA.tongueAnswers)+'</div>'+
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.25rem;"><div style="font-size:10px;color:var(--gold3);letter-spacing:.12em;margin-bottom:.75rem;">'+L('second')+'</div>'+renderTD(rB.tongueAnswers)+'</div>'+
+    '</div>';
+  }
+
+  document.getElementById('compare-result').innerHTML = html;
+
+  // AI 智能分析
+  const aiBox2 = document.getElementById('ai-analysis-box');
+  if(aiBox2) aiBox2.style.display='block';
+  generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx, primaryBIdx);
+
+  // 动画
+  setTimeout(()=>{
+    names.forEach((_,i)=>{
+      const a=document.getElementById('ca-'+i), b=document.getElementById('cb-'+i);
+      if(a) a.style.width=(sA[i]||0)+'%';
+      if(b) b.style.width=(sB[i]||0)+'%';
+    });
+  }, 200);
+}
+
+
+function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx, primaryBIdx){
+  const isZh = lang==='zh', isJa = lang==='ja';
+  const dateA = new Date(rA.date).toLocaleDateString();
+  const dateB = new Date(rB.date).toLocaleDateString();
+
+  // 构建发给 Claude 的 prompt
+  const typeA = rA.primaryType;
+  const typeB = rB.primaryType;
+  const changedType = typeA !== typeB;
+
+  const improvedList = improved.map(c=>c.name+'(▼'+Math.abs(c.diff)+'%)').join('、');
+  const worsenList   = worsen.map(c=>c.name+'(▲'+c.diff+'%)').join('、');
+
+  const promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
+  const outputLang = isZh?'中文（简体）':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
+
+  const prompt = `你是一位有20年经验的中医养生顾问，擅长用温暖、贴心的方式和用户沟通。请根据以下两次体质检测数据，用${promptLang}写一份深入、有价值的对比分析报告。
+
+用户姓名：${userName}
+第一次检测：${dateA}，主体质：${typeA}
+第二次检测：${dateB}，主体质：${typeB}
+${changedType ? '【主体质已发生变化，说明身体状态有明显转变】' : '【主体质未变，但各项数值有变动】'}
+改善项目（分数下降=偏颇减轻）：${improvedList || '无明显改善'}
+需关注项目（分数上升=偏颇加重）：${worsenList || '无明显变化'}
+
+请用${outputLang}写350-450字的深度分析，结构如下：
+
+第一段：用温暖的语气叫出用户名字，说明这段时间身体整体的变化方向，解释为什么会有这样的变化（比如生活压力、季节、饮食习惯等可能的原因）。
+
+第二段：针对改善的项目，具体说明改善意味着什么（身体上会有哪些感受变好了），给予真诚的鼓励；针对加重的项目，解释这个体质偏颇在日常生活中会带来什么具体影响（比如容易怎样、感觉怎样），让用户真正理解自己身体的状态。
+
+第三段：给出针对当前主体质的具体生活建议，涵盖：饮食上吃什么避什么、作息上几点睡几点起、运动选择什么方式、情绪管理怎么做、居住环境注意什么。建议要具体可执行，不要泛泛而谈。
+
+第四段：给出未来1-3个月最重要的2-3个改善重点，说明如果坚持做到会有什么改变，用鼓励的语气收尾。
+
+要求：口语化、有温度、像朋友聊天，不要用冷冰冰的条列式，要写成流畅的段落。请直接输出正文，不要加标题或编号。`;
+
+  // 显示加载动画
+  const aiBox = document.getElementById('ai-analysis-box');
+  const aiTitle = isZh?'AI 智能体质分析':isJa?'AI 体質インサイト':lang==='es'?'Análisis AI Personalizado':lang==='de'?'KI Konstitutionsanalyse':lang==='fr'?'Analyse IA Personnalisée':'AI Health Insights';
+
+  aiBox.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">' +
+      '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.5s ease-in-out infinite;"></div>' +
+      '<span style="font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;">'+aiTitle+'</span>' +
+    '</div>' +
+    '<div id="ai-text" style="font-size:14px;color:var(--text2);line-height:2;letter-spacing:.03em;">' +
+      '<span style="color:var(--text3);">' + (isZh?'正在分析您的体质变化...':isJa?'体質変化を分析中...':'Analyzing your constitution changes...') + '</span>' +
+    '</div>';
+
+  // Use doStreamAI helper (Bug5&6: mobile compatible)
+  var cmpTextEl = document.getElementById('ai-text');
+  if(cmpTextEl){
+    doStreamAI(prompt, 1200, cmpTextEl, null, function(){
+      cmpTextEl.textContent = generateLocalAnalysis(userName,typeA,typeB,dateA,dateB,improved,worsen,changedType);
+    });
+  }
+}
+
+// ── AI 通用 helper（全平台流式；手机用 res.text() 缓冲避免 Cloudflare 30s 超时）──
+function doStreamAI(prompt, maxTokens, textEl, onDone, onError){
+  var isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  textEl.textContent = lang==='zh'?'正在分析中…':lang==='ja'?'分析中…':'Analyzing…';
+  var WORKER='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev/';
+  var done=false;
+  var timer=setTimeout(function(){if(!done){done=true;if(onError)onError(new Error('Timeout'));}},55000);
+  function finish(text){
+    if(done)return;done=true;clearTimeout(timer);
+    if(text){textEl.textContent=text;if(onDone)onDone(text);}
+    else if(onError)onError(new Error('Empty'));
+  }
+  function fail(e){if(done)return;done=true;clearTimeout(timer);if(onError)onError(e);}
+
+  // 统一用流式 — 避免 Cloudflare Worker 30 秒非流式超时
+  var body={max_tokens:maxTokens||1200,messages:[{role:'user',content:prompt}]};
+  fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  .then(function(res){
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    if(!isMobile && res.body && typeof res.body.getReader==='function'){
+      // 桌面：SSE 流式逐字显示
+      var reader=res.body.getReader();var dec=new TextDecoder();var full='';
+      textEl.textContent='';
+      function read(){
+        reader.read().then(function(r){
+          if(r.done){finish(full||null);return;}
+          dec.decode(r.value,{stream:true}).split('\n').forEach(function(line){
+            var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+            var d=tl.slice(6).trim();if(d==='[DONE]')return;
+            try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t){full+=t;textEl.textContent=full;}}catch(e){}
+          });read();
+        }).catch(function(){if(full)finish(full);else fail(new Error('Stream error'));});
+      }
+      read();
+    } else {
+      // 手机：res.text() 等流全部到达后一次解析（流式不会触发 Cloudflare 30s 限制）
+      res.text().then(function(text){
+        var full='';
+        text.split('\n').forEach(function(line){
+          var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+          var d=tl.slice(6).trim();if(d==='[DONE]')return;
+          try{var j=JSON.parse(d);var t=j&&j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
+        });
+        // 降级：尝试直接 JSON 解析
+        if(!full){try{var jj=JSON.parse(text);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
+        if(full)finish(full);else fail(new Error('Empty response'));
+      }).catch(function(e){fail(e);});
+    }
+  }).catch(function(err){fail(err);});
+}
+
+// ── 结果页 AI 分析 ──
+function generateResultAI(result){
+  var textEl = document.getElementById('ai-result-text');
+  if(!textEl) return;
+  var names = TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  var primaryName = names[result.primaryIdx];
+  var d = TD[result.primaryIdx];
+  var dJa = TD_JA?TD_JA[result.primaryIdx]:null;
+  var isZh=lang==='zh', isJa=lang==='ja';
+  var NL1 = String.fromCharCode(10);
+  var isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||('ontouchstart' in window&&window.screen.width<900);
+
+  var sorted = result.pcts.map(function(p,i){return {name:names[i],pct:p};})
+    .sort(function(a,b){return b.pct-a.pct;});
+  var top3 = sorted.slice(0,3).map(function(x){
+    return x.name.replace(/体质|体質|質$/,'')+'('+x.pct+'%)';
+  }).join(lang==='zh'||lang==='ja'?'、':', ');
+
+  var promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
+
+  if(isMobile){
+    // ── 手机端：fetch + stream:false + res.json()，最原生的 JSON 接收方式 ──
+    var WORKER='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev/';
+    var shortPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写3-4句个性化体质分析：主体质'+primaryName+'，占比'+top3+'。叫出名字，说出最典型的身体感受，给出2条最重要的调理建议。直接输出正文。';
+    textEl.textContent = isZh?'正在分析中…':isJa?'分析中…':'Analyzing…';
+
+    // 显示调试信息框（帮助排查问题，成功后自动消失）
+    var debugBox=document.getElementById('mobile-debug-box');
+    if(!debugBox){
+      debugBox=document.createElement('div');
+      debugBox.id='mobile-debug-box';
+      debugBox.style.cssText='background:#2a1a1a;border:1px solid #8B2020;border-radius:2px;padding:.75rem;margin-bottom:.75rem;font-size:11px;color:#E05040;letter-spacing:.03em;display:none;';
+      textEl.parentNode&&textEl.parentNode.insertBefore(debugBox,textEl);
+    }
+    debugBox.style.display='none';
+
+    fetch(WORKER,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}],stream:false})
+    })
+    .then(function(r){
+      if(!r.ok) throw new Error('Worker HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(data){
+      var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+      if(text&&text.length>5){
+        textEl.textContent=text;
+        debugBox.style.display='none';
+      } else {
+        throw new Error('Empty response: '+JSON.stringify(data).slice(0,100));
+      }
+    })
+    .catch(function(err){
+      // 显示具体错误，不覆盖——方便截图排查
+      debugBox.style.display='block';
+      debugBox.textContent='📱 AI错误：'+err.message+'\nUA: '+navigator.userAgent.slice(0,80);
+      textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':isJa?'AI分析は一時的に利用できません。':'AI analysis temporarily unavailable.';
+    });
+    return;
+  }
+
+  // ── 桌面端：完整流式 AI 分析 ──
+  var promptParts = [
+    '你是一位有20年经验的中医养生顾问，擅长用温暖、贴心的方式和用户沟通。请根据以下体质检测结果，用' + promptLang + '写一份深入、有实际价值的个人体质分析。',
+    '用户姓名：' + userName,'主体质：' + primaryName,'体质占比前三名：' + top3,'',
+    '请用' + promptLang + '写350-450字的深度分析，结构如下：',
+    '第一段：温暖叫出用户名字，用生动的语言解释「' + primaryName + '」在日常生活中是什么感觉。',
+    '第二段：根据体质占比，分析最需要关注的2-3个方向及相互关联。',
+    '第三段：具体生活建议（饮食食材、作息时间、运动方式、情绪疏导、季节注意）。',
+    '第四段：未来最重要的1-2个改善重点，鼓励收尾。',
+    '要求：口语化、有温度，写成流畅段落，不要标题或编号。'
+  ];
+  var prompt = promptParts.join(NL1);
+  var NL='\n\n';
+  var desc=isZh?d.d:isJa?(dJa?dJa.d:d.dE):d.dE;
+  doStreamAI(prompt, 1200, textEl, null, function(){
+    var local=isZh?
+      [userName+'，你好！根据这次检测，你的主体质是「'+primaryName+'」。',desc,'体质占比：'+top3+'。建议从饮食和作息入手，循序渐进调理。','调理体质是一段旅程，保持耐心，每一次坚持都在让身体变得更好！'].join(NL):
+      isJa?[userName+'さん！主な体質は「'+primaryName+'」です。',desc,'体質分布：'+top3+'。食事と生活習慣から改善しましょう。'].join(NL):
+      [userName+', primary constitution: '+primaryName+'. '+desc,'Top: '+top3+'. Start with diet and lifestyle.'].join(NL);
+    textEl.textContent=local;
+  });
+}
+
+
+// ── 对比报告下载 ──
+function downloadCompareReport(){
+  var resultEl = document.getElementById('compare-result');
+  var aiEl = document.getElementById('ai-analysis-box');
+  if(!resultEl || !resultEl.innerHTML.trim()){
+    alert(lang==='zh'?'请先选择两次检测记录进行对比':lang==='ja'?'先に2つの記録を選択してください':'Please select two records to compare first.');
+    return;
+  }
+
+  var btn = document.getElementById('dl-compare-btn');
+  var orig = btn ? btn.textContent : '';
+  if(btn) btn.textContent = lang==='zh'?'⏳ 生成中...':lang==='ja'?'⏳ 生成中...':'⏳ Generating...';
+
+  // 建立用于截图的临时容器，样式全部内联
+  var NL = String.fromCharCode(10);
+  var titleMap={zh:'对比分析报告',ja:'比較分析レポート',en:'Comparison Report',es:'Informe Comparativo',de:'Vergleichsbericht',fr:'Rapport Comparatif'};
+  var reportTitle = titleMap[lang]||'Comparison Report';
+  var aiTextContent = document.getElementById('ai-text') ? document.getElementById('ai-text').textContent : '';
+
+  // 建立截图容器
+  var wrap = document.createElement('div');
+  wrap.id = 'cmp-snapshot-wrap';
+  wrap.style.cssText = [
+    'position:fixed',
+    'top:-99999px',
+    'left:-99999px',
+    'width:720px',
+    'background:#1A1508',
+    'padding:2.5rem',
+    'font-family:Georgia,sans-serif',
+    'color:#F5EDD8',
+    'z-index:-1'
+  ].join(';');
+
+  // 顶部金线
+  var topLine = document.createElement('div');
+  topLine.style.cssText = 'height:2px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);margin-bottom:1.5rem;';
+  wrap.appendChild(topLine);
+
+  // 标题
+  var titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-size:28px;font-weight:300;color:#F0D98A;letter-spacing:.06em;margin-bottom:.25rem;';
+  titleEl.textContent = reportTitle;
+  wrap.appendChild(titleEl);
+
+  var subEl = document.createElement('div');
+  subEl.style.cssText = 'font-size:10px;letter-spacing:.2em;color:#8B6914;text-transform:uppercase;margin-bottom:2rem;';
+  subEl.textContent = userName + ' · ' + new Date().toLocaleDateString();
+  wrap.appendChild(subEl);
+
+  // 克隆对比结果
+  var resultClone = resultEl.cloneNode(true);
+  resultClone.style.cssText = 'margin-bottom:1.5rem;';
+
+  // 修复克隆内所有元素的颜色（CSS变量替换为实际值）
+  function fixColors(el){
+    el.querySelectorAll('*').forEach(function(e){
+      var cs = window.getComputedStyle(e);
+      var bg = cs.backgroundColor;
+      var col = cs.color;
+      var bd = cs.borderColor;
+      if(bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') e.style.backgroundColor = bg;
+      if(col) e.style.color = col;
+      if(bd && bd !== 'rgba(0, 0, 0, 0)') e.style.borderColor = bd;
+      // 修复进度条宽度
+      if(e.classList && (e.classList.contains('cbar') || e.classList.contains('chart-fill'))){
+        var w = e.style.width;
+        if(!w || w === '0%'){
+          // 已经有内联宽度，保留
+        }
+      }
+    });
+  }
+  fixColors(resultClone);
+  wrap.appendChild(resultClone);
+
+  // AI 分析区块
+  if(aiTextContent){
+    var aiWrap = document.createElement('div');
+    aiWrap.style.cssText = [
+      'background:rgba(201,168,76,.06)',
+      'border:1px solid #4A3C22',
+      'border-left:3px solid #8B6914',
+      'border-radius:2px',
+      'padding:1.5rem',
+      'margin-bottom:1.5rem'
+    ].join(';');
+
+    var aiTitleEl = document.createElement('div');
+    aiTitleEl.style.cssText = 'font-size:10px;letter-spacing:.2em;color:#8B6914;text-transform:uppercase;margin-bottom:1rem;';
+    aiTitleEl.textContent = lang==='zh'?'AI 智能体质分析':lang==='ja'?'AI 体質インサイト':'AI Health Insights';
+    aiWrap.appendChild(aiTitleEl);
+
+    var aiTextEl = document.createElement('div');
+    aiTextEl.style.cssText = 'font-size:13px;color:#C8B898;line-height:2;white-space:pre-wrap;';
+    aiTextEl.textContent = aiTextContent;
+    aiWrap.appendChild(aiTextEl);
+    wrap.appendChild(aiWrap);
+  }
+
+  // 底部
+  var footerEl = document.createElement('div');
+  footerEl.style.cssText = 'text-align:center;font-size:10px;color:#8A7A5C;padding-top:1rem;border-top:1px solid #3A2E18;letter-spacing:.1em;text-transform:uppercase;';
+  footerEl.textContent = 'TCM CONSTITUTION ASSESSMENT · ' + new Date().toLocaleDateString();
+  wrap.appendChild(footerEl);
+
+  document.body.appendChild(wrap);
+
+  // 稍等 DOM 渲染后截图
+  setTimeout(function(){
+    html2canvas(wrap, {
+      scale: 2,
+      backgroundColor: '#1A1508',
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      width: 720,
+      onclone: function(doc, cloned){
+        var root = doc.documentElement;
+        var vars = {
+          '--ink':'#0F0C07','--ink2':'#1C1710','--ink3':'#2A2318',
+          '--gold':'#C9A84C','--gold2':'#F0D98A','--gold3':'#8B6914',
+          '--text':'#F5EDD8','--text2':'#C8B898','--text3':'#8A7A5C',
+          '--card':'#1A1508','--card2':'#221C0D',
+          '--border':'#3A2E18','--border2':'#4A3C22',
+          '--red':'#E05040','--green':'#5A9A6A'
+        };
+        Object.keys(vars).forEach(function(k){ root.style.setProperty(k, vars[k]); });
+
+        // 对克隆中所有元素写内联颜色
+        var colorMap = {
+          '.compare-type-card':    {background:'#221C0D', border:'1px solid #3A2E18'},
+          '.compare-type-name':    {color:'#F0D98A'},
+          '.compare-type-date':    {color:'#8A7A5C'},
+          '.compare-legend':       {color:'#8A7A5C'},
+          '.cmp-label':            {color:'#8A7A5C'},
+          '.cbar.a':               {background:'#C9A84C'},
+          '.cbar.b':               {background:'#7B6BBE'},
+          '.cmp-diff':             {color:'#8A7A5C'},
+          '.compare-rows':         {background:'#1A1508', border:'1px solid #3A2E18'},
+          '.compare-header-grid':  {display:'grid','grid-template-columns':'1fr 1fr', gap:'10px'},
+          '.section-label':        {color:'#8B6914'},
+          '.section-line':         {background:'#3A2E18'},
+          '.tip-card':             {background:'#1C1710', border:'1px solid #3A2E18'},
+          '.tip-title':            {color:'#8B6914'},
+          '.tip-body':             {color:'#C8B898'},
+        };
+        var snap = doc.getElementById('cmp-snapshot-wrap');
+        if(snap){
+          Object.keys(colorMap).forEach(function(sel){
+            snap.querySelectorAll(sel).forEach(function(e){
+              Object.assign(e.style, colorMap[sel]);
+            });
+          });
+        }
+      }
+    }).then(function(canvas){
+      document.body.removeChild(wrap);
+      canvas.toBlob(function(blob){
+        if(!blob){ alert('截图失败，请重试'); return; }
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = userName + '_' + reportTitle + '_' + new Date().toLocaleDateString().replace(/\//g,'-') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+        if(btn) btn.textContent = orig;
+      }, 'image/png', 1.0);
+    }).catch(function(e){
+      document.body.removeChild(wrap);
+      alert('截图失败：' + e.message);
+      if(btn) btn.textContent = orig;
+    });
+  }, 300);
+}
+
+
+function generateLocalAnalysis(name, typeA, typeB, dateA, dateB, improved, worsen, changedType){
+  var isZh=lang==='zh', isJa=lang==='ja';
+  var NL = '\n\n';
+  var text = '';
+  if(isZh){
+    text = name + '，我仔细看了你从' + dateA + '到' + dateB + '这段时间的体质变化。';
+    if(changedType) text += '这次你的主体质从「' + typeA + '」变成了「' + typeB + '」，说明你的身体状态有了比较明显的转变。';
+    else text += '你的主体质依然是「' + typeA + '」，整体方向没有大的变化。';
+    if(improved.length > 0) text += NL + '好消息是，' + improved.map(function(c){return c.name.replace('体质','');}).join('、') + '这几方面的偏颇都有所减轻，说明你最近的调理是有效果的，继续保持！';
+    if(worsen.length > 0) text += NL + '需要留意的是，' + worsen.map(function(c){return c.name.replace('体质','');}).join('、') + '方面有些加重的迹象。这可能和近期的压力、饮食或作息有关，建议重点关注这个方向的调理。';
+    text += NL + '总体来说，调理身体是一个持续的过程，不要急于求成。希望下次检测时能看到更好的变化，加油！';
+  } else if(isJa){
+    text = name + 'さん、' + dateA + 'から' + dateB + 'までの体質変化を詳しく見てみました。';
+    if(changedType) text += '今回、主な体質が「' + typeA + '」から「' + typeB + '」へと変化しました。体の状態にかなり明確な変化が見られます。';
+    else text += '主な体質は引き続き「' + typeA + '」で、全体的な方向性に大きな変化はありません。';
+    if(improved.length > 0) text += NL + '良いニュースとして、' + improved.map(function(c){return c.name;}).join('、') + 'の偏りが改善されています。この調子で続けましょう！';
+    if(worsen.length > 0) text += NL + worsen.map(function(c){return c.name;}).join('、') + 'の面でやや悪化の兆候があります。ストレス、食事、生活習慣を見直してみてください。';
+    text += NL + '体質改善は長い旅です。焦らず着実に取り組んでいきましょう。次回の検査でさらに良い変化が見られることを願っています！';
+  } else {
+    text = name + ", I carefully reviewed your constitution changes from " + dateA + " to " + dateB + ". ";
+    if(changedType) text += "Your primary constitution has shifted from " + typeA + " to " + typeB + ", indicating a meaningful change in your body's overall balance. ";
+    else text += "Your primary constitution remains " + typeA + ", showing overall consistency in your body's pattern. ";
+    if(improved.length > 0) text += NL + "The good news: your " + improved.map(function(c){return c.name;}).join(", ") + " imbalance has improved — your wellness efforts are paying off, keep it up! ";
+    if(worsen.length > 0) text += NL + "Something to watch: your " + worsen.map(function(c){return c.name;}).join(", ") + " patterns have intensified slightly. This could relate to recent stress, diet, or sleep changes. ";
+    text += NL + "Remember, constitutional wellness is a journey. Stay consistent and look forward to even better results next time!";
+  }
+  return text;
+}
+
+
+// ══════════════════════════════
+//  结果页内嵌舌诊（分层增强）
+// ══════════════════════════════
+function toggleTongueEnhance(){
+  var body=document.getElementById('tongue-enhance-body');
+  var arrow=document.getElementById('tongue-enhance-arrow');
+  var section=document.getElementById('tongue-enhance-section');
+  if(!body||section.classList.contains('done')) return;
+  var open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(arrow) arrow.classList.toggle('open',!open);
+}
+
+function renderInlineTongue(){
+  tongueAnswers=new Array(6).fill(0);
+  var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
+  var body=document.getElementById('tongue-inline-questions');
+  if(!body) return;
+  body.innerHTML='';
+  qs.forEach(function(q,i){
+    var div=document.createElement('div');
+    div.className='tongue-q-block';
+    div.id='itqb-'+i;
+    var gridClass='tongue-opts-'+(q.cols||3);
+    div.innerHTML='<div class="q-num">Q'+(i+1)+' / '+qs.length+'</div>'+
+      '<div class="q-text">'+q.q+'</div>'+
+      '<div class="'+gridClass+'">'+
+        q.opts.map(function(o,j){
+          return '<button class="tongue-opt" onclick="pickInlineTongue('+i+','+(j+1)+',this)">'+o+'</button>';
+        }).join('')+
+      '</div>';
+    body.appendChild(div);
+  });
+  var err=document.getElementById('tongue-inline-error');
+  if(err) err.textContent='';
+}
+
+function resetInlineTongue(){
+  renderInlineTongue();
+}
+
+function pickInlineTongue(qi,val,el){
+  tongueAnswers[qi]=val;
+  var block=document.getElementById('itqb-'+qi);
+  if(block){
+    block.querySelectorAll('.tongue-opt').forEach(function(b){b.classList.remove('selected');});
+    el.classList.add('selected');
+    block.classList.add('answered');
+  }
+  var err=document.getElementById('tongue-inline-error');
+  if(err) err.textContent='';
+}
+
+function submitInlineTongue(){
+  var unanswered=tongueAnswers.map(function(a,i){return a===0?i+1:null;}).filter(Boolean);
+  if(unanswered.length){
+    var errMsg=lang==='zh'?'请完成第 '+unanswered.join('、')+' 题':
+               lang==='ja'?unanswered.join('、')+' の質問に回答してください':
+               'Please answer question(s): '+unanswered.join(', ');
+    var err=document.getElementById('tongue-inline-error');
+    if(err) err.textContent=errMsg;
+    return;
+  }
+  generateInlineCombinedAI();
+}
+
+function generateInlineCombinedAI(){
+  if(!lastConstitutionResult) return;
+  var isZh=lang==='zh', isJa=lang==='ja';
+  var promptLang=isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
+  var outputLang=isZh?'中文':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
+  var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  var primaryName=names[lastConstitutionResult.primaryIdx];
+  var sorted=lastConstitutionResult.pcts.map(function(p,i){return {name:names[i],pct:p};}).sort(function(a,b){return b.pct-a.pct;});
+  var top3=sorted.slice(0,3).map(function(x){return x.name.replace(/体质|体質|質$/,'')+'('+x.pct+'%)';}).join(isZh||isJa?'、':', ');
+  var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
+  var tongueDesc=tongueAnswers.map(function(a,i){return qs[i].q+'：'+qs[i].opts[a-1];}).join('\n');
+
+  var prompt=isZh?
+    '你是一位有20年经验的中医师，精通望闻问切。请根据以下用户的体质测评结果和舌象自测，用中文写一份综合分析报告。\n\n'+
+    '用户姓名：'+userName+'\n主体质：'+primaryName+'\n体质占比前三：'+top3+'\n\n【舌象自测结果】\n'+tongueDesc+'\n\n'+
+    '请写450-550字的综合分析，结构如下：\n'+
+    '第一段：叫出用户名字，说明舌象与体质测评结果的关联——舌象是否印证了体质结论，还是发现了额外信息？用生动语言让用户觉得「说的就是我」。\n'+
+    '第二段：从中医舌诊角度详细解读舌象，结合体质特点给出深度诠释。\n'+
+    '第三段：基于体质和舌象的综合判断，给出最针对性的生活调养建议（饮食、作息、运动各举具体例子）。\n'+
+    '第四段：用充满希望和鼓励的语气收尾，告诉用户坚持调养后会看到什么改变。\n\n要求：口语化、有温度、像朋友聊天，写成流畅段落，不要加标题或编号。':
+    isJa?
+    'あなたは20年の経験を持つ中医師です。以下の体質検査結果と舌象自己チェックに基づき、日本語で総合分析レポートを書いてください。\n\n'+
+    'ユーザー名：'+userName+'\n主な体質：'+primaryName+'\n体質分布上位3：'+top3+'\n\n【舌象チェック結果】\n'+tongueDesc+'\n\n'+
+    '450〜550字の総合分析を書いてください。舌象と体質の関連、舌診の詳細解釈、生活改善のアドバイス、励ましの言葉で締めてください。':
+    'You are a TCM doctor with 20 years of experience. Based on the following constitution assessment and tongue self-examination, write a comprehensive analysis in '+outputLang+'.\n\n'+
+    'User: '+userName+'\nPrimary constitution: '+primaryName+'\nTop 3: '+top3+'\n\n[Tongue Self-Examination]\n'+tongueDesc+'\n\n'+
+    'Write a 450-550 word integrated analysis covering: tongue-constitution correlation, TCM tongue diagnosis interpretation, personalized lifestyle advice (diet/sleep/exercise with specific examples), and an encouraging closing. Use a warm, conversational tone. No headers or numbering.';
+
+  // Bug3: save tongue answers to most recent record
+  var recentRec=records.filter(function(r){return r.name===userName;}).sort(function(a,b){return b.id-a.id;})[0];
+  if(recentRec){recentRec.tongueAnswers=[...tongueAnswers];localStorage.setItem('tcm_pro_v1',JSON.stringify(records));}
+
+  // Update UI: collapse & mark done
+  var section=document.getElementById('tongue-enhance-section');
+  var body2=document.getElementById('tongue-enhance-body');
+  var arrow=document.getElementById('tongue-enhance-arrow');
+  var titleEl=document.getElementById('enhance-title-text');
+  var subEl=document.getElementById('enhance-sub-text');
+  if(section) section.classList.add('done');
+  if(body2) body2.classList.remove('open');
+  if(arrow) arrow.classList.remove('open');
+  if(titleEl) titleEl.textContent=isZh?'✓ 舌诊已添加':isJa?'✓ 舌診済み':'✓ Tongue Added';
+  if(subEl) subEl.textContent=isZh?'综合分析生成中…':isJa?'総合レポート生成中…':'Generating combined analysis…';
+
+  // Hide constitution AI, show combined box
+  var origBox=document.getElementById('ai-result-box');
+  if(origBox) origBox.style.display='none';
+  var combinedBox=document.getElementById('combined-ai-box');
+  var combinedText=document.getElementById('combined-ai-text');
+  var badge=document.getElementById('combined-ai-badge');
+  if(combinedBox){
+    // Clear any previous retry buttons (Bug1)
+    Array.from(combinedBox.querySelectorAll('button')).forEach(function(b){b.remove();});
+    combinedBox.style.display='block';
+  }
+  var badgeMap={zh:'体质 + 舌象综合分析',ja:'体質 + 舌象総合分析',en:'Constitution + Tongue Analysis',es:'Análisis Combinado',de:'Kombinierte Analyse',fr:'Analyse Combinée'};
+  if(badge) badge.textContent=badgeMap[lang]||badgeMap.en;
+
+  // Use doStreamAI helper (Bug5&6)
+  if(combinedText){
+    doStreamAI(prompt, 1400, combinedText,
+      function(){ if(subEl) subEl.textContent=isZh?'综合分析已完成':isJa?'総合分析完了':'Combined analysis ready'; },
+      function(){
+        var qs2=TONGUE_QS[lang]||TONGUE_QS.zh;
+        var td2=tongueAnswers.map(function(a,i){return qs2[i].q+'：'+(qs2[i].opts[a-1]||'—');}).join('；');
+        var NL='\n\n';
+        var localText=isZh?
+          userName+'，您好！主体质「'+primaryName+'」，前三：'+top3+'。'+NL+'【舌象】'+td2+NL+'建议从饮食作息入手，循序渐进调理。（网络不稳定，显示本地摘要，可重试）':
+          isJa?userName+'さん、主体質「'+primaryName+'」、上位3：'+top3+NL+'【舌象】'+td2+NL+'食事と生活習慣から改善していきましょう。（接続不安定のためローカル要約）':
+          userName+', constitution: "'+primaryName+'" (Top 3: '+top3+').'+NL+'[Tongue] '+td2+NL+'Focus on diet and lifestyle adjustments. (Local summary — retry for full analysis)';
+        combinedText.textContent=localText;
+        if(subEl) subEl.textContent=isZh?'已显示本地摘要，可重试':'Local summary — retry for full analysis';
+        var retryBtn=document.createElement('button');
+        retryBtn.className='btn-ghost';retryBtn.style.cssText='font-size:11px;padding:8px 20px;margin-top:1rem;';
+        retryBtn.textContent=isZh?'↺ 重新生成':isJa?'↺ 再生成':'↺ Retry';
+        retryBtn.onclick=function(){
+          Array.from(combinedBox.querySelectorAll('button')).forEach(function(b){b.remove();});
+          generateInlineCombinedAI();
+        };
+        if(combinedBox) combinedBox.appendChild(retryBtn);
+      }
+    );
+  }
+}
+
+// ══════════════════════════════
+//  舌诊模块
+// ══════════════════════════════
+function renderTongue(){
+  tongueAnswers=new Array(6).fill(0);
+  var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
+  var body=document.getElementById('tongue-questions');
+  body.innerHTML='';
+  qs.forEach(function(q,i){
+    var div=document.createElement('div');
+    div.className='tongue-q-block';
+    div.id='tqb-'+i;
+    var gridClass='tongue-opts-'+(q.cols||3);
+    div.innerHTML='<div class="q-num">Q'+(i+1)+' / '+qs.length+'</div>'+
+      '<div class="q-text">'+q.q+'</div>'+
+      '<div class="'+gridClass+'">'+
+        q.opts.map(function(o,j){
+          return '<button class="tongue-opt" onclick="pickTongue('+i+','+(j+1)+',this)">'+o+'</button>';
+        }).join('')+
+      '</div>';
+    body.appendChild(div);
+  });
+  var aiBox=document.getElementById('tongue-ai-box');
+  aiBox.style.display='none'; aiBox.innerHTML='';
+  document.getElementById('tongue-error').textContent='';
+  document.getElementById('tongue-combine-row').style.display='none';
+}
+
+function pickTongue(qi,val,el){
+  tongueAnswers[qi]=val;
+  document.getElementById('tqb-'+qi).querySelectorAll('.tongue-opt').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected');
+  document.getElementById('tqb-'+qi).classList.add('answered');
+  document.getElementById('tongue-error').textContent='';
+}
+
+function submitTongue(){
+  var unanswered=tongueAnswers.map(function(a,i){return a===0?i+1:null;}).filter(Boolean);
+  if(unanswered.length){
+    var errMsg=lang==='zh'?'请完成第 '+unanswered[0]+' 题':
+               lang==='ja'?'第'+unanswered[0]+'問を回答してください':
+               'Please answer question '+unanswered[0]+' first';
+    document.getElementById('tongue-error').textContent=errMsg;
+    document.getElementById('tqb-'+(unanswered[0]-1)).scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  // Bug3: save tongue answers to most recent record
+  var recForTongue=records.filter(function(r){return r.name===userName;}).sort(function(a,b){return b.id-a.id;})[0];
+  if(recForTongue){recForTongue.tongueAnswers=[...tongueAnswers];localStorage.setItem('tcm_pro_v1',JSON.stringify(records));}
+  // Generate tongue AI analysis
+  generateTongueAI(tongueFromInvite && lastConstitutionResult!==null);
+  // Show combined report button if constitution result available
+  if(lastConstitutionResult && !tongueFromInvite){
+    document.getElementById('tongue-combine-row').style.display='block';
+  }
+}
+
+function goToTongue(fromInvite){
+  tongueFromInvite=!!fromInvite;
+  showTab('tongue');
+}
+
+function generateTongueAI(combined){
+  var isZh=lang==='zh', isJa=lang==='ja';
+  var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
+  var aiBox=document.getElementById('tongue-ai-box');
+  aiBox.style.display='block';
+
+  // 整理舌象描述文字
+  var tongueDesc=tongueAnswers.map(function(a,i){
+    var q=qs[i];
+    return q.q.replace(/[？?]/g,'')+': '+(q.opts[a-1]||'—');
+  }).join('; ');
+
+  var outputLang=isZh?'中文（简体）':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
+  var promptLang=isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
+
+  var prompt='';
+  if(combined&&lastConstitutionResult){
+    var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+    var primaryName=names[lastConstitutionResult.primaryIdx];
+    var sorted=lastConstitutionResult.pcts.map(function(p,i){return {name:names[i],pct:p};}).sort(function(a,b){return b.pct-a.pct;});
+    var top3=sorted.slice(0,3).map(function(x){return x.name.replace(/体质|体質|質$/,'')+' ('+x.pct+'%)';}).join(isZh||isJa?'、':', ');
+    prompt='你是一位有20年经验的中医师，精通望闻问切。请根据以下用户的体质测评结果和舌象自测，用'+promptLang+'写一份综合分析报告。\n\n'+
+      '用户姓名：'+userName+'\n'+
+      '【体质测评结果】\n主体质：'+primaryName+'\n体质分布前三：'+top3+'\n\n'+
+      '【舌象自测结果】\n'+tongueDesc+'\n\n'+
+      '请用'+outputLang+'写380-450字的综合分析，结构如下：\n\n'+
+      '第一段：叫出用户名字，说明舌象与体质测评结果的关联——舌象是否印证了体质结论，还是发现了额外信息？用生动语言解释这意味着什么。\n\n'+
+      '第二段：从中医舌诊角度详细解读舌象：舌色反映了什么、舌苔说明了什么、舌形揭示了什么，结合体质特点给出深度诠释。\n\n'+
+      '第三段：基于体质和舌象的综合判断，给出最针对性的生活调养建议（饮食、作息、运动各举具体例子）。\n\n'+
+      '第四段：告诉用户如何通过日常观察舌象来自我监测身体变化，以及坚持调养后预期会看到哪些改善，用鼓励语气收尾。\n\n'+
+      '要求：口语化、有温度、像朋友聊天，写成流畅段落，不要加标题编号。';
+  } else {
+    prompt='你是一位有20年经验的中医师，精通中医舌诊。请根据以下用户的舌象自测结果，用'+promptLang+'写一份深入的舌诊分析。\n\n'+
+      '用户姓名：'+userName+'\n'+
+      '【舌象自测结果】\n'+tongueDesc+'\n\n'+
+      '请用'+outputLang+'写300-380字的舌诊分析，结构如下：\n\n'+
+      '第一段：叫出用户名字，根据舌象数据判断目前的体质倾向和身体状态，用生动语言描述这些舌象在中医里代表什么，让用户觉得「说的就是我」。\n\n'+
+      '第二段：从舌色、苔质、舌形等各方面详细解读，说明这些征象组合揭示了什么身体信息，以及日常生活中可能出现哪些感受或症状。\n\n'+
+      '第三段：给出针对这种舌象的具体调养建议：饮食上推荐什么食材、避免什么；作息上有什么注意点；舌苔的改善通常需要多长时间，以及如何自我观察进步。\n\n'+
+      '要求：口语化、有温度、像朋友聊天，写成流畅段落，不要加标题编号。请直接输出正文。';
+  }
+
+  var titleMap={zh:combined?'舌象 + 体质综合分析':'舌象 AI 分析',ja:combined?'舌象+体質総合分析':'舌象 AI 分析',en:combined?'Combined Tongue + Constitution Analysis':'Tongue AI Analysis',es:combined?'Análisis Combinado':'Análisis Lingual IA',de:combined?'Kombinierte Analyse':'Zungen-KI-Analyse',fr:combined?'Analyse Combinée':'Analyse Linguale IA'};
+  var loadingMap={zh:'正在分析您的舌象...',ja:'舌象を分析中...',en:'Analyzing your tongue...',es:'Analizando su lengua...',de:'Zunge wird analysiert...',fr:'Analyse en cours...'};
+
+  aiBox.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">'+
+      '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.5s ease-in-out infinite;"></div>'+
+      '<span style="font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;">'+(titleMap[lang]||titleMap.en)+'</span>'+
+    '</div>'+
+    '<div id="tongue-ai-text" style="font-size:14px;color:var(--text2);line-height:2.1;letter-spacing:.03em;white-space:pre-wrap;">'+
+      '<span style="color:var(--text3);">'+(loadingMap[lang]||loadingMap.en)+'</span>'+
+    '</div>';
+
+  var textEl=document.getElementById('tongue-ai-text');
+  var isCombined=(combined&&lastConstitutionResult)?true:false;
+  // Use doStreamAI helper (Bug5&6)
+  doStreamAI(prompt, 1200, textEl, null, function(err){
+    var retryLabel=isZh?'重试':isJa?'再試み':'Retry';
+    aiBox.innerHTML=
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">'+
+        '<span style="font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;">'+(titleMap[lang]||titleMap.en)+'</span>'+
+      '</div>'+
+      '<div style="font-size:13px;color:var(--text3);line-height:2;margin-bottom:1rem;">⚠ '+(isZh?'AI 分析连接失败，请点击重试':isJa?'AI分析の接続に失敗しました':'AI analysis failed. Please retry')+'</div>'+
+      '<button class="btn-ghost" onclick="generateTongueAI('+isCombined+')" style="font-size:11px;padding:8px 20px;">↺ '+retryLabel+'</button>';
+  });
+}
+
+function renderExpTable(){
+  const el=document.getElementById('export-table');
+  if(!records.length){el.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem;">${L('noData')}</p>`;return;}
+  el.innerHTML=`<table><thead><tr><th>${L('colName')}</th><th>${L('colType')}</th><th>${L('colDate')}</th></tr></thead><tbody>${records.map(r=>`<tr><td>${r.name}</td><td>${r.primaryType}</td><td>${new Date(r.date).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
+}
+function exportCSV(){
+  if(!records.length){alert(L('noData'));return;}
+  const h=[L('colName'),L('colType'),...TYPE_NAMES.zh,L('colDate')];
+  const csv=[h.join(','),...records.map(r=>[r.name,r.primaryType,...(r.scores||[]),new Date(r.date).toLocaleString()].join(','))].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TCM_Data.csv';a.click();
+}
+function exportJSON(){
+  if(!records.length){alert(L('noData'));return;}
+  const blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TCM_Data.json';a.click();
+}
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data))throw new Error('Format error');
+      records=[...records,...data];
+      localStorage.setItem('tcm_pro_v1',JSON.stringify(records));
+      document.getElementById('export-msg').innerHTML=`<div class="msg success">${L('impOk')} ${data.length}</div>`;
+      renderExpTable();
+    }catch(err){document.getElementById('export-msg').innerHTML=`<div class="msg error">${L('impFail')}${err.message}</div>`;}
+  };
+  reader.readAsText(file);
+}
+// ── Bug8: 跨设备同步码 ──
+function genSyncCode(){
+  var data=records.filter(function(r){return r.name===userName;});
+  if(!data.length){alert(lang==='zh'?'暂无检测数据':lang==='ja'?'データがありません':'No data available');return;}
+  try{
+    var code=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    var area=document.getElementById('sync-code-area');
+    var copyLabel=lang==='zh'?'点击文本框全选复制':lang==='ja'?'テキストをクリックして全選択コピー':'Click the box to select & copy';
+    if(area) area.innerHTML=
+      '<div style="margin-top:.75rem;">'+
+      '<p style="font-size:11px;color:var(--text3);margin-bottom:.5rem;">'+copyLabel+'</p>'+
+      '<textarea readonly onclick="this.select()" style="width:100%;height:90px;background:var(--card);border:1px solid var(--border2);color:var(--gold2);padding:.65rem;font-size:10px;resize:none;font-family:monospace;border-radius:1px;letter-spacing:.02em;">'+code+'</textarea>'+
+      '</div>';
+  }catch(e){alert('生成失败：'+e.message);}
+}
+function importSyncCode(){
+  var codePrompt=lang==='zh'?'请粘贴同步码：':lang==='ja'?'同期コードを貼り付けてください：':'Please paste your sync code:';
+  var code=prompt(codePrompt);
+  if(!code) return;
+  try{
+    var data=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if(!Array.isArray(data)) throw new Error('Format error');
+    var added=0;
+    data.forEach(function(rec){if(!records.some(function(r){return r.id===rec.id;})){records.push(rec);added++;}});
+    localStorage.setItem('tcm_pro_v1',JSON.stringify(records));
+    var msg=lang==='zh'?'导入成功，新增 '+added+' 条记录':lang==='ja'?'インポート成功、'+added+'件追加':'Imported '+added+' records successfully';
+    alert(msg);
+    renderExpTable();
+    var area=document.getElementById('sync-code-area');
+    if(area) area.innerHTML='';
+  }catch(e){
+    alert(lang==='zh'?'同步码无效，请重试':lang==='ja'?'同期コードが無効です':'Invalid sync code. Please try again.');
+  }
+}
+
+applyI18n();
+</script>
+</body>
+</html>
