@@ -1410,24 +1410,30 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
     var mCmpAttempt=0;
     function showCmpResult(full){cmpTextEl.textContent=full;debugCmpBox.style.display='none';}
     function showCmpErr(msg){debugCmpBox.style.display='block';debugCmpBox.textContent=msg;cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';}
-    function doMobileCmpFetch(){
+    function doMobileCmpES(){
       mCmpAttempt++;
-      fetch(WORKER_CMP,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({max_tokens:80,stream:false,messages:[{role:'user',content:shortCmpPrompt}]})})
-      .then(function(res){
-        if(!res.ok)throw new Error('HTTP '+res.status);
-        return res.json();
-      })
-      .then(function(data){
-        var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-        if(text&&text.length>5){showCmpResult(text);}
-        else throw new Error('Empty:'+JSON.stringify(data).slice(0,80));
-      })
-      .catch(function(e){
-        if(mCmpAttempt<2){setTimeout(doMobileCmpFetch,2000);return;}
-        showCmpErr('📱 对比[#'+mCmpAttempt+'] '+e.message);
-      });
+      var full2='';var esDone2=false;
+      var q2=btoa(unescape(encodeURIComponent(JSON.stringify([{role:'user',content:shortCmpPrompt}]))));
+      var timer2=setTimeout(function(){
+        if(!esDone2){esDone2=true;es2.close();
+          if(full2&&full2.length>5)showCmpResult(full2);
+          else{if(mCmpAttempt<2){setTimeout(doMobileCmpES,2000);return;}showCmpErr('📱 对比ES超时25s[#'+mCmpAttempt+']');}
+        }
+      },25000);
+      var es2=new EventSource(WORKER_CMP+'?q='+encodeURIComponent(q2));
+      es2.onmessage=function(e){
+        if(esDone2)return;
+        if(e.data==='[DONE]'){esDone2=true;clearTimeout(timer2);es2.close();if(full2)showCmpResult(full2);else showCmpErr('📱 对比ES空[#'+mCmpAttempt+']');return;}
+        try{var j=JSON.parse(e.data);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full2+=t;}catch(ex){}
+      };
+      es2.onerror=function(){
+        if(esDone2)return;esDone2=true;clearTimeout(timer2);es2.close();
+        if(full2&&full2.length>5){showCmpResult(full2);return;}
+        if(mCmpAttempt<2){setTimeout(doMobileCmpES,2000);return;}
+        showCmpErr('📱 对比ES错误[#'+mCmpAttempt+']');
+      };
     }
-    doMobileCmpFetch();
+    doMobileCmpES();
     return;
   }
 
@@ -1525,25 +1531,31 @@ function generateResultAI(result){
     var mAttempt=0;
     function showResult(full){textEl.textContent=full;debugBox.style.display='none';}
     function showErr(msg){debugBox.style.display='block';debugBox.textContent=msg;textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';}
-    var ultraPrompt='用'+promptLang+'为'+userName+'写2句话：①'+primaryName+'体质最典型的身体感受 ②最重要的1条调理建议。叫出名字，直接输出正文。';
-    function doMobileFetch(){
+    var ultraPrompt='用'+promptLang+'为'+userName+'写3句话：①'+primaryName+'体质最典型的身体感受 ②最重要的调理建议 ③鼓励的话。叫出名字，直接输出正文。';
+    function doMobileES(){
       mAttempt++;
-      fetch(WORKER,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({max_tokens:80,stream:false,messages:[{role:'user',content:ultraPrompt}]})})
-      .then(function(res){
-        if(!res.ok)throw new Error('HTTP '+res.status);
-        return res.json();
-      })
-      .then(function(data){
-        var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-        if(text&&text.length>5){showResult(text);}
-        else throw new Error('Empty:'+JSON.stringify(data).slice(0,80));
-      })
-      .catch(function(e){
-        if(mAttempt<2){setTimeout(doMobileFetch,2000);return;}
-        showErr('📱[#'+mAttempt+'] '+e.message+'\nUA:'+navigator.userAgent.slice(0,60));
-      });
+      var full='';var esDone=false;
+      var q=btoa(unescape(encodeURIComponent(JSON.stringify([{role:'user',content:ultraPrompt}]))));
+      var timer=setTimeout(function(){
+        if(!esDone){esDone=true;es.close();
+          if(full&&full.length>5)showResult(full);
+          else{if(mAttempt<2){setTimeout(doMobileES,2000);return;}showErr('📱 ES超时25s[#'+mAttempt+']');}
+        }
+      },25000);
+      var es=new EventSource(WORKER+'?q='+encodeURIComponent(q));
+      es.onmessage=function(e){
+        if(esDone)return;
+        if(e.data==='[DONE]'){esDone=true;clearTimeout(timer);es.close();if(full)showResult(full);else showErr('📱 ES空[#'+mAttempt+']');return;}
+        try{var j=JSON.parse(e.data);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(ex){}
+      };
+      es.onerror=function(){
+        if(esDone)return;esDone=true;clearTimeout(timer);es.close();
+        if(full&&full.length>5){showResult(full);return;}
+        if(mAttempt<2){setTimeout(doMobileES,2000);return;}
+        showErr('📱 ES错误[#'+mAttempt+']\nUA:'+navigator.userAgent.slice(0,60));
+      };
     }
-    doMobileFetch();
+    doMobileES();
     return;
   }
 
