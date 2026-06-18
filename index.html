@@ -1413,17 +1413,20 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
       var xhr2=new XMLHttpRequest();
       xhr2.open('POST',WORKER_CMP,true);
       xhr2.setRequestHeader('Content-Type','text/plain');
-      xhr2.timeout=22000;
+      xhr2.timeout=55000;
       xhr2.onload=function(){
         if(xhr2.status>=200&&xhr2.status<300){
-          try{
-            var data=JSON.parse(xhr2.responseText);
-            var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-            if(text&&text.length>5){cmpTextEl.textContent=text;debugCmpBox.style.display='none';}
-            else{throw new Error('Empty: '+xhr2.responseText.slice(0,80));}
-          }catch(e){
+          var full='';
+          xhr2.responseText.split('\n').forEach(function(line){
+            var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+            var d=tl.slice(6).trim();if(d==='[DONE]')return;
+            try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
+          });
+          if(!full){try{var jj=JSON.parse(xhr2.responseText);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
+          if(full&&full.length>5){cmpTextEl.textContent=full;debugCmpBox.style.display='none';}
+          else{
             debugCmpBox.style.display='block';
-            debugCmpBox.textContent='📱 对比AI解析错误[#'+xhrCmpAttempt+']：'+e.message;
+            debugCmpBox.textContent='📱 对比AI空响应[#'+xhrCmpAttempt+']：'+xhr2.responseText.slice(0,100);
             cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
           }
         } else {
@@ -1435,16 +1438,16 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
       xhr2.ontimeout=function(){
         if(xhrCmpAttempt<2){setTimeout(doXHRCmp,1500);return;}
         debugCmpBox.style.display='block';
-        debugCmpBox.textContent='📱 对比XHR超时22s[#'+xhrCmpAttempt+']\n请切换WiFi重试';
-        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+        debugCmpBox.textContent='📱 对比XHR超时55s[#'+xhrCmpAttempt+']';
+        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';
       };
       xhr2.onerror=function(){
         if(xhrCmpAttempt<2){setTimeout(doXHRCmp,2000);return;}
         debugCmpBox.style.display='block';
-        debugCmpBox.textContent='📱 对比网络错误Failed[#'+xhrCmpAttempt+']\n运营商可能屏蔽Worker，请切换WiFi';
-        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+        debugCmpBox.textContent='📱 对比网络错误[#'+xhrCmpAttempt+']';
+        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';
       };
-      xhr2.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortCmpPrompt}],stream:false}));
+      xhr2.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortCmpPrompt}]}));
     }
     doXHRCmp();
     return;
@@ -1547,17 +1550,22 @@ function generateResultAI(result){
       var xhr=new XMLHttpRequest();
       xhr.open('POST',WORKER,true);
       xhr.setRequestHeader('Content-Type','text/plain');
-      xhr.timeout=22000;
+      xhr.timeout=55000;
       xhr.onload=function(){
         if(xhr.status>=200&&xhr.status<300){
-          try{
-            var data=JSON.parse(xhr.responseText);
-            var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-            if(text&&text.length>5){textEl.textContent=text;debugBox.style.display='none';}
-            else{throw new Error('Empty: '+xhr.responseText.slice(0,80));}
-          }catch(e){
+          // 先尝试解析 SSE 流
+          var full='';
+          xhr.responseText.split('\n').forEach(function(line){
+            var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+            var d=tl.slice(6).trim();if(d==='[DONE]')return;
+            try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
+          });
+          // 降级：尝试 JSON 解析（非流式响应）
+          if(!full){try{var jj=JSON.parse(xhr.responseText);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
+          if(full&&full.length>5){textEl.textContent=full;debugBox.style.display='none';}
+          else{
             debugBox.style.display='block';
-            debugBox.textContent='📱 AI解析错误[#'+xhrAttempt+']：'+e.message+'\nUA:'+navigator.userAgent.slice(0,60);
+            debugBox.textContent='📱 AI空响应[#'+xhrAttempt+']：'+xhr.responseText.slice(0,100);
             textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
           }
         } else {
@@ -1569,16 +1577,16 @@ function generateResultAI(result){
       xhr.ontimeout=function(){
         if(xhrAttempt<2){setTimeout(doXHR,1500);return;}
         debugBox.style.display='block';
-        debugBox.textContent='📱 XHR超时22s[#'+xhrAttempt+']\n请检查网络或切换WiFi重试\nUA:'+navigator.userAgent.slice(0,60);
-        textEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+        debugBox.textContent='📱 XHR超时55s[#'+xhrAttempt+']\nDeepSeek响应过慢，请稍后重试';
+        textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable. Please retry.';
       };
       xhr.onerror=function(){
         if(xhrAttempt<2){setTimeout(doXHR,2000);return;}
         debugBox.style.display='block';
-        debugBox.textContent='📱 网络错误Failed[#'+xhrAttempt+']\nWorker无法连接，可能是运营商屏蔽或无网络\nUA:'+navigator.userAgent.slice(0,60);
-        textEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+        debugBox.textContent='📱 网络错误[#'+xhrAttempt+']\nUA:'+navigator.userAgent.slice(0,60);
+        textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';
       };
-      xhr.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}],stream:false}));
+      xhr.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}]}));
     }
     doXHR();
     return;
