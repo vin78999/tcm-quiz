@@ -1388,11 +1388,71 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
 
   // Use doStreamAI helper (Bug5&6: mobile compatible)
   var cmpTextEl = document.getElementById('ai-text');
-  if(cmpTextEl){
-    doStreamAI(prompt, 1200, cmpTextEl, null, function(){
-      cmpTextEl.textContent = generateLocalAnalysis(userName,typeA,typeB,dateA,dateB,improved,worsen,changedType);
-    });
+  if(!cmpTextEl) return;
+
+  var isMobileCmp=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||('ontouchstart' in window&&window.screen.width<900);
+  if(isMobileCmp){
+    // 手机端：stream:false + res.json()，短 prompt，避免 30s 超时
+    var WORKER_CMP='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev/';
+    var improvedShort=improved.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'改善';}).join('、')||'无';
+    var worsenShort=worsen.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'需注意';}).join('、')||'无';
+    var shortCmpPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写3-4句对比分析：从'+typeA+'变为'+typeB+'，改善项：'+improvedShort+'，需关注：'+worsenShort+'。叫出名字，说出变化意味着什么，给出1-2条最重要建议。直接输出正文。';
+
+    var debugCmpBox=document.getElementById('mobile-cmp-debug-box');
+    if(!debugCmpBox){
+      debugCmpBox=document.createElement('div');
+      debugCmpBox.id='mobile-cmp-debug-box';
+      debugCmpBox.style.cssText='background:#2a1a1a;border:1px solid #8B2020;border-radius:2px;padding:.75rem;margin-bottom:.75rem;font-size:11px;color:#E05040;letter-spacing:.03em;display:none;';
+      cmpTextEl.parentNode&&cmpTextEl.parentNode.insertBefore(debugCmpBox,cmpTextEl);
+    }
+    debugCmpBox.style.display='none';
+
+    var xhrCmpAttempt=0;
+    function doXHRCmp(){
+      xhrCmpAttempt++;
+      var xhr2=new XMLHttpRequest();
+      xhr2.open('POST',WORKER_CMP,true);
+      xhr2.setRequestHeader('Content-Type','text/plain');
+      xhr2.timeout=22000;
+      xhr2.onload=function(){
+        if(xhr2.status>=200&&xhr2.status<300){
+          try{
+            var data=JSON.parse(xhr2.responseText);
+            var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+            if(text&&text.length>5){cmpTextEl.textContent=text;debugCmpBox.style.display='none';}
+            else{throw new Error('Empty: '+xhr2.responseText.slice(0,80));}
+          }catch(e){
+            debugCmpBox.style.display='block';
+            debugCmpBox.textContent='📱 对比AI解析错误[#'+xhrCmpAttempt+']：'+e.message;
+            cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
+          }
+        } else {
+          debugCmpBox.style.display='block';
+          debugCmpBox.textContent='📱 对比Worker HTTP '+xhr2.status+'[#'+xhrCmpAttempt+']';
+          cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
+        }
+      };
+      xhr2.ontimeout=function(){
+        if(xhrCmpAttempt<2){setTimeout(doXHRCmp,1500);return;}
+        debugCmpBox.style.display='block';
+        debugCmpBox.textContent='📱 对比XHR超时22s[#'+xhrCmpAttempt+']\n请切换WiFi重试';
+        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+      };
+      xhr2.onerror=function(){
+        if(xhrCmpAttempt<2){setTimeout(doXHRCmp,2000);return;}
+        debugCmpBox.style.display='block';
+        debugCmpBox.textContent='📱 对比网络错误Failed[#'+xhrCmpAttempt+']\n运营商可能屏蔽Worker，请切换WiFi';
+        cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+      };
+      xhr2.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortCmpPrompt}],stream:false}));
+    }
+    doXHRCmp();
+    return;
   }
+
+  doStreamAI(prompt, 1200, cmpTextEl, null, function(){
+    cmpTextEl.textContent = generateLocalAnalysis(userName,typeA,typeB,dateA,dateB,improved,worsen,changedType);
+  });
 }
 
 // ── AI 通用 helper（全平台流式；手机用 res.text() 缓冲避免 Cloudflare 30s 超时）──
@@ -1467,45 +1527,60 @@ function generateResultAI(result){
   var promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
 
   if(isMobile){
-    // ── 手机端：fetch + stream:false + res.json()，最原生的 JSON 接收方式 ──
+    // ── 手机端：XHR + 自动重试，比 fetch 更稳定 ──
     var WORKER='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev/';
     var shortPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写3-4句个性化体质分析：主体质'+primaryName+'，占比'+top3+'。叫出名字，说出最典型的身体感受，给出2条最重要的调理建议。直接输出正文。';
     textEl.textContent = isZh?'正在分析中…':isJa?'分析中…':'Analyzing…';
 
-    // 显示调试信息框（帮助排查问题，成功后自动消失）
     var debugBox=document.getElementById('mobile-debug-box');
     if(!debugBox){
       debugBox=document.createElement('div');
       debugBox.id='mobile-debug-box';
-      debugBox.style.cssText='background:#2a1a1a;border:1px solid #8B2020;border-radius:2px;padding:.75rem;margin-bottom:.75rem;font-size:11px;color:#E05040;letter-spacing:.03em;display:none;';
+      debugBox.style.cssText='background:#2a1a1a;border:1px solid #8B2020;border-radius:2px;padding:.75rem;margin-bottom:.75rem;font-size:11px;color:#E05040;letter-spacing:.03em;display:none;white-space:pre-wrap;word-break:break-all;';
       textEl.parentNode&&textEl.parentNode.insertBefore(debugBox,textEl);
     }
     debugBox.style.display='none';
 
-    fetch(WORKER,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}],stream:false})
-    })
-    .then(function(r){
-      if(!r.ok) throw new Error('Worker HTTP '+r.status);
-      return r.json();
-    })
-    .then(function(data){
-      var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-      if(text&&text.length>5){
-        textEl.textContent=text;
-        debugBox.style.display='none';
-      } else {
-        throw new Error('Empty response: '+JSON.stringify(data).slice(0,100));
-      }
-    })
-    .catch(function(err){
-      // 显示具体错误，不覆盖——方便截图排查
-      debugBox.style.display='block';
-      debugBox.textContent='📱 AI错误：'+err.message+'\nUA: '+navigator.userAgent.slice(0,80);
-      textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':isJa?'AI分析は一時的に利用できません。':'AI analysis temporarily unavailable.';
-    });
+    var xhrAttempt=0;
+    function doXHR(){
+      xhrAttempt++;
+      var xhr=new XMLHttpRequest();
+      xhr.open('POST',WORKER,true);
+      xhr.setRequestHeader('Content-Type','text/plain');
+      xhr.timeout=22000;
+      xhr.onload=function(){
+        if(xhr.status>=200&&xhr.status<300){
+          try{
+            var data=JSON.parse(xhr.responseText);
+            var text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+            if(text&&text.length>5){textEl.textContent=text;debugBox.style.display='none';}
+            else{throw new Error('Empty: '+xhr.responseText.slice(0,80));}
+          }catch(e){
+            debugBox.style.display='block';
+            debugBox.textContent='📱 AI解析错误[#'+xhrAttempt+']：'+e.message+'\nUA:'+navigator.userAgent.slice(0,60);
+            textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
+          }
+        } else {
+          debugBox.style.display='block';
+          debugBox.textContent='📱 Worker HTTP '+xhr.status+'[#'+xhrAttempt+']\n'+xhr.responseText.slice(0,80);
+          textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI analysis temporarily unavailable.';
+        }
+      };
+      xhr.ontimeout=function(){
+        if(xhrAttempt<2){setTimeout(doXHR,1500);return;}
+        debugBox.style.display='block';
+        debugBox.textContent='📱 XHR超时22s[#'+xhrAttempt+']\n请检查网络或切换WiFi重试\nUA:'+navigator.userAgent.slice(0,60);
+        textEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+      };
+      xhr.onerror=function(){
+        if(xhrAttempt<2){setTimeout(doXHR,2000);return;}
+        debugBox.style.display='block';
+        debugBox.textContent='📱 网络错误Failed[#'+xhrAttempt+']\nWorker无法连接，可能是运营商屏蔽或无网络\nUA:'+navigator.userAgent.slice(0,60);
+        textEl.textContent=isZh?'AI分析暂时无法使用，请切换WiFi后重试。':'AI temporarily unavailable. Try WiFi.';
+      };
+      xhr.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}],stream:false}));
+    }
+    doXHR();
     return;
   }
 
