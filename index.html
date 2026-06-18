@@ -1407,56 +1407,42 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
     }
     debugCmpBox.style.display='none';
 
-    var xhrCmpAttempt=0;
-    function parseSSECmp(text){
-      var full='';
-      text.split('\n').forEach(function(line){
-        var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
-        var d=tl.slice(6).trim();if(d==='[DONE]')return;
-        try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
-      });
-      if(!full){try{var jj=JSON.parse(text);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
-      return full;
-    }
+    var mCmpAttempt=0;
     function showCmpResult(full){cmpTextEl.textContent=full;debugCmpBox.style.display='none';}
     function showCmpErr(msg){debugCmpBox.style.display='block';debugCmpBox.textContent=msg;cmpTextEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';}
-    function doXHRCmp(){
-      xhrCmpAttempt++;
-      var xhr2=new XMLHttpRequest();
-      var done2=false;
-      xhr2.open('POST',WORKER_CMP,true);
-      xhr2.setRequestHeader('Content-Type','text/plain');
-      xhr2.timeout=30000;
-      xhr2.onprogress=function(){
-        if(done2)return;
-        if(xhr2.responseText.indexOf('[DONE]')!==-1){
-          done2=true;
-          var full=parseSSECmp(xhr2.responseText);
-          if(full&&full.length>5)showCmpResult(full);
-          else showCmpErr('📱 对比SSE空[#'+xhrCmpAttempt+']:'+xhr2.responseText.slice(0,80));
+    function doMobileCmpFetch(){
+      mCmpAttempt++;
+      var mDone2=false;
+      var mTimer2=setTimeout(function(){
+        if(!mDone2){mDone2=true;
+          if(mCmpAttempt<2){setTimeout(doMobileCmpFetch,1000);return;}
+          showCmpErr('📱 对比超时28s[#'+mCmpAttempt+']');
         }
-      };
-      xhr2.onload=function(){
-        if(done2)return;done2=true;
-        if(xhr2.status>=200&&xhr2.status<300){
-          var full=parseSSECmp(xhr2.responseText);
-          if(full&&full.length>5)showCmpResult(full);
-          else showCmpErr('📱 对比空响应[#'+xhrCmpAttempt+']:'+xhr2.responseText.slice(0,80));
-        } else {showCmpErr('📱 对比HTTP '+xhr2.status+'[#'+xhrCmpAttempt+']');}
-      };
-      xhr2.ontimeout=function(){
-        if(done2)return;done2=true;
-        if(xhrCmpAttempt<2){setTimeout(doXHRCmp,1000);return;}
-        showCmpErr('📱 对比超时30s[#'+xhrCmpAttempt+']');
-      };
-      xhr2.onerror=function(){
-        if(done2)return;done2=true;
-        if(xhrCmpAttempt<2){setTimeout(doXHRCmp,2000);return;}
-        showCmpErr('📱 对比网络错误[#'+xhrCmpAttempt+']');
-      };
-      xhr2.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortCmpPrompt}]}));
+      },28000);
+      fetch(WORKER_CMP,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortCmpPrompt}]})})
+      .then(function(res){
+        if(!res.ok){clearTimeout(mTimer2);mDone2=true;showCmpErr('📱 对比HTTP '+res.status+'[#'+mCmpAttempt+']');return;}
+        var reader2=res.body.getReader();var dec2=new TextDecoder();var full2='';
+        function read2(){
+          reader2.read().then(function(r){
+            if(mDone2)return;
+            if(r.done){clearTimeout(mTimer2);mDone2=true;if(full2)showCmpResult(full2);else showCmpErr('📱 对比流空[#'+mCmpAttempt+']');return;}
+            dec2.decode(r.value,{stream:true}).split('\n').forEach(function(line){
+              var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+              var d=tl.slice(6).trim();if(d==='[DONE]')return;
+              try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full2+=t;}catch(e){}
+            });
+            read2();
+          }).catch(function(e){clearTimeout(mTimer2);if(!mDone2){mDone2=true;if(full2)showCmpResult(full2);else showCmpErr('📱 对比读取错误[#'+mCmpAttempt+']:'+e.message);}});
+        }
+        read2();
+      })
+      .catch(function(e){clearTimeout(mTimer2);if(!mDone2){mDone2=true;
+        if(mCmpAttempt<2){setTimeout(doMobileCmpFetch,2000);return;}
+        showCmpErr('📱 对比Fetch失败[#'+mCmpAttempt+']:'+e.message);
+      }});
     }
-    doXHRCmp();
+    doMobileCmpFetch();
     return;
   }
 
@@ -1551,56 +1537,42 @@ function generateResultAI(result){
     }
     debugBox.style.display='none';
 
-    var xhrAttempt=0;
-    function parseSSE(text){
-      var full='';
-      text.split('\n').forEach(function(line){
-        var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
-        var d=tl.slice(6).trim();if(d==='[DONE]')return;
-        try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
-      });
-      if(!full){try{var jj=JSON.parse(text);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
-      return full;
-    }
+    var mAttempt=0;
     function showResult(full){textEl.textContent=full;debugBox.style.display='none';}
     function showErr(msg){debugBox.style.display='block';debugBox.textContent=msg;textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';}
-    function doXHR(){
-      xhrAttempt++;
-      var xhr=new XMLHttpRequest();
-      var done=false;
-      xhr.open('POST',WORKER,true);
-      xhr.setRequestHeader('Content-Type','text/plain');
-      xhr.timeout=30000;
-      xhr.onprogress=function(){
-        if(done)return;
-        if(xhr.responseText.indexOf('[DONE]')!==-1){
-          done=true;
-          var full=parseSSE(xhr.responseText);
-          if(full&&full.length>5)showResult(full);
-          else showErr('📱 SSE空[#'+xhrAttempt+']:'+xhr.responseText.slice(0,80));
+    function doMobileFetch(){
+      mAttempt++;
+      var mDone=false;
+      var mTimer=setTimeout(function(){
+        if(!mDone){mDone=true;
+          if(mAttempt<2){setTimeout(doMobileFetch,1000);return;}
+          showErr('📱 超时28s[#'+mAttempt+']\nUA:'+navigator.userAgent.slice(0,60));
         }
-      };
-      xhr.onload=function(){
-        if(done)return;done=true;
-        if(xhr.status>=200&&xhr.status<300){
-          var full=parseSSE(xhr.responseText);
-          if(full&&full.length>5)showResult(full);
-          else showErr('📱 空响应[#'+xhrAttempt+']:'+xhr.responseText.slice(0,80));
-        } else {showErr('📱 HTTP '+xhr.status+'[#'+xhrAttempt+']');}
-      };
-      xhr.ontimeout=function(){
-        if(done)return;done=true;
-        if(xhrAttempt<2){setTimeout(doXHR,1000);return;}
-        showErr('📱 超时30s[#'+xhrAttempt+']\nUA:'+navigator.userAgent.slice(0,60));
-      };
-      xhr.onerror=function(){
-        if(done)return;done=true;
-        if(xhrAttempt<2){setTimeout(doXHR,2000);return;}
-        showErr('📱 网络错误[#'+xhrAttempt+']\nUA:'+navigator.userAgent.slice(0,60));
-      };
-      xhr.send(JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}]}));
+      },28000);
+      fetch(WORKER,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:shortPrompt}]})})
+      .then(function(res){
+        if(!res.ok){clearTimeout(mTimer);mDone=true;showErr('📱 HTTP '+res.status+'[#'+mAttempt+']');return;}
+        var reader=res.body.getReader();var dec=new TextDecoder();var full='';
+        function read(){
+          reader.read().then(function(r){
+            if(mDone)return;
+            if(r.done){clearTimeout(mTimer);mDone=true;if(full)showResult(full);else showErr('📱 流空[#'+mAttempt+']');return;}
+            dec.decode(r.value,{stream:true}).split('\n').forEach(function(line){
+              var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+              var d=tl.slice(6).trim();if(d==='[DONE]')return;
+              try{var j=JSON.parse(d);var t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
+            });
+            read();
+          }).catch(function(e){clearTimeout(mTimer);if(!mDone){mDone=true;if(full)showResult(full);else showErr('📱 读取错误[#'+mAttempt+']:'+e.message);}});
+        }
+        read();
+      })
+      .catch(function(e){clearTimeout(mTimer);if(!mDone){mDone=true;
+        if(mAttempt<2){setTimeout(doMobileFetch,2000);return;}
+        showErr('📱 Fetch失败[#'+mAttempt+']:'+e.message+'\nUA:'+navigator.userAgent.slice(0,60));
+      }});
     }
-    doXHR();
+    doMobileFetch();
     return;
   }
 
