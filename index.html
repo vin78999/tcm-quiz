@@ -337,7 +337,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.19-B17（双向同步）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.19-B18（修复登录验证）</span>
 </div>
 
 <div id="screen-intro">
@@ -832,6 +832,7 @@ async function doCloudRegister(){
     var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
     var d=await r.json();
     if(d.error){_authStatus('注册失败：'+d.error,'err');_authBtns(false);return;}
+    if(!d.uid||!d.idToken||!d.email){_authStatus('注册失败：服务器返回异常，请重试','err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
     _authStatus('✓ 注册成功！现在可点击「立即同步」上传数据','ok');
@@ -848,6 +849,7 @@ async function doCloudLogin(){
     var r=await _fetchWithTimeout(CN_AUTH+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},15000);
     var d=await r.json();
     if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
+    if(!d.uid||!d.idToken||!d.email){_authStatus('登录失败：服务器返回异常，请重试','err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
     _authStatus('正在同步数据…');
@@ -884,7 +886,7 @@ function doCloudLogout(){
 async function _syncLoad(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
-    if(!auth)return 0;
+    if(!auth||!auth.uid||!auth.idToken)return 0;
     var r=await _fetchWithTimeout(CN_AUTH+'/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken})},15000);
     var d=await r.json();
     if(d.records&&Array.isArray(d.records)&&d.records.length>0){
@@ -901,7 +903,7 @@ async function _syncLoad(){
 async function _syncSave(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
-    if(!auth)return;
+    if(!auth||!auth.uid||!auth.idToken)return;
     await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})},15000);
   }catch(e){}
 }
@@ -920,7 +922,11 @@ function _updateSyncBadge(){
 // 页面初始化：如已登录则显示已登录面板并自动双向同步
 (async function(){
   var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
-  if(!auth)return;
+  // 清除无效的登录状态（空对象或字段缺失）
+  if(!auth||!auth.uid||!auth.idToken||!auth.email){
+    if(auth)localStorage.removeItem('_tcm_auth');
+    return;
+  }
   _showLoggedIn(auth.email);
   _updateSyncBadge();
   _authStatus('正在自动同步…');
