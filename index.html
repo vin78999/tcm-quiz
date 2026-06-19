@@ -337,7 +337,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.19-B16（云同步版）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.19-B17（双向同步）</span>
 </div>
 
 <div id="screen-intro">
@@ -385,6 +385,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <div class="topbar">
     <div class="topbar-brand" id="brand-text" onclick="doLogout()" title="返回首页">中医体质检测</div>
     <div class="topbar-right">
+      <span id="sync-badge" style="display:none;font-size:10px;opacity:.55;letter-spacing:.04em;margin-right:.5rem;cursor:pointer;" onclick="doManualSync()" title="点击立即同步"></span>
       <span id="header-name">—</span>
       <span class="logout-link" onclick="doLogout()" id="logout-text">退出</span>
     </div>
@@ -849,9 +850,11 @@ async function doCloudLogin(){
     if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
-    _authStatus('正在从云端同步数据…');
-    var cnt=await _syncLoad();
-    _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条记录到本机':'✓ 已是最新，云端暂无新数据','ok');
+    _authStatus('正在同步数据…');
+    var cnt=await _syncLoad();   // 先拉取云端数据合并到本地
+    await _syncSave();            // 再上传本机的完整数据到云端
+    _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条记录':'✓ 登录成功，数据已同步','ok');
+    _updateSyncBadge();
   }catch(e){
     _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
   }finally{_authBtns(false);}
@@ -861,11 +864,11 @@ async function doManualSync(){
   if(!auth){_showLoggedOut();return;}
   _authBtns(true);_authStatus('同步中…');
   try{
-    // 先上传本机数据
-    await _syncSave();
-    // 再拉取云端数据
+    // 正确顺序：先拉取云端（合并到本地），再上传完整数据
     var cnt=await _syncLoad();
-    _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条新记录':'✓ 数据已是最新','ok');
+    await _syncSave();
+    _authStatus(cnt>0?'✓ 已合并 '+cnt+' 条新记录并上传':'✓ 数据已同步到云端','ok');
+    _updateSyncBadge();
   }catch(e){
     _authStatus('同步失败，请检查网络','err');
   }finally{_authBtns(false);}
@@ -902,14 +905,28 @@ async function _syncSave(){
     await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})},15000);
   }catch(e){}
 }
-// 页面初始化：如已登录则显示已登录面板并自动同步
+// 更新主页面顶部的云端账号徽标
+function _updateSyncBadge(){
+  var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
+  var badge=document.getElementById('sync-badge');
+  if(!badge)return;
+  if(auth){
+    badge.textContent='☁ '+auth.email;
+    badge.style.display='inline-block';
+  } else {
+    badge.style.display='none';
+  }
+}
+// 页面初始化：如已登录则显示已登录面板并自动双向同步
 (async function(){
   var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
   if(!auth)return;
   _showLoggedIn(auth.email);
+  _updateSyncBadge();
   _authStatus('正在自动同步…');
-  var cnt=await _syncLoad();
-  _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条新记录':'✓ 数据已是最新','ok');
+  var cnt=await _syncLoad();   // 先拉云端合并
+  await _syncSave();            // 再上传完整数据
+  _authStatus(cnt>0?'☁ 已合并 '+cnt+' 条新记录':'☁ 数据已是最新','ok');
 })();
 // ── end B16 ──
 function enterMain(){
