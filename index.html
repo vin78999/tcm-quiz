@@ -784,58 +784,88 @@ function _authStatus(msg,type){
   var el=document.getElementById('auth-status');
   if(el){el.textContent=msg;el.className='auth-status'+(type?' '+type:'');}
 }
+function _authBtns(disabled){
+  document.querySelectorAll('.auth-btn').forEach(function(b){b.disabled=disabled;b.style.opacity=disabled?'.5':'1';});
+}
+function _fetchWithTimeout(url,opts,ms){
+  var ctrl=new AbortController();
+  var t=setTimeout(function(){ctrl.abort();},ms||15000);
+  return fetch(url,Object.assign({},opts,{signal:ctrl.signal})).finally(function(){clearTimeout(t);});
+}
 async function doCloudRegister(){
   var email=document.getElementById('auth-email').value.trim();
   var pass=document.getElementById('auth-password').value;
   if(!email||!pass){_authStatus('请填写邮箱和密码','err');return;}
-  _authStatus('注册中...');
+  _authBtns(true);_authStatus('注册中，请稍候（约5-10秒）…');
   try{
-    var r=await fetch(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
     var d=await r.json();
-    if(d.error){_authStatus('注册失败：'+d.error,'err');return;}
+    if(d.error){_authStatus('注册失败：'+d.error,'err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
-    _authStatus('✓ 注册成功，云端同步已开启','ok');
-  }catch(e){_authStatus('网络错误，请重试','err');}
+    _authStatus('✓ 注册成功！云端同步已开启','ok');
+  }catch(e){
+    _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
+  }finally{_authBtns(false);}
 }
 async function doCloudLogin(){
   var email=document.getElementById('auth-email').value.trim();
   var pass=document.getElementById('auth-password').value;
   if(!email||!pass){_authStatus('请填写邮箱和密码','err');return;}
-  _authStatus('登录中...');
+  _authBtns(true);_authStatus('登录中，请稍候…');
   try{
-    var r=await fetch(CN_AUTH+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    var r=await _fetchWithTimeout(CN_AUTH+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},15000);
     var d=await r.json();
-    if(d.error){_authStatus('登录失败：'+d.error,'err');return;}
+    if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
-    _authStatus('✓ 已登录 '+d.email,'ok');
-    // 登录后加载云端数据
-    await _syncLoad();
-  }catch(e){_authStatus('网络错误，请重试','err');}
+    _authStatus('✓ 已登录 '+d.email+'，正在同步数据…','ok');
+    var cnt=await _syncLoad();
+    _authStatus('✓ 已登录 '+d.email+(cnt>0?' · 已同步 '+cnt+' 条记录':'· 云端暂无数据'),'ok');
+  }catch(e){
+    _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
+  }finally{_authBtns(false);}
 }
 async function _syncLoad(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
-    if(!auth)return;
-    var r=await fetch(CN_AUTH+'/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken})});
+    if(!auth)return 0;
+    var r=await _fetchWithTimeout(CN_AUTH+'/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken})},15000);
     var d=await r.json();
     if(d.records&&Array.isArray(d.records)&&d.records.length>0){
-      // 合并云端记录（以id去重）
       var localIds=new Set(records.map(function(x){return x.id;}));
-      var merged=records.slice();
-      d.records.forEach(function(rec){if(!localIds.has(rec.id))merged.push(rec);});
-      merged.sort(function(a,b){return a.id-b.id;});
-      records=merged;
+      var added=0;
+      d.records.forEach(function(rec){if(!localIds.has(rec.id)){records.push(rec);added++;}});
+      records.sort(function(a,b){return a.id-b.id;});
       localStorage.setItem('tcm_pro_v1',JSON.stringify(records));
+      return added;
     }
-  }catch(e){}
+    return 0;
+  }catch(e){return 0;}
 }
 async function _syncSave(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
     if(!auth)return;
-    await fetch(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})});
+    await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})},15000);
   }catch(e){}
 }
+// 页面初始化：如已登录则自动同步
+(async function(){
+  var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
+  if(!auth)return;
+  // 已有登录状态，静默同步
+  var cnt=await _syncLoad();
+  if(cnt>0){
+    // 有新数据，更新 UI 提示
+    var s=document.getElementById('auth-status');
+    if(s){s.textContent='☁ 云端已同步 '+cnt+' 条新记录';s.className='auth-status ok';}
+    // 展开 auth 面板短暂显示
+    toggleAuthFields();
+    setTimeout(function(){
+      var f=document.getElementById('auth-fields');
+      if(f&&f.style.display==='block')toggleAuthFields();
+    },3000);
+  }
+})();
 // ── end B16 ──
 function enterMain(){
   const n=document.getElementById('user-name-input').value.trim();
