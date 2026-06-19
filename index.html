@@ -337,7 +337,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.18-CN</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.19-B16（云同步版）</span>
 </div>
 
 <div id="screen-intro">
@@ -358,6 +358,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
     <p class="start-note" id="start-note-text">约需 5 分钟 · 请如实作答以获得准确结果</p>
     <div class="auth-section">
       <div class="auth-toggle" onclick="toggleAuthFields()" id="auth-toggle-label">☁ 云端同步账户（可选）▾</div>
+      <!-- 未登录：显示登录注册表单 -->
       <div class="auth-fields" id="auth-fields">
         <input type="email" id="auth-email" class="auth-input" placeholder="邮箱">
         <input type="password" id="auth-password" class="auth-input" placeholder="密码（至少6位）">
@@ -366,6 +367,15 @@ tr:hover td{background:rgba(201,168,76,.03);}
           <button class="auth-btn" onclick="doCloudRegister()">注册</button>
         </div>
         <div class="auth-status" id="auth-status"></div>
+      </div>
+      <!-- 已登录：显示同步状态 + 操作按钮 -->
+      <div id="auth-logged-in" style="display:none;">
+        <div id="auth-user-info" style="font-size:11px;color:var(--text3);margin-bottom:.6rem;letter-spacing:.04em;"></div>
+        <div class="auth-row">
+          <button class="auth-btn" onclick="doManualSync()" id="sync-btn">☁ 立即同步</button>
+          <button class="auth-btn" onclick="doCloudLogout()" style="opacity:.6;">退出账户</button>
+        </div>
+        <div class="auth-status" id="auth-status-loggedin"></div>
       </div>
     </div>
   </div>
@@ -773,6 +783,7 @@ function applyI18n(){
 
 // ── B16: CN Proxy Auth ──
 var CN_AUTH='https://tcm-ai-proxy-qpckqjvffh.cn-shenzhen.fcapp.run';
+
 function toggleAuthFields(){
   var f=document.getElementById('auth-fields');
   var t=document.getElementById('auth-toggle-label');
@@ -780,8 +791,27 @@ function toggleAuthFields(){
   f.style.display=open?'none':'block';
   t.textContent=open?'☁ 云端同步账户（可选）▾':'☁ 云端同步账户（可选）▴';
 }
+// 切换到已登录面板
+function _showLoggedIn(email){
+  document.getElementById('auth-fields').style.display='none';
+  document.getElementById('auth-logged-in').style.display='block';
+  var info=document.getElementById('auth-user-info');
+  if(info)info.textContent='✓ 已登录：'+email;
+  var t=document.getElementById('auth-toggle-label');
+  if(t)t.textContent='☁ 云端同步已开启 ▾';
+}
+// 切换回未登录面板
+function _showLoggedOut(){
+  document.getElementById('auth-logged-in').style.display='none';
+  document.getElementById('auth-fields').style.display='none';
+  var t=document.getElementById('auth-toggle-label');
+  if(t)t.textContent='☁ 云端同步账户（可选）▾';
+}
 function _authStatus(msg,type){
-  var el=document.getElementById('auth-status');
+  // 写入当前显示的状态栏
+  var loggedIn=document.getElementById('auth-logged-in');
+  var id=loggedIn&&loggedIn.style.display!=='none'?'auth-status-loggedin':'auth-status';
+  var el=document.getElementById(id);
   if(el){el.textContent=msg;el.className='auth-status'+(type?' '+type:'');}
 }
 function _authBtns(disabled){
@@ -802,7 +832,8 @@ async function doCloudRegister(){
     var d=await r.json();
     if(d.error){_authStatus('注册失败：'+d.error,'err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
-    _authStatus('✓ 注册成功！云端同步已开启','ok');
+    _showLoggedIn(d.email);
+    _authStatus('✓ 注册成功！现在可点击「立即同步」上传数据','ok');
   }catch(e){
     _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
   }finally{_authBtns(false);}
@@ -817,12 +848,35 @@ async function doCloudLogin(){
     var d=await r.json();
     if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
-    _authStatus('✓ 已登录 '+d.email+'，正在同步数据…','ok');
+    _showLoggedIn(d.email);
+    _authStatus('正在从云端同步数据…');
     var cnt=await _syncLoad();
-    _authStatus('✓ 已登录 '+d.email+(cnt>0?' · 已同步 '+cnt+' 条记录':'· 云端暂无数据'),'ok');
+    _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条记录到本机':'✓ 已是最新，云端暂无新数据','ok');
   }catch(e){
     _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
   }finally{_authBtns(false);}
+}
+async function doManualSync(){
+  var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
+  if(!auth){_showLoggedOut();return;}
+  _authBtns(true);_authStatus('同步中…');
+  try{
+    // 先上传本机数据
+    await _syncSave();
+    // 再拉取云端数据
+    var cnt=await _syncLoad();
+    _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条新记录':'✓ 数据已是最新','ok');
+  }catch(e){
+    _authStatus('同步失败，请检查网络','err');
+  }finally{_authBtns(false);}
+}
+function doCloudLogout(){
+  localStorage.removeItem('_tcm_auth');
+  _showLoggedOut();
+  // 清空输入框
+  var em=document.getElementById('auth-email');if(em)em.value='';
+  var pw=document.getElementById('auth-password');if(pw)pw.value='';
+  var s=document.getElementById('auth-status');if(s){s.textContent='已退出账户';s.className='auth-status';}
 }
 async function _syncLoad(){
   try{
@@ -848,23 +902,14 @@ async function _syncSave(){
     await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})},15000);
   }catch(e){}
 }
-// 页面初始化：如已登录则自动同步
+// 页面初始化：如已登录则显示已登录面板并自动同步
 (async function(){
   var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
   if(!auth)return;
-  // 已有登录状态，静默同步
+  _showLoggedIn(auth.email);
+  _authStatus('正在自动同步…');
   var cnt=await _syncLoad();
-  if(cnt>0){
-    // 有新数据，更新 UI 提示
-    var s=document.getElementById('auth-status');
-    if(s){s.textContent='☁ 云端已同步 '+cnt+' 条新记录';s.className='auth-status ok';}
-    // 展开 auth 面板短暂显示
-    toggleAuthFields();
-    setTimeout(function(){
-      var f=document.getElementById('auth-fields');
-      if(f&&f.style.display==='block')toggleAuthFields();
-    },3000);
-  }
+  _authStatus(cnt>0?'✓ 已同步 '+cnt+' 条新记录':'✓ 数据已是最新','ok');
 })();
 // ── end B16 ──
 function enterMain(){
