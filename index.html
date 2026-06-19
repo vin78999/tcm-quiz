@@ -832,7 +832,7 @@ async function doCloudRegister(){
     var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
     var d=await r.json();
     if(d.error){_authStatus('注册失败：'+d.error,'err');_authBtns(false);return;}
-    if(!d.uid||!d.idToken||!d.email){_authStatus('注册失败：服务器返回异常，请重试','err');_authBtns(false);return;}
+    if(!d.uid||!d.idToken||!d.email){_authStatus('注册失败：服务器异常（'+JSON.stringify(d)+'）','err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
     _authStatus('✓ 注册成功！现在可点击「立即同步」上传数据','ok');
@@ -849,7 +849,7 @@ async function doCloudLogin(){
     var r=await _fetchWithTimeout(CN_AUTH+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},15000);
     var d=await r.json();
     if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
-    if(!d.uid||!d.idToken||!d.email){_authStatus('登录失败：服务器返回异常，请重试','err');_authBtns(false);return;}
+    if(!d.uid||!d.idToken||!d.email){_authStatus('登录失败：服务器异常（'+JSON.stringify(d)+'）','err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
     _authStatus('正在同步数据…');
