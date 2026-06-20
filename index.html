@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B23（视觉冲击升级：粒子+水印+揭晓动画）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B24（修复揭晓动画卡住导致首页无响应）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1126,6 +1126,9 @@ function enterMain(){
   renderQuiz();showTab('quiz');
 }
 function doLogout(){
+  // 强制重置揭晓动画 overlay（防止卡住遮挡页面）
+  var ov=document.getElementById('reveal-overlay');
+  if(ov){ov.classList.remove('show');ov.style.animation='';}
   document.getElementById('screen-main').style.display='none';
   document.getElementById('screen-intro').style.display='flex';
   // 恢复固定语言栏
