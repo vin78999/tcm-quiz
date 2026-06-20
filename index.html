@@ -348,10 +348,18 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B22（Phase 2B 结果页大改版）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B23（视觉冲击升级：粒子+水印+揭晓动画）</span>
+</div>
+
+<div id="reveal-overlay">
+  <div class="reveal-ring">
+    <div class="reveal-char" id="reveal-char">質</div>
+  </div>
+  <div class="reveal-label" id="reveal-label">正在分析您的体质</div>
 </div>
 
 <div id="screen-intro">
+  <div id="intro-particles"></div>
   <div class="intro-bg"></div>
   <div class="intro-deco"></div>
   <div class="intro-content">
@@ -625,6 +633,73 @@ tr:hover td{background:rgba(201,168,76,.03);}
 .tip-card-body{font-size:13px;color:var(--text2);line-height:2.1;font-family:'Noto Sans SC',sans-serif;font-weight:300;letter-spacing:.03em;}
 
 .report-type-wrap{text-align:center;padding:1.5rem 0 1rem;}
+
+/* ── Phase 2B+ A: 首页粒子背景 ── */
+@keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:0;}10%{opacity:1;}90%{opacity:.6;}100%{transform:translateY(-100vh) scale(.8);opacity:0;}}
+@keyframes bgShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.intro-particle{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.7),transparent);pointer-events:none;animation:floatUp linear infinite;}
+#intro-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+
+/* ── Phase 2B+ B: 结果页水印 ── */
+.report-watermark{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;
+  font-size:280px;
+  font-weight:900;
+  color:rgba(201,168,76,0.045);
+  pointer-events:none;
+  user-select:none;
+  z-index:0;
+  line-height:1;
+  letter-spacing:0;
+  white-space:nowrap;
+}
+#report-wrap > *:not(.report-watermark){position:relative;z-index:1;}
+
+/* ── Phase 2B+ C: 揭晓动画 ── */
+#reveal-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--ink);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+#reveal-overlay.show{opacity:1;pointer-events:all;}
+@keyframes revealRing{
+  0%{transform:scale(0);opacity:0;}
+  40%{transform:scale(1.1);opacity:1;}
+  70%{transform:scale(.95);opacity:1;}
+  100%{transform:scale(1);opacity:1;}
+}
+@keyframes revealFadeIn{
+  0%{opacity:0;transform:translateY(12px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+.reveal-ring{
+  width:140px;height:140px;border-radius:50%;
+  border:2px solid var(--gold3);
+  box-shadow:0 0 0 8px rgba(201,168,76,0.06),0 0 60px rgba(201,168,76,0.15);
+  display:flex;align-items:center;justify-content:center;
+  animation:revealRing .7s cubic-bezier(.34,1.56,.64,1) forwards;
+  opacity:0;
+}
+.reveal-char{
+  font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti','KaiTi','Noto Serif SC',serif;
+  font-size:72px;color:var(--gold2);
+  text-shadow:0 0 40px rgba(240,217,138,0.4);
+}
+.reveal-label{
+  margin-top:1.5rem;
+  font-size:11px;letter-spacing:.3em;color:var(--gold3);
+  text-transform:uppercase;
+  animation:revealFadeIn .5s ease .5s both;
+}
+@keyframes overlayFadeOut{
+  0%{opacity:1;}
+  100%{opacity:0;}
+}
       </style>
     </div>
 
@@ -1149,8 +1224,29 @@ function submitQuiz(){
     return;
   }
   const result=calcScores();
-  saveRecord(result);
-  showResult(result);
+  // Phase 2B+ C: 揭晓动画
+  var watermarkChars = ['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
+  var revealLabelMap = {zh:'正在分析您的体质',en:'Analysing your constitution',ja:'体質を分析中',es:'Analizando tu constitución',de:'Analyse läuft',fr:'Analyse en cours'};
+  var overlay = document.getElementById('reveal-overlay');
+  var revChar = document.getElementById('reveal-char');
+  var revLabel = document.getElementById('reveal-label');
+  if(revChar) revChar.textContent = watermarkChars[result.primaryIdx] || '質';
+  if(revLabel) revLabel.textContent = revealLabelMap[lang] || revealLabelMap.zh;
+  if(overlay){
+    overlay.classList.add('show');
+    setTimeout(function(){
+      saveRecord(result);
+      showResult(result);
+      overlay.style.animation = 'overlayFadeOut .6s ease forwards';
+      setTimeout(function(){
+        overlay.classList.remove('show');
+        overlay.style.animation = '';
+      }, 600);
+    }, 1800);
+  } else {
+    saveRecord(result);
+    showResult(result);
+  }
 }
 function calcScores(){
   const qs=QS[lang]||QS.zh;
@@ -1254,6 +1350,18 @@ function showResult(result, skipAI){
   var dJa=TD_JA[result.primaryIdx];
   var isZh=lang==='zh';
   var isJa=lang==='ja';
+
+  // Phase 2B+ B: 体质水印
+  var watermarkChars = ['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
+  var wm = document.getElementById('report-watermark');
+  if(!wm){
+    wm = document.createElement('div');
+    wm.id = 'report-watermark';
+    wm.className = 'report-watermark';
+    var rw = document.getElementById('report-wrap');
+    if(rw) rw.insertBefore(wm, rw.firstChild);
+  }
+  wm.textContent = watermarkChars[result.primaryIdx] || '質';
 
   // Phase 2B: 分数圆环
   var primaryScore = result.pcts[result.primaryIdx];
@@ -2561,6 +2669,32 @@ document.addEventListener('click', function(e) {
   siblings.forEach(function(s){ s.style.transform = ''; });
   opt.style.transform = 'translateY(-1px)';
 });
+
+// Phase 2B+ A: 首页粒子生成
+(function spawnParticles(){
+  var container = document.getElementById('intro-particles');
+  if(!container){
+    container = document.createElement('div');
+    container.id = 'intro-particles';
+    var introEl = document.getElementById('screen-intro');
+    if(introEl) introEl.appendChild(container);
+  }
+  var count = 18;
+  for(var i=0;i<count;i++){
+    (function(idx){
+      setTimeout(function(){
+        var p = document.createElement('div');
+        p.className = 'intro-particle';
+        var size = 2 + Math.random()*4;
+        var left = Math.random()*100;
+        var dur = 8 + Math.random()*14;
+        var delay = Math.random()*8;
+        p.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+left+'%;bottom:-10px;animation-duration:'+dur+'s;animation-delay:'+delay+'s;opacity:0;';
+        container.appendChild(p);
+      }, idx*200);
+    })(i);
+  }
+})();
 </script>
 </body>
 </html>
