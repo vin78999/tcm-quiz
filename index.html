@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B26（升级AI报告提示词：结构化输出，清晰易懂）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B27（AI报告升级：全数据输入+组合洞察+反常识建议）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1859,92 +1859,69 @@ function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx
   const improvedList = improved.map(c=>c.name+'(▼'+Math.abs(c.diff)+'%)').join('、');
   const worsenList   = worsen.map(c=>c.name+'(▲'+c.diff+'%)').join('、');
 
+  const allScoresA = TYPE_NAMES.zh.map(function(n,i){
+    return n.replace(/体质$/,'') + ':' + (rA.scores[i]||0) + '%';
+  }).join('，');
+  const allScoresB = TYPE_NAMES.zh.map(function(n,i){
+    return n.replace(/体质$/,'') + ':' + (rB.scores[i]||0) + '%';
+  }).join('，');
+
   const promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
   const outputLang = isZh?'中文（简体）':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
 
   const cmpPromptMap = {
-    zh: `你是一位经验丰富的中医养生顾问。请根据以下两次体质对比数据，用中文写一份清晰易懂的变化分析报告。
+    zh: `你是一位中医养生专家，以准确、犀利、有洞察力著称。根据以下两次完整体质数据，为用户写一份真正有洞察力的变化分析报告。
 
 用户姓名：${userName}
-第一次：${dateA}，主体质：${typeA}
-第二次：${dateB}，主体质：${typeB}
-${changedType ? '【主体质已改变】' : '【主体质未变，数值有波动】'}
-改善项（分数下降=变好）：${improvedList || '无明显改善'}
-需关注（分数上升=偏颇加重）：${worsenList || '无明显变化'}
+第一次（${dateA}）完整数据：${allScoresA}
+第二次（${dateB}）完整数据：${allScoresB}
+主体质变化：${typeA} → ${typeB}
 
-请严格按以下格式输出，控制在220-260字：
+写作要求（必须严格遵守）：
+1. 分析两次数据组合的变化规律——说出这个变化模式的独有特征（哪些项同步变化，哪些背道而驰，意味着什么）
+2. 至少说出1个可能让用户惊讶的洞察（反常识的，基于数据组合才能发现的）
+3. 给出1个针对"这次变化特点"的具体建议，不能是通用建议
+4. 全用日常生活场景描述，不用中医术语解释中医术语
+5. 口吻像真正了解用户的顾问朋友，不是客服模板
+6. 正文160-220字，自然段落，不要格式标题不要编号
 
-【${userName}，你的身体在变化】
-（1-2句话说明整体变化方向，用日常语言，不用中医术语）
+正文最后另起一行写：
+💡 接下来最重要的一件事：（1个非常具体的行动，必须解释为什么这个动作对你这个变化模式特别有效）`,
 
-【变好的地方 ✅】
-（1-2句话，说明改善项在日常生活中意味着什么感受变好了，给予真诚鼓励）
-
-【需要关注的地方 ⚠️】
-（1-2句话，说明需关注项会带来什么日常感受，让用户真正理解，不要恐吓）
-
-【接下来最重要的2件事】
-① （第1件，具体可执行，针对需关注项）
-② （第2件，具体可执行，针对当前主体质）
-
-【坚持下去】
-（1句温暖鼓励的话，提到如果坚持1-2个月会有什么变化）
-
-要求：语气像朋友，完全避免生僻中医术语，建议具体可执行。`,
-
-    en: `You are an experienced TCM wellness consultant. Write a clear comparison analysis report in English.
+    en: `You are a TCM wellness expert known for sharp, insightful, personalized analysis. Based on the complete constitution data from two assessments, write a genuinely insightful change analysis report.
 
 User: ${userName}
-First test: ${dateA}, constitution: ${typeA}
-Second test: ${dateB}, constitution: ${typeB}
-${changedType ? '[Constitution changed]' : '[Same constitution, scores shifted]'}
-Improved: ${improvedList || 'No significant improvement'}
-Needs attention: ${worsenList || 'No significant change'}
+First assessment (${dateA}) full data: ${allScoresA}
+Second assessment (${dateB}) full data: ${allScoresB}
+Primary constitution change: ${typeA} → ${typeB}
 
-Follow this exact format, 220-260 words:
+Writing requirements (strictly follow):
+1. Analyze the CHANGE PATTERN across the full data — which scores moved together, which diverged, and what does this combination of changes actually mean?
+2. Include at least 1 surprising or counterintuitive insight only visible from the full data comparison
+3. Give 1 specific recommendation tailored to this particular change pattern, not generic advice
+4. Explain everything in everyday life terms, no jargon
+5. Tone like a knowledgeable trusted friend
+6. 160-220 words, natural paragraphs, no formatted headers or numbered lists
 
-【${userName}, Your Body Is Changing】
-(1-2 sentences on overall direction, plain language)
+End with a separate line:
+💡 The single most important thing now: (1 very specific action with explanation of WHY it fits this exact change pattern)`,
 
-【What's Getting Better ✅】
-(1-2 sentences on what improvements feel like in daily life, encouraging)
-
-【What Needs Attention ⚠️】
-(1-2 sentences explaining what to watch, not scary)
-
-【2 Most Important Things Now】
-① (Specific action for what needs attention)
-② (Specific action for current constitution)
-
-【Keep Going】
-(1 warm encouraging sentence about 1-2 month progress)`,
-
-    ja: `あなたは中医養生の専門家です。以下の体質変化データをもとに、日本語でわかりやすい変化レポートを書いてください。
+    ja: `あなたは洞察力があり、鋭い分析で知られる中医養生の専門家です。以下の2回分の完全な体質データに基づき、真に洞察力のある変化分析レポートを書いてください。
 
 ユーザー名：${userName}
-1回目：${dateA}、体質：${typeA}
-2回目：${dateB}、体質：${typeB}
-${changedType ? '【主体質が変化】' : '【主体質変化なし、数値に変動あり】'}
-改善：${improvedList || '目立った改善なし'}
-要注意：${worsenList || '目立った変化なし'}
+1回目（${dateA}）完全データ：${allScoresA}
+2回目（${dateB}）完全データ：${allScoresB}
+主体質の変化：${typeA} → ${typeB}
 
-以下のフォーマットで、220〜260字：
+執筆要件：
+1. 全データの変化パターンを分析する（どの項目が連動し、どれが逆行したか、何を意味するか）
+2. 全データ比較からのみ見える驚きの洞察を最低1つ含める
+3. この変化パターンに特化した具体的なアドバイスを1つ（汎用不可）
+4. 専門用語を避け、日常の言葉で説明する
+5. 信頼できる友人のような口調で、160〜220字、自然な段落
 
-【${userName}さん、体が変化しています】
-（全体的な変化の方向を1〜2文で）
-
-【改善していること ✅】
-（日常での変化の感覚を1〜2文、励まし込みで）
-
-【注意が必要なこと ⚠️】
-（日常への影響を1〜2文、怖がらせずに）
-
-【次の重要なこと2つ】
-①（具体的なアクション）
-②（具体的なアクション）
-
-【続けていきましょう】
-（1文の温かい励まし）`
+最後に別行で：
+💡 今すぐ最も大切なこと：（この変化パターンに特に効く理由とともに、具体的なアクション1つ）`
   };
   const prompt = cmpPromptMap[lang] || cmpPromptMap.en;
 
@@ -2088,6 +2065,10 @@ function generateResultAI(result){
     return x.name.replace(/体质|体質|質$/,'')+'('+x.pct+'%)';
   }).join(lang==='zh'||lang==='ja'?'、':', ');
 
+  var allScoresZh = TYPE_NAMES.zh.map(function(n,i){
+    return n.replace(/体质$/,'') + ':' + result.pcts[i] + '%';
+  }).join('，');
+
   var promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
 
   if(isMobile){
@@ -2140,153 +2121,103 @@ function generateResultAI(result){
 
   // ── 桌面端：完整流式 AI 分析 ──
   var singlePromptMap = {
-    zh: `你是一位经验丰富的中医养生顾问。请根据以下检测结果，用中文为用户写一份清晰易懂的体质健康报告。
+    zh: `你是一位中医养生专家，以准确、犀利、有洞察力著称。根据以下完整体质数据，为用户写一份真正个性化的分析报告。
 
 用户姓名：${userName}
+完整体质数据（9项）：${allScoresZh}
 主体质：${primaryName}
-体质占比前三：${top3}
 
-请严格按照以下格式输出（保留标题标签，内容用中文），字数控制在220-280字：
+写作要求（必须严格遵守）：
+1. 分析"体质组合特征"——说出这个分数组合独有的规律（比如气虚+痰湿同时高，意味着什么特殊现象）
+2. 至少说出1个可能让用户惊讶的洞察（反常识的，或"你怎么知道我是这样"的感受）
+3. 建议必须针对这个具体数据组合，不能是任何人都适用的通用建议
+4. 不用中医术语解释中医术语，全用日常生活场景描述
+5. 口吻像真正了解用户的顾问朋友，不是客服模板
+6. 正文160-220字，自然段落，不要格式标题不要编号
 
-【一句话了解你的体质】
-（1句话，用最简单的日常语言说明这个体质是什么，避免中医术语，叫出用户名字）
+正文最后另起一行写：
+💡 这周最重要的一件事：（1个非常具体的行动，必须解释为什么这个动作对你这个体质组合特别有效）`,
 
-【你的身体正在经历什么】
-（2-3句话，描述这个体质的人日常会有哪些真实感受，比如：容易怎样、常常感觉什么、身体哪里比较弱）
-
-【这周就做这3件事】
-① 🍵 饮食：（1句具体的食物建议，举出实际食材名称）
-② 🌙 作息：（1句具体的时间建议）
-③ 🏃 运动：（1句具体的运动类型和时长）
-
-【坚持1个月，你会感受到】
-（1-2句话，描述具体的改善体验，给用户动力）
-
-⚠️ 特别注意：（1-2条最需要避免的行为或饮食，简短直接）
-
-要求：语气温暖友好像朋友，完全避免生僻中医术语，每个建议都要具体可执行。`,
-
-    en: `You are an experienced TCM wellness consultant. Write a clear, easy-to-understand constitution health report in English.
+    en: `You are a TCM wellness expert known for sharp, insightful, personalized analysis. Based on the complete constitution data below, write a genuinely personalized health report.
 
 User: ${userName}
+Full constitution data (9 types): ${allScoresZh}
 Primary constitution: ${primaryName}
-Top 3 constitutions: ${top3}
 
-Follow this exact format (keep the section headers, write content in English), 220-280 words total:
+Writing requirements (strictly follow):
+1. Analyze the COMBINATION pattern — what does this specific score combination reveal that a single type wouldn't show?
+2. Include at least 1 surprising or counterintuitive insight (something that feels like "how did you know that about me?")
+3. Recommendations must be specific to this person's data combination, not generic advice
+4. Explain everything in everyday life terms, no jargon
+5. Tone like a knowledgeable trusted friend, not a customer service template
+6. 160-220 words, natural paragraphs, no formatted headers or numbered lists
 
-【Your Constitution in One Line】
-(1 sentence in plain everyday language, mention the user's name)
+End with a separate line:
+💡 The one most important thing this week: (1 very specific action with explanation of WHY it works for this exact combination)`,
 
-【What Your Body Is Experiencing】
-(2-3 sentences describing real daily sensations this constitution type feels)
-
-【3 Things to Do This Week】
-① 🍵 Diet: (specific foods to eat or avoid)
-② 🌙 Sleep: (specific bedtime recommendation)
-③ 🏃 Exercise: (specific type and duration)
-
-【After 1 Month, You'll Notice】
-(1-2 sentences describing specific improvements, motivating)
-
-⚠️ Watch Out For: (1-2 specific things to avoid)
-
-Requirements: Warm, friendly tone like advice from a knowledgeable friend. No complex TCM jargon without explanation. Every tip must be concrete and actionable.`,
-
-    ja: `あなたは経験豊富な中医養生アドバイザーです。以下の結果をもとに、日本語でわかりやすい体質レポートを書いてください。
+    ja: `あなたは洞察力があり、鋭い分析で知られる中医養生の専門家です。以下の完全な体質データに基づき、真に個別化された健康レポートを書いてください。
 
 ユーザー名：${userName}
+完全な体質データ（9項目）：${allScoresZh}
 主な体質：${primaryName}
-体質上位3：${top3}
 
-以下のフォーマットで出力してください（見出しはそのまま、内容は日本語）、220〜280字：
+執筆要件：
+1. この点数の組み合わせから見えるパターンを分析する（単一体質では分からないこと）
+2. 驚きのある洞察を最低1つ含める（「なぜわかるの？」と思わせるもの）
+3. この具体的な組み合わせに特化したアドバイスを提供する（汎用的なものは不可）
+4. 専門用語を避け、日常の言葉で説明する
+5. 信頼できる友人のような口調で、160〜220字
 
-【あなたの体質を一言で】
-（1文、日常言葉でわかりやすく、名前を呼んで）
+最後に別行で：
+💡 今週最も大切なこと：（この体質の組み合わせに特に効く理由とともに、具体的なアクション1つ）`,
 
-【体が感じていること】
-（2〜3文、この体質の人が日常で感じる具体的な症状）
-
-【今週やること3つ】
-① 🍵 食事：（具体的な食材・食べ方）
-② 🌙 睡眠：（具体的な就寝時間）
-③ 🏃 運動：（種類と時間）
-
-【1ヶ月後に感じる変化】
-（1〜2文、具体的な改善感）
-
-⚠️ 特に注意：（避けるべきこと1〜2点）`,
-
-    es: `Eres un consultor experto en bienestar de la Medicina China. Escribe un informe claro en Español.
+    es: `Eres un experto en bienestar de la Medicina China, conocido por análisis perspicaces y personalizados. Escribe un informe genuinamente personalizado en Español.
 
 Usuario: ${userName}
+Datos completos (9 tipos): ${allScoresZh}
 Constitución principal: ${primaryName}
-Top 3: ${top3}
 
-Sigue este formato exacto, 220-280 palabras:
+Requisitos:
+1. Analiza el patrón de COMBINACIÓN — qué revela esta combinación específica
+2. Incluye al menos 1 insight sorprendente o contraintuitivo
+3. Recomendaciones específicas para esta combinación de datos
+4. Sin jerga técnica, términos cotidianos
+5. Tono de amigo experto, 160-220 palabras, párrafos naturales
 
-【Tu Constitución en Una Frase】
-（1 frase clara, menciona el nombre）
+Termina con una línea separada:
+💡 Lo más importante esta semana: (1 acción muy específica con explicación de por qué funciona para esta combinación exacta)`,
 
-【Lo Que Siente Tu Cuerpo】
-（2-3 frases de síntomas cotidianos）
-
-【3 Cosas Para Esta Semana】
-① 🍵 Alimentación: （alimentos específicos）
-② 🌙 Descanso: （hora específica）
-③ 🏃 Ejercicio: （tipo y duración）
-
-【En 1 Mes Notarás】
-（1-2 frases motivadoras）
-
-⚠️ Evitar: （1-2 cosas concretas）`,
-
-    de: `Du bist ein erfahrener TCM-Wellness-Berater. Schreibe einen klaren Gesundheitsbericht auf Deutsch.
+    de: `Du bist ein TCM-Wellness-Experte, bekannt für scharfsinnige, personalisierte Analysen. Schreibe einen wirklich personalisierten Bericht auf Deutsch.
 
 Nutzer: ${userName}
+Vollständige Daten (9 Typen): ${allScoresZh}
 Hauptkonstitution: ${primaryName}
-Top 3: ${top3}
 
-Folge diesem Format, 220-280 Wörter:
+Anforderungen:
+1. Analysiere das KOMBINATIONS-Muster — was zeigt diese spezifische Kombination?
+2. Mindestens 1 überraschende Erkenntnis einbeziehen
+3. Empfehlungen spezifisch für diese Datenkombination
+4. Keine Fachbegriffe, Alltagssprache
+5. Ton wie ein vertrauenswürdiger Freund, 160-220 Wörter, natürliche Absätze
 
-【Deine Konstitution in einem Satz】
-（1 Satz, nenne den Namen）
+Ende mit einer separaten Zeile:
+💡 Das Wichtigste dieser Woche: (1 sehr spezifische Maßnahme mit Erklärung, warum sie für diese Kombination besonders wirkt)`,
 
-【Was dein Körper erlebt】
-（2-3 Sätze zu alltäglichen Beschwerden）
-
-【3 Dinge für diese Woche】
-① 🍵 Ernährung: （konkrete Lebensmittel）
-② 🌙 Schlaf: （konkrete Schlafzeit）
-③ 🏃 Bewegung: （Typ und Dauer）
-
-【Nach 1 Monat wirst du merken】
-（1-2 motivierende Sätze）
-
-⚠️ Achtung: （1-2 konkrete Dinge vermeiden）`,
-
-    fr: `Tu es un consultant expert en bien-être TCM. Écris un rapport clair en Français.
+    fr: `Tu es un expert en bien-être TCM, reconnu pour tes analyses perspicaces et personnalisées. Écris un rapport vraiment personnalisé en Français.
 
 Utilisateur: ${userName}
+Données complètes (9 types): ${allScoresZh}
 Constitution principale: ${primaryName}
-Top 3: ${top3}
 
-Suis ce format exact, 220-280 mots:
+Exigences:
+1. Analyse le schéma de COMBINAISON — que révèle cette combinaison spécifique?
+2. Au moins 1 insight surprenant ou contre-intuitif
+3. Recommandations spécifiques à cette combinaison de données
+4. Pas de jargon, termes du quotidien
+5. Ton d'ami expert, 160-220 mots, paragraphes naturels
 
-【Ta Constitution en Une Phrase】
-（1 phrase claire, mentionne le prénom）
-
-【Ce Que Ressent Ton Corps】
-（2-3 phrases de symptômes quotidiens）
-
-【3 Choses à Faire Cette Semaine】
-① 🍵 Alimentation: （aliments spécifiques）
-② 🌙 Sommeil: （heure précise）
-③ 🏃 Exercice: （type et durée）
-
-【Dans 1 Mois Tu Ressentiras】
-（1-2 phrases motivantes）
-
-⚠️ À Éviter: （1-2 choses concrètes）`
+Terminer avec une ligne séparée:
+💡 La chose la plus importante cette semaine: (1 action très spécifique avec explication de pourquoi elle fonctionne pour cette combinaison exacte)`
   };
   var prompt = singlePromptMap[lang] || singlePromptMap.en;
   var NL='\n\n';
