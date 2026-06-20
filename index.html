@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B27（AI报告升级：全数据输入+组合洞察+反常识建议）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B28（AI报告深度升级：5维度分析+组合机制+具体症状+反常识建议）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -2089,7 +2089,7 @@ function generateResultAI(result){
     var mAttempt=0;
     function showResult(full){textEl.textContent=full;debugBox.style.display='none';}
     function showErr(msg){debugBox.style.display='block';debugBox.textContent=msg;textEl.textContent=isZh?'AI分析暂时无法使用，请稍后重试。':'AI temporarily unavailable.';}
-    var ultraPrompt='用'+promptLang+'为'+userName+'写3句话：①'+primaryName+'体质最典型的身体感受 ②最重要的调理建议 ③鼓励的话。叫出名字，直接输出正文。';
+    var ultraPrompt='用'+promptLang+'为'+userName+'写4句话体质分析（简短版）：第1句说出'+primaryName+'和第二高体质的组合特点；第2句说出这个组合最典型的一个身体症状（具体到时间或场景）；第3句给出一个针对这个组合的具体调理建议（有时间/动作/理由）；第4句鼓励。叫出名字，直接输出正文，不加标题。';
     function doMobileProxy(useFallback){
       mAttempt++;
       var done=false;
@@ -2121,103 +2121,144 @@ function generateResultAI(result){
 
   // ── 桌面端：完整流式 AI 分析 ──
   var singlePromptMap = {
-    zh: `你是一位中医养生专家，以准确、犀利、有洞察力著称。根据以下完整体质数据，为用户写一份真正个性化的分析报告。
+    zh: `你是一位经验丰富的中医调理顾问，擅长从数据中发现普通人看不出的规律。根据以下完整体质检测数据，为用户写一份真正有深度、有共鸣感的个人体质报告。
 
 用户姓名：${userName}
 完整体质数据（9项）：${allScoresZh}
 主体质：${primaryName}
 
-写作要求（必须严格遵守）：
-1. 分析"体质组合特征"——说出这个分数组合独有的规律（比如气虚+痰湿同时高，意味着什么特殊现象）
-2. 至少说出1个可能让用户惊讶的洞察（反常识的，或"你怎么知道我是这样"的感受）
-3. 建议必须针对这个具体数据组合，不能是任何人都适用的通用建议
-4. 不用中医术语解释中医术语，全用日常生活场景描述
-5. 口吻像真正了解用户的顾问朋友，不是客服模板
-6. 正文160-220字，自然段落，不要格式标题不要编号
+你必须分析以下5个维度，但不要用标题列出，写成连贯的段落：
 
-正文最后另起一行写：
-💡 这周最重要的一件事：（1个非常具体的行动，必须解释为什么这个动作对你这个体质组合特别有效）`,
+① 体质组合的相互作用机制
+   不要只描述单个体质特征。如果有两个体质分数都偏高，必须分析它们如何互相影响（例如：气虚导致运化无力→痰湿更难消散→反过来阻碍气的流动，形成恶性循环）。这个组合机制是报告最有价值的部分。
 
-    en: `You are a TCM wellness expert known for sharp, insightful, personalized analysis. Based on the complete constitution data below, write a genuinely personalized health report.
+② 你可能正在经历的具体症状（用日常场景描述）
+   说出2-3个这个体质组合特有的症状表现，要具体到时间点或场景（例如：下午3-5点特别犯困、饭后容易发胀腹鸣、早上起床后喉咙有痰感）。让用户感觉"你怎么知道我是这样的"。
+
+③ 一个容易踩的误区（反常识洞察）
+   说出一件用户可能以为是对的、但其实会加重问题的事（例如：气虚的人以为多补就好，但如果痰湿偏高，补品反而会被痰湿"拦截"，越补越没用）。
+
+④ 最应该注意的季节或时间窗口
+   根据体质数据说出最脆弱的季节/时间，并解释原因。
+
+⑤ 一个非常具体的调理动作
+   给一个可以今天就做的具体动作，要有时间、次数、方式（例如：每天饭后15分钟，慢走500步，不是为了消耗热量，而是用走路的律动帮助脾胃运化，专门针对你痰湿+气虚的组合）。
+
+写作风格要求：
+- 像一个真正了解你的顾问朋友说话，不是客服
+- 不要说"建议您"、"请注意"这类客套话
+- 不要写通用的"保持良好作息"、"多喝水"、"保持心情愉快"
+- 用肯定语气，直接说"你的情况是..."
+- 正文250-320字，自然段落，不要格式标题不要编号
+
+最后单独一行写：
+💡 本周首要行动：（用20字以内说出最重要的一件事，具体到动作+时间+理由）`,
+
+    en: `You are an experienced TCM wellness consultant known for finding patterns others miss. Based on the complete constitution data below, write a genuinely insightful, personally resonant health report.
 
 User: ${userName}
 Full constitution data (9 types): ${allScoresZh}
 Primary constitution: ${primaryName}
 
-Writing requirements (strictly follow):
-1. Analyze the COMBINATION pattern — what does this specific score combination reveal that a single type wouldn't show?
-2. Include at least 1 surprising or counterintuitive insight (something that feels like "how did you know that about me?")
-3. Recommendations must be specific to this person's data combination, not generic advice
-4. Explain everything in everyday life terms, no jargon
-5. Tone like a knowledgeable trusted friend, not a customer service template
-6. 160-220 words, natural paragraphs, no formatted headers or numbered lists
+Analyze these 5 dimensions in flowing paragraphs (no numbered headers):
+
+① Constitution interaction mechanism
+   If two or more scores are elevated, explain HOW they interact with each other (e.g., Qi deficiency impairs fluid metabolism → phlegm-dampness accumulates → phlegm further blocks Qi flow → vicious cycle). This mechanism is the most valuable insight.
+
+② Specific daily symptoms this combination causes
+   Name 2-3 symptoms specific to THIS combination with time/context clues (e.g., "energy crash between 3-5pm", "bloating and gurgling 30 min after meals", "waking up with phlegm in throat"). Make the user think "how did you know?"
+
+③ One common mistake to avoid (counterintuitive insight)
+   Name one thing the user probably thinks is helping but might be making things worse. Be specific and explain why.
+
+④ Most vulnerable season or time of day
+   Based on the data, identify when this person is most at risk and why.
+
+⑤ One very specific action to take today
+   Give one concrete action with timing, repetition, and explanation of why it works for THIS specific combination (not generic advice).
+
+Writing style:
+- Like a knowledgeable trusted friend, not a chatbot
+- No filler phrases like "it is recommended that you..."
+- No generic advice like "maintain good sleep habits", "drink more water"
+- Use direct confident tone: "Your pattern shows..."
+- 250-320 words, natural paragraphs
 
 End with a separate line:
-💡 The one most important thing this week: (1 very specific action with explanation of WHY it works for this exact combination)`,
+💡 Your #1 action this week: (under 20 words — specific action + timing + why it matters for your combination)`,
 
-    ja: `あなたは洞察力があり、鋭い分析で知られる中医養生の専門家です。以下の完全な体質データに基づき、真に個別化された健康レポートを書いてください。
+    ja: `あなたは経験豊富な中医養生コンサルタントです。以下の完全な体質データを基に、本当に深みのある個人的な健康レポートを書いてください。
 
 ユーザー名：${userName}
 完全な体質データ（9項目）：${allScoresZh}
 主な体質：${primaryName}
 
-執筆要件：
-1. この点数の組み合わせから見えるパターンを分析する（単一体質では分からないこと）
-2. 驚きのある洞察を最低1つ含める（「なぜわかるの？」と思わせるもの）
-3. この具体的な組み合わせに特化したアドバイスを提供する（汎用的なものは不可）
-4. 専門用語を避け、日常の言葉で説明する
-5. 信頼できる友人のような口調で、160〜220字
+以下の5つの次元を連続した段落で分析してください（番号見出しなし）：
+
+①体質の相互作用メカニズム：複数の体質スコアが高い場合、それらがどう影響し合うかを具体的に説明する
+②この組み合わせに特有の日常症状：時間帯や場面を含む具体的な症状を2〜3つ挙げる（「なぜわかるの？」と思わせるもの）
+③よくある誤解（逆説的な洞察）：ユーザーが良いと思っていることが実は逆効果になっている可能性を指摘する
+④最も注意すべき季節・時間帯：データに基づいて脆弱な時期とその理由を説明する
+⑤今日からできる具体的なケア：時間・回数・方法を含む具体的な行動を1つ提案する
+
+文体：信頼できる友人のような口調、250〜320字、自然な段落
 
 最後に別行で：
-💡 今週最も大切なこと：（この体質の組み合わせに特に効く理由とともに、具体的なアクション1つ）`,
+💡 今週最優先すること：（20字以内で具体的な行動＋理由）`,
 
-    es: `Eres un experto en bienestar de la Medicina China, conocido por análisis perspicaces y personalizados. Escribe un informe genuinamente personalizado en Español.
+    es: `Eres un consultor experto en bienestar TCM. Basándote en los datos completos de constitución, escribe un informe genuinamente profundo y resonante en Español.
 
 Usuario: ${userName}
 Datos completos (9 tipos): ${allScoresZh}
 Constitución principal: ${primaryName}
 
-Requisitos:
-1. Analiza el patrón de COMBINACIÓN — qué revela esta combinación específica
-2. Incluye al menos 1 insight sorprendente o contraintuitivo
-3. Recomendaciones específicas para esta combinación de datos
-4. Sin jerga técnica, términos cotidianos
-5. Tono de amigo experto, 160-220 palabras, párrafos naturales
+Analiza estos 5 aspectos en párrafos fluidos:
+① Mecanismo de interacción entre constituciones (cómo se afectan mutuamente)
+② Síntomas específicos de esta combinación (con horarios o contextos concretos)
+③ Un error común a evitar (insight contraintuitivo específico para estos datos)
+④ Temporada o momento del día más vulnerable y por qué
+⑤ Una acción muy concreta para hoy (con hora, frecuencia y razón específica para esta combinación)
 
-Termina con una línea separada:
-💡 Lo más importante esta semana: (1 acción muy específica con explicación de por qué funciona para esta combinación exacta)`,
+Estilo: amigo experto, sin frases genéricas, 250-320 palabras, párrafos naturales.
 
-    de: `Du bist ein TCM-Wellness-Experte, bekannt für scharfsinnige, personalisierte Analysen. Schreibe einen wirklich personalisierten Bericht auf Deutsch.
+Terminar con línea separada:
+💡 Tu acción #1 esta semana: (menos de 20 palabras — acción concreta + horario + por qué funciona para tu combinación)`,
+
+    de: `Du bist ein erfahrener TCM-Wellnessberater. Schreibe auf Deutsch einen wirklich tiefgründigen, persönlich resonanten Gesundheitsbericht.
 
 Nutzer: ${userName}
 Vollständige Daten (9 Typen): ${allScoresZh}
 Hauptkonstitution: ${primaryName}
 
-Anforderungen:
-1. Analysiere das KOMBINATIONS-Muster — was zeigt diese spezifische Kombination?
-2. Mindestens 1 überraschende Erkenntnis einbeziehen
-3. Empfehlungen spezifisch für diese Datenkombination
-4. Keine Fachbegriffe, Alltagssprache
-5. Ton wie ein vertrauenswürdiger Freund, 160-220 Wörter, natürliche Absätze
+Analysiere diese 5 Dimensionen in fließenden Absätzen:
+① Wechselwirkungsmechanismus der Konstitutionen (wie beeinflussen sie sich gegenseitig?)
+② Spezifische Symptome dieser Kombination (mit Tageszeit oder Kontext, 2-3 Beispiele)
+③ Ein häufiger Fehler, den es zu vermeiden gilt (kontraintuitiver Einblick)
+④ Verletzlichste Jahreszeit oder Tageszeit und warum
+⑤ Eine sehr konkrete Maßnahme für heute (mit Zeitpunkt, Häufigkeit und Erklärung warum für genau diese Kombination)
 
-Ende mit einer separaten Zeile:
-💡 Das Wichtigste dieser Woche: (1 sehr spezifische Maßnahme mit Erklärung, warum sie für diese Kombination besonders wirkt)`,
+Stil: vertrauenswürdiger Freund, keine Floskeln, 250-320 Wörter, natürliche Absätze.
 
-    fr: `Tu es un expert en bien-être TCM, reconnu pour tes analyses perspicaces et personnalisées. Écris un rapport vraiment personnalisé en Français.
+Ende mit separater Zeile:
+💡 Deine Priorität #1 diese Woche: (unter 20 Wörter — konkrete Maßnahme + Timing + Warum)`,
+
+    fr: `Tu es un consultant expert en bien-être TCM. Rédige en Français un rapport de santé vraiment approfondi et personnellement résonnant.
 
 Utilisateur: ${userName}
 Données complètes (9 types): ${allScoresZh}
 Constitution principale: ${primaryName}
 
-Exigences:
-1. Analyse le schéma de COMBINAISON — que révèle cette combinaison spécifique?
-2. Au moins 1 insight surprenant ou contre-intuitif
-3. Recommandations spécifiques à cette combinaison de données
-4. Pas de jargon, termes du quotidien
-5. Ton d'ami expert, 160-220 mots, paragraphes naturels
+Analyse ces 5 dimensions en paragraphes fluides:
+① Mécanisme d'interaction entre les constitutions (comment s'influencent-elles mutuellement?)
+② Symptômes spécifiques de cette combinaison (avec heure ou contexte précis, 2-3 exemples)
+③ Une erreur courante à éviter (insight contre-intuitif)
+④ Saison ou moment de la journée le plus vulnérable et pourquoi
+⑤ Une action très concrète pour aujourd'hui (avec timing, fréquence et explication pourquoi pour cette combinaison exacte)
 
-Terminer avec une ligne séparée:
-💡 La chose la plus importante cette semaine: (1 action très spécifique avec explication de pourquoi elle fonctionne pour cette combinaison exacte)`
+Style: ami expert, sans généralités, 250-320 mots, paragraphes naturels.
+
+Terminer avec ligne séparée:
+💡 Ta priorité #1 cette semaine: (moins de 20 mots — action concrète + timing + pourquoi)`
   };
   var prompt = singlePromptMap[lang] || singlePromptMap.en;
   var NL='\n\n';
