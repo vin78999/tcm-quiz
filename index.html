@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B25（修复返回首页黑屏问题）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B26（升级AI报告提示词：结构化输出，清晰易懂）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1862,26 +1862,91 @@ function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx
   const promptLang = isZh?'中文':isJa?'日语':lang==='es'?'西班牙语':lang==='de'?'德语':lang==='fr'?'法语':'英语';
   const outputLang = isZh?'中文（简体）':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
 
-  const prompt = `你是一位有20年经验的中医养生顾问，擅长用温暖、贴心的方式和用户沟通。请根据以下两次体质检测数据，用${promptLang}写一份深入、有价值的对比分析报告。
+  const cmpPromptMap = {
+    zh: `你是一位经验丰富的中医养生顾问。请根据以下两次体质对比数据，用中文写一份清晰易懂的变化分析报告。
 
 用户姓名：${userName}
-第一次检测：${dateA}，主体质：${typeA}
-第二次检测：${dateB}，主体质：${typeB}
-${changedType ? '【主体质已发生变化，说明身体状态有明显转变】' : '【主体质未变，但各项数值有变动】'}
-改善项目（分数下降=偏颇减轻）：${improvedList || '无明显改善'}
-需关注项目（分数上升=偏颇加重）：${worsenList || '无明显变化'}
+第一次：${dateA}，主体质：${typeA}
+第二次：${dateB}，主体质：${typeB}
+${changedType ? '【主体质已改变】' : '【主体质未变，数值有波动】'}
+改善项（分数下降=变好）：${improvedList || '无明显改善'}
+需关注（分数上升=偏颇加重）：${worsenList || '无明显变化'}
 
-请用${outputLang}写350-450字的深度分析，结构如下：
+请严格按以下格式输出，控制在220-260字：
 
-第一段：用温暖的语气叫出用户名字，说明这段时间身体整体的变化方向，解释为什么会有这样的变化（比如生活压力、季节、饮食习惯等可能的原因）。
+【${userName}，你的身体在变化】
+（1-2句话说明整体变化方向，用日常语言，不用中医术语）
 
-第二段：针对改善的项目，具体说明改善意味着什么（身体上会有哪些感受变好了），给予真诚的鼓励；针对加重的项目，解释这个体质偏颇在日常生活中会带来什么具体影响（比如容易怎样、感觉怎样），让用户真正理解自己身体的状态。
+【变好的地方 ✅】
+（1-2句话，说明改善项在日常生活中意味着什么感受变好了，给予真诚鼓励）
 
-第三段：给出针对当前主体质的具体生活建议，涵盖：饮食上吃什么避什么、作息上几点睡几点起、运动选择什么方式、情绪管理怎么做、居住环境注意什么。建议要具体可执行，不要泛泛而谈。
+【需要关注的地方 ⚠️】
+（1-2句话，说明需关注项会带来什么日常感受，让用户真正理解，不要恐吓）
 
-第四段：给出未来1-3个月最重要的2-3个改善重点，说明如果坚持做到会有什么改变，用鼓励的语气收尾。
+【接下来最重要的2件事】
+① （第1件，具体可执行，针对需关注项）
+② （第2件，具体可执行，针对当前主体质）
 
-要求：口语化、有温度、像朋友聊天，不要用冷冰冰的条列式，要写成流畅的段落。请直接输出正文，不要加标题或编号。`;
+【坚持下去】
+（1句温暖鼓励的话，提到如果坚持1-2个月会有什么变化）
+
+要求：语气像朋友，完全避免生僻中医术语，建议具体可执行。`,
+
+    en: `You are an experienced TCM wellness consultant. Write a clear comparison analysis report in English.
+
+User: ${userName}
+First test: ${dateA}, constitution: ${typeA}
+Second test: ${dateB}, constitution: ${typeB}
+${changedType ? '[Constitution changed]' : '[Same constitution, scores shifted]'}
+Improved: ${improvedList || 'No significant improvement'}
+Needs attention: ${worsenList || 'No significant change'}
+
+Follow this exact format, 220-260 words:
+
+【${userName}, Your Body Is Changing】
+(1-2 sentences on overall direction, plain language)
+
+【What's Getting Better ✅】
+(1-2 sentences on what improvements feel like in daily life, encouraging)
+
+【What Needs Attention ⚠️】
+(1-2 sentences explaining what to watch, not scary)
+
+【2 Most Important Things Now】
+① (Specific action for what needs attention)
+② (Specific action for current constitution)
+
+【Keep Going】
+(1 warm encouraging sentence about 1-2 month progress)`,
+
+    ja: `あなたは中医養生の専門家です。以下の体質変化データをもとに、日本語でわかりやすい変化レポートを書いてください。
+
+ユーザー名：${userName}
+1回目：${dateA}、体質：${typeA}
+2回目：${dateB}、体質：${typeB}
+${changedType ? '【主体質が変化】' : '【主体質変化なし、数値に変動あり】'}
+改善：${improvedList || '目立った改善なし'}
+要注意：${worsenList || '目立った変化なし'}
+
+以下のフォーマットで、220〜260字：
+
+【${userName}さん、体が変化しています】
+（全体的な変化の方向を1〜2文で）
+
+【改善していること ✅】
+（日常での変化の感覚を1〜2文、励まし込みで）
+
+【注意が必要なこと ⚠️】
+（日常への影響を1〜2文、怖がらせずに）
+
+【次の重要なこと2つ】
+①（具体的なアクション）
+②（具体的なアクション）
+
+【続けていきましょう】
+（1文の温かい励まし）`
+  };
+  const prompt = cmpPromptMap[lang] || cmpPromptMap.en;
 
   // 显示加载动画
   const aiBox = document.getElementById('ai-analysis-box');
@@ -1906,7 +1971,7 @@ ${changedType ? '【主体质已发生变化，说明身体状态有明显转变
     var CF_PROXY2='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev';
     var improvedShort=improved.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'改善';}).join('、')||'无';
     var worsenShort=worsen.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'需注意';}).join('、')||'无';
-    var shortCmpPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写3-4句对比分析：从'+typeA+'变为'+typeB+'，改善项：'+improvedShort+'，需关注：'+worsenShort+'。叫出名字，说出变化意味着什么，给出1-2条最重要建议。直接输出正文。';
+    var shortCmpPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写一份简短体质变化报告，格式如下：第一行叫出名字说明体质变化（1句）；第二行说改善项让用户感受到什么变好了（1句）；第三行说需关注项会有什么日常影响（1句）；最后给出最重要的1条具体建议（1句）。避免生僻中医术语，建议具体可执行。直接输出正文，共4句。从'+typeA+'变为'+typeB+'，改善：'+improvedShort+'，需关注：'+worsenShort+'。';
 
     var debugCmpBox=document.getElementById('mobile-cmp-debug-box');
     if(!debugCmpBox){
@@ -2074,17 +2139,156 @@ function generateResultAI(result){
   }
 
   // ── 桌面端：完整流式 AI 分析 ──
-  var promptParts = [
-    '你是一位有20年经验的中医养生顾问，擅长用温暖、贴心的方式和用户沟通。请根据以下体质检测结果，用' + promptLang + '写一份深入、有实际价值的个人体质分析。',
-    '用户姓名：' + userName,'主体质：' + primaryName,'体质占比前三名：' + top3,'',
-    '请用' + promptLang + '写350-450字的深度分析，结构如下：',
-    '第一段：温暖叫出用户名字，用生动的语言解释「' + primaryName + '」在日常生活中是什么感觉。',
-    '第二段：根据体质占比，分析最需要关注的2-3个方向及相互关联。',
-    '第三段：具体生活建议（饮食食材、作息时间、运动方式、情绪疏导、季节注意）。',
-    '第四段：未来最重要的1-2个改善重点，鼓励收尾。',
-    '要求：口语化、有温度，写成流畅段落，不要标题或编号。'
-  ];
-  var prompt = promptParts.join(NL1);
+  var singlePromptMap = {
+    zh: `你是一位经验丰富的中医养生顾问。请根据以下检测结果，用中文为用户写一份清晰易懂的体质健康报告。
+
+用户姓名：${userName}
+主体质：${primaryName}
+体质占比前三：${top3}
+
+请严格按照以下格式输出（保留标题标签，内容用中文），字数控制在220-280字：
+
+【一句话了解你的体质】
+（1句话，用最简单的日常语言说明这个体质是什么，避免中医术语，叫出用户名字）
+
+【你的身体正在经历什么】
+（2-3句话，描述这个体质的人日常会有哪些真实感受，比如：容易怎样、常常感觉什么、身体哪里比较弱）
+
+【这周就做这3件事】
+① 🍵 饮食：（1句具体的食物建议，举出实际食材名称）
+② 🌙 作息：（1句具体的时间建议）
+③ 🏃 运动：（1句具体的运动类型和时长）
+
+【坚持1个月，你会感受到】
+（1-2句话，描述具体的改善体验，给用户动力）
+
+⚠️ 特别注意：（1-2条最需要避免的行为或饮食，简短直接）
+
+要求：语气温暖友好像朋友，完全避免生僻中医术语，每个建议都要具体可执行。`,
+
+    en: `You are an experienced TCM wellness consultant. Write a clear, easy-to-understand constitution health report in English.
+
+User: ${userName}
+Primary constitution: ${primaryName}
+Top 3 constitutions: ${top3}
+
+Follow this exact format (keep the section headers, write content in English), 220-280 words total:
+
+【Your Constitution in One Line】
+(1 sentence in plain everyday language, mention the user's name)
+
+【What Your Body Is Experiencing】
+(2-3 sentences describing real daily sensations this constitution type feels)
+
+【3 Things to Do This Week】
+① 🍵 Diet: (specific foods to eat or avoid)
+② 🌙 Sleep: (specific bedtime recommendation)
+③ 🏃 Exercise: (specific type and duration)
+
+【After 1 Month, You'll Notice】
+(1-2 sentences describing specific improvements, motivating)
+
+⚠️ Watch Out For: (1-2 specific things to avoid)
+
+Requirements: Warm, friendly tone like advice from a knowledgeable friend. No complex TCM jargon without explanation. Every tip must be concrete and actionable.`,
+
+    ja: `あなたは経験豊富な中医養生アドバイザーです。以下の結果をもとに、日本語でわかりやすい体質レポートを書いてください。
+
+ユーザー名：${userName}
+主な体質：${primaryName}
+体質上位3：${top3}
+
+以下のフォーマットで出力してください（見出しはそのまま、内容は日本語）、220〜280字：
+
+【あなたの体質を一言で】
+（1文、日常言葉でわかりやすく、名前を呼んで）
+
+【体が感じていること】
+（2〜3文、この体質の人が日常で感じる具体的な症状）
+
+【今週やること3つ】
+① 🍵 食事：（具体的な食材・食べ方）
+② 🌙 睡眠：（具体的な就寝時間）
+③ 🏃 運動：（種類と時間）
+
+【1ヶ月後に感じる変化】
+（1〜2文、具体的な改善感）
+
+⚠️ 特に注意：（避けるべきこと1〜2点）`,
+
+    es: `Eres un consultor experto en bienestar de la Medicina China. Escribe un informe claro en Español.
+
+Usuario: ${userName}
+Constitución principal: ${primaryName}
+Top 3: ${top3}
+
+Sigue este formato exacto, 220-280 palabras:
+
+【Tu Constitución en Una Frase】
+（1 frase clara, menciona el nombre）
+
+【Lo Que Siente Tu Cuerpo】
+（2-3 frases de síntomas cotidianos）
+
+【3 Cosas Para Esta Semana】
+① 🍵 Alimentación: （alimentos específicos）
+② 🌙 Descanso: （hora específica）
+③ 🏃 Ejercicio: （tipo y duración）
+
+【En 1 Mes Notarás】
+（1-2 frases motivadoras）
+
+⚠️ Evitar: （1-2 cosas concretas）`,
+
+    de: `Du bist ein erfahrener TCM-Wellness-Berater. Schreibe einen klaren Gesundheitsbericht auf Deutsch.
+
+Nutzer: ${userName}
+Hauptkonstitution: ${primaryName}
+Top 3: ${top3}
+
+Folge diesem Format, 220-280 Wörter:
+
+【Deine Konstitution in einem Satz】
+（1 Satz, nenne den Namen）
+
+【Was dein Körper erlebt】
+（2-3 Sätze zu alltäglichen Beschwerden）
+
+【3 Dinge für diese Woche】
+① 🍵 Ernährung: （konkrete Lebensmittel）
+② 🌙 Schlaf: （konkrete Schlafzeit）
+③ 🏃 Bewegung: （Typ und Dauer）
+
+【Nach 1 Monat wirst du merken】
+（1-2 motivierende Sätze）
+
+⚠️ Achtung: （1-2 konkrete Dinge vermeiden）`,
+
+    fr: `Tu es un consultant expert en bien-être TCM. Écris un rapport clair en Français.
+
+Utilisateur: ${userName}
+Constitution principale: ${primaryName}
+Top 3: ${top3}
+
+Suis ce format exact, 220-280 mots:
+
+【Ta Constitution en Une Phrase】
+（1 phrase claire, mentionne le prénom）
+
+【Ce Que Ressent Ton Corps】
+（2-3 phrases de symptômes quotidiens）
+
+【3 Choses à Faire Cette Semaine】
+① 🍵 Alimentation: （aliments spécifiques）
+② 🌙 Sommeil: （heure précise）
+③ 🏃 Exercice: （type et durée）
+
+【Dans 1 Mois Tu Ressentiras】
+（1-2 phrases motivantes）
+
+⚠️ À Éviter: （1-2 choses concrètes）`
+  };
+  var prompt = singlePromptMap[lang] || singlePromptMap.en;
   var NL='\n\n';
   var desc=isZh?d.d:isJa?(dJa?dJa.d:d.dE):d.dE;
   doStreamAI(prompt, 1200, textEl, null, function(){
