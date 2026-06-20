@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B21（Phase 2A 视觉升级）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B22（Phase 2B 结果页大改版）</span>
 </div>
 
 <div id="screen-intro">
@@ -600,6 +600,31 @@ tr:hover td{background:rgba(201,168,76,.03);}
 .ai-loading-rings::after{inset:6px;border-top-color:var(--gold3);animation:spin .7s linear infinite reverse;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .ai-loading-text{font-size:12px;color:var(--text3);letter-spacing:.15em;animation:pulse 2s ease-in-out infinite;}
+
+/* ── Phase 2B 结果页升级 ── */
+.score-ring-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:1.75rem;}
+.score-ring-svg{transform:rotate(-90deg);}
+.score-ring-bg{fill:none;stroke:rgba(58,46,24,0.6);stroke-width:6;}
+.score-ring-fill{fill:none;stroke:url(#ringGrad);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.6s cubic-bezier(.22,1,.36,1);}
+.score-ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+.score-ring-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--gold2);line-height:1;}
+.score-ring-pct{font-size:13px;color:var(--gold3);letter-spacing:.05em;}
+.score-ring-label{font-size:10px;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;margin-top:.6rem;}
+.score-ring-outer{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+
+.report-hero-deco{display:flex;align-items:center;gap:12px;margin-bottom:1rem;justify-content:center;}
+.report-hero-deco-line{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold3));}
+.report-hero-deco-line.right{background:linear-gradient(90deg,var(--gold3),transparent);}
+.report-hero-deco-icon{font-size:11px;color:var(--gold3);letter-spacing:.3em;}
+
+.tip-card-v2{background:var(--ink2);border:1px solid var(--border);border-radius:3px;padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;transition:border-color .2s,box-shadow .2s;}
+.tip-card-v2:hover{border-color:var(--border2);box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+.tip-card-header{display:flex;align-items:center;gap:.6rem;}
+.tip-card-icon{font-size:18px;line-height:1;}
+.tip-card-title{font-size:10px;letter-spacing:.2em;color:var(--gold3);text-transform:uppercase;}
+.tip-card-body{font-size:13px;color:var(--text2);line-height:2.1;font-family:'Noto Sans SC',sans-serif;font-weight:300;letter-spacing:.03em;}
+
+.report-type-wrap{text-align:center;padding:1.5rem 0 1rem;}
       </style>
     </div>
 
@@ -1230,6 +1255,63 @@ function showResult(result, skipAI){
   var isZh=lang==='zh';
   var isJa=lang==='ja';
 
+  // Phase 2B: 分数圆环
+  var primaryScore = result.pcts[result.primaryIdx];
+  var radius = 52;
+  var circ = 2 * Math.PI * radius;
+  var fillLen = circ * (primaryScore / 100);
+  var scoreRingLabelMap = {zh:'主体质得分',en:'Primary Score',ja:'主体質スコア',es:'Puntuación',de:'Hauptwert',fr:'Score'};
+  var scoreRingLabel = scoreRingLabelMap[lang] || scoreRingLabelMap.zh;
+  var heroEl = document.getElementById('report-hero') || document.querySelector('.report-hero');
+  if(heroEl){
+    heroEl.innerHTML = '<div class="score-ring-wrap">' +
+      '<div class="score-ring-outer">' +
+        '<svg class="score-ring-svg" width="120" height="120" viewBox="0 0 120 120">' +
+          '<defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+            '<stop offset="0%" style="stop-color:#8B6914"/>' +
+            '<stop offset="50%" style="stop-color:#C9A84C"/>' +
+            '<stop offset="100%" style="stop-color:#F0D98A"/>' +
+          '</linearGradient></defs>' +
+          '<circle class="score-ring-bg" cx="60" cy="60" r="' + radius + '"/>' +
+          '<circle class="score-ring-fill" cx="60" cy="60" r="' + radius + '"' +
+            ' stroke-dasharray="' + circ + '"' +
+            ' stroke-dashoffset="' + circ + '"' +
+            ' id="ring-fill-circle"/>' +
+        '</svg>' +
+        '<div class="score-ring-center">' +
+          '<div class="score-ring-num" id="ring-num">0</div>' +
+          '<div class="score-ring-pct">%</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="score-ring-label">' + scoreRingLabel + '</div>' +
+    '</div>' +
+    '<div class="report-hero-deco">' +
+      '<div class="report-hero-deco-line"></div>' +
+      '<div class="report-hero-deco-icon">◈</div>' +
+      '<div class="report-hero-deco-line right"></div>' +
+    '</div>' +
+    '<div class="report-type" id="r-type">—</div>' +
+    '<div class="report-type-en" id="r-en">—</div>' +
+    '<p class="report-desc" id="r-desc">—</p>';
+    // 动画：圆环填充 + 数字递增
+    setTimeout(function(){
+      var fillEl = document.getElementById('ring-fill-circle');
+      if(fillEl) fillEl.style.strokeDashoffset = (circ - fillLen);
+      var numEl = document.getElementById('ring-num');
+      if(numEl){
+        var start = 0, end = primaryScore, dur = 1600, startTime = null;
+        function animNum(ts){
+          if(!startTime) startTime = ts;
+          var progress = Math.min((ts - startTime) / dur, 1);
+          var ease = 1 - Math.pow(1 - progress, 3);
+          numEl.textContent = Math.round(start + (end - start) * ease);
+          if(progress < 1) requestAnimationFrame(animNum);
+        }
+        requestAnimationFrame(animNum);
+      }
+    }, 100);
+  }
+
   document.getElementById('r-type').textContent=names[result.primaryIdx];
   document.getElementById('r-en').textContent=TYPE_EN[result.primaryIdx];
   document.getElementById('r-desc').textContent=
@@ -1266,17 +1348,32 @@ function showResult(result, skipAI){
   var dEs=TD_ES[result.primaryIdx];
   var dDe=TD_DE[result.primaryIdx];
   var dFr=TD_FR[result.primaryIdx];
-  var tipData=isZh?
-    [[L('tipFood'),d.f],[L('tipLife'),d.l],[L('tipSport'),d.s],[L('tipAvoid'),d.a]]:
-    isJa?[[L('tipFood'),dJa.f],[L('tipLife'),dJa.l],[L('tipSport'),dJa.s],[L('tipAvoid'),dJa.a]]:
-    lang==='es'?[[L('tipFood'),dEs.f],[L('tipLife'),dEs.l],[L('tipSport'),dEs.s],[L('tipAvoid'),dEs.a]]:
-    lang==='de'?[[L('tipFood'),dDe.f],[L('tipLife'),dDe.l],[L('tipSport'),dDe.s],[L('tipAvoid'),dDe.a]]:
-    lang==='fr'?[[L('tipFood'),dFr.f],[L('tipLife'),dFr.l],[L('tipSport'),dFr.s],[L('tipAvoid'),dFr.a]]:
-    [[L('tipFood'),d.fE],[L('tipLife'),d.lE],[L('tipSport'),d.sE],[L('tipAvoid'),d.aE]];
-
-  document.getElementById('r-tips').innerHTML=tipData.map(function(arr){
-    return '<div class="tip-card"><div class="tip-title">'+arr[0]+'</div><div class="tip-body">'+arr[1]+'</div></div>';
-  }).join('');
+  var tipIcons = {
+    zh:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'},
+    en:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'},
+    ja:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'},
+    es:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'},
+    de:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'},
+    fr:{f:'🍵',l:'🌙',s:'🏃',a:'⚠️'}
+  };
+  var tipTitleMap = {
+    zh:{f:'饮食调养',l:'起居调护',s:'运动养生',a:'注意事项'},
+    en:{f:'Diet',l:'Lifestyle',s:'Exercise',a:'Cautions'},
+    ja:{f:'食事養生',l:'生活習慣',s:'運動',a:'注意点'},
+    es:{f:'Alimentación',l:'Estilo de vida',s:'Ejercicio',a:'Precauciones'},
+    de:{f:'Ernährung',l:'Lebensstil',s:'Sport',a:'Hinweise'},
+    fr:{f:'Alimentation',l:'Mode de vie',s:'Exercice',a:'Précautions'}
+  };
+  var icons = tipIcons[lang] || tipIcons.zh;
+  var titles = tipTitleMap[lang] || tipTitleMap.zh;
+  var tipsEl = document.getElementById('r-tips');
+  if(tipsEl && d){
+    tipsEl.innerHTML =
+      '<div class="tip-card-v2"><div class="tip-card-header"><span class="tip-card-icon">'+icons.f+'</span><span class="tip-card-title">'+titles.f+'</span></div><div class="tip-card-body">'+(isZh?d.f:isJa?dJa.f:lang==='es'?TD_ES[result.primaryIdx].f:lang==='de'?TD_DE[result.primaryIdx].f:lang==='fr'?TD_FR[result.primaryIdx].f:d.fE)+'</div></div>' +
+      '<div class="tip-card-v2"><div class="tip-card-header"><span class="tip-card-icon">'+icons.l+'</span><span class="tip-card-title">'+titles.l+'</span></div><div class="tip-card-body">'+(isZh?d.l:isJa?dJa.l:lang==='es'?TD_ES[result.primaryIdx].l:lang==='de'?TD_DE[result.primaryIdx].l:lang==='fr'?TD_FR[result.primaryIdx].l:d.lE)+'</div></div>' +
+      '<div class="tip-card-v2"><div class="tip-card-header"><span class="tip-card-icon">'+icons.s+'</span><span class="tip-card-title">'+titles.s+'</span></div><div class="tip-card-body">'+(isZh?d.s:isJa?dJa.s:lang==='es'?TD_ES[result.primaryIdx].s:lang==='de'?TD_DE[result.primaryIdx].s:lang==='fr'?TD_FR[result.primaryIdx].s:d.sE)+'</div></div>' +
+      '<div class="tip-card-v2"><div class="tip-card-header"><span class="tip-card-icon">'+icons.a+'</span><span class="tip-card-title">'+titles.a+'</span></div><div class="tip-card-body">'+(isZh?d.a:isJa?dJa.a:lang==='es'?TD_ES[result.primaryIdx].a:lang==='de'?TD_DE[result.primaryIdx].a:lang==='fr'?TD_FR[result.primaryIdx].a:d.aE)+'</div></div>';
+  }
 
   // Bug4: massage tip card
   var mt=MASSAGE_TIPS[result.primaryIdx];
