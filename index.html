@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B33（修复历史舌诊恢复+AI报告三段式标题渲染）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B34（舌诊+对比报告升级：三问框架+结构化标题渲染）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1847,6 +1847,34 @@ function renderCompare(){
 }
 
 
+function renderCmpReport(text, el){
+  var allMarkers=[
+    ['§进展§','📊 整体进展评估'],['§原因§','🔍 变化背后的原因'],['§方向§','🎯 下一阶段重点'],
+    ['§progress§','📊 Overall Progress'],['§reasons§','🔍 Why Things Changed'],['§direction§','🎯 Next Phase Focus'],
+    ['§進展§','📊 全体的な進展'],['§理由§','🔍 変化の理由'],
+    ['§progreso§','📊 Progreso General'],['§razones§','🔍 Por Qué Cambió'],['§dirección§','🎯 Próximo Enfoque'],
+    ['§fortschritt§','📊 Gesamtfortschritt'],['§gründe§','🔍 Warum Veränderungen'],['§richtung§','🎯 Nächster Fokus'],
+    ['§progrès§','📊 Progression Globale'],['§raisons§','🔍 Pourquoi les Changements'],['§direction§','🎯 Prochain Focus']
+  ];
+  var active=allMarkers.filter(function(m){return text.indexOf(m[0])>=0;});
+  if(active.length<2){el.textContent=text;return;}
+  var html='';
+  active.forEach(function(m,idx){
+    var marker=m[0]; var title=m[1];
+    var nextMarker=idx<active.length-1?active[idx+1][0]:null;
+    var start=text.indexOf(marker);
+    if(start<0) return;
+    var content=text.slice(start+marker.length);
+    if(nextMarker){var end=content.indexOf(nextMarker);if(end>=0) content=content.slice(0,end);}
+    content=content.trim();
+    html+='<div style="margin-bottom:1.5rem;">';
+    html+='<div style="font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;font-weight:600;">'+title+'</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+content.replace(/\n/g,'<br>')+'</div>';
+    html+='</div>';
+  });
+  el.innerHTML=html||text;
+}
+
 function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx, primaryBIdx){
   const isZh = lang==='zh', isJa = lang==='ja';
   const dateA = new Date(rA.date).toLocaleDateString();
@@ -1871,58 +1899,114 @@ function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx
   const outputLang = isZh?'中文（简体）':isJa?'日本語':lang==='es'?'Español':lang==='de'?'Deutsch':lang==='fr'?'Français':'English';
 
   const cmpPromptMap = {
-    zh: `你是一位中医养生专家，以准确、犀利、有洞察力著称。根据以下两次完整体质数据，为用户写一份真正有洞察力的变化分析报告。
+    zh: `你是一位经验丰富的中医健康顾问。根据用户两次体质检测数据，围绕三个核心问题写一份对比分析报告。直接叫名字，像顾问朋友说话，不要废话。
 
 用户姓名：${userName}
-第一次（${dateA}）完整数据：${allScoresA}
-第二次（${dateB}）完整数据：${allScoresB}
+第一次检测（${dateA}）完整数据：${allScoresA}
+第二次检测（${dateB}）完整数据：${allScoresB}
 主体质变化：${typeA} → ${typeB}
 
-写作要求（必须严格遵守）：
-1. 分析两次数据组合的变化规律——说出这个变化模式的独有特征（哪些项同步变化，哪些背道而驰，意味着什么）
-2. 至少说出1个可能让用户惊讶的洞察（反常识的，基于数据组合才能发现的）
-3. 给出1个针对"这次变化特点"的具体建议，不能是通用建议
-4. 全用日常生活场景描述，不用中医术语解释中医术语
-5. 口吻像真正了解用户的顾问朋友，不是客服模板
-6. 正文160-220字，自然段落，不要格式标题不要编号
+输出时必须用以下标记分隔三段，标记本身单独一行：
+§进展§
+（第一段）
+§原因§
+（第二段）
+§方向§
+（第三段）
 
-正文最后另起一行写：
-💡 接下来最重要的一件事：（1个非常具体的行动，必须解释为什么这个动作对你这个变化模式特别有效）`,
+§进展§
+给出清晰的总体评判：整体是改善、持平还是需要关注？不要模糊，要直接说。然后说出变化最显著的2-3项（哪些改善了、哪些加重了），以及这个变化幅度在中医角度意味着什么。让用户对自己的进展有清晰的"全局感"。最低120字，不能模糊。
 
-    en: `You are a TCM wellness expert known for sharp, insightful, personalized analysis. Based on the complete constitution data from two assessments, write a genuinely insightful change analysis report.
+§原因§
+分析为什么会发生这些变化：数据的变化规律里有什么规律（哪几项总是一起动，这说明什么）？说出1个只有从完整数据对比才能看出的反常识洞察。推测可能是什么生活因素导致了这些变化（季节、压力、饮食、作息等），让用户觉得"你说的可能就是原因"。最低130字。
+
+§方向§
+基于这次变化的方向，给出下一阶段的三层指引：①什么在起效——继续保持的事（具体）；②什么需要调整——效果不明显或反效果的习惯；③下一个重点目标——根据当前数据，接下来最值得优先改善哪一项，为什么，怎么做。最后给出下次检测的建议时间。最低150字。`,
+
+    en: `You are an experienced TCM health advisor. Based on two constitution assessments, answer the three questions users actually want answered about their progress. Address by name, speak like a trusted advisor.
 
 User: ${userName}
 First assessment (${dateA}) full data: ${allScoresA}
 Second assessment (${dateB}) full data: ${allScoresB}
 Primary constitution change: ${typeA} → ${typeB}
 
-Writing requirements (strictly follow):
-1. Analyze the CHANGE PATTERN across the full data — which scores moved together, which diverged, and what does this combination of changes actually mean?
-2. Include at least 1 surprising or counterintuitive insight only visible from the full data comparison
-3. Give 1 specific recommendation tailored to this particular change pattern, not generic advice
-4. Explain everything in everyday life terms, no jargon
-5. Tone like a knowledgeable trusted friend
-6. 160-220 words, natural paragraphs, no formatted headers or numbered lists
+Separate three sections with these markers on their own lines:
+§progress§
+(section 1)
+§reasons§
+(section 2)
+§direction§
+(section 3)
 
-End with a separate line:
-💡 The single most important thing now: (1 very specific action with explanation of WHY it fits this exact change pattern)`,
+§progress§
+Give a clear overall verdict: improved, stable, or needs attention — directly, no vagueness. Name the 2-3 most significant changes (what improved, what worsened) and what these shifts mean from a TCM perspective. Give the user a clear "big picture" of where they stand. Minimum 120 words.
 
-    ja: `あなたは洞察力があり、鋭い分析で知られる中医養生の専門家です。以下の2回分の完全な体質データに基づき、真に洞察力のある変化分析レポートを書いてください。
+§reasons§
+Analyze WHY these changes happened: what patterns appear in the full data comparison (which scores always moved together, what does that reveal)? Include 1 counterintuitive insight only visible from comparing full data sets. Suggest likely lifestyle factors that contributed to these changes (season, stress, diet, sleep). Minimum 130 words.
+
+§direction§
+Based on the direction of change, give three-level guidance: ①What's working — keep doing (specific); ②What needs adjustment — habits with weak or reverse effect; ③Next priority target — which area to focus on now, why, and how. End with recommended timing for next assessment. Minimum 150 words.`,
+
+    ja: `あなたは経験豊富な中医健康顧問です。2回の体質検査データに基づき、3つの核心的な問いに答えてください。名前で呼びかけ、信頼できる顧問のように。
 
 ユーザー名：${userName}
 1回目（${dateA}）完全データ：${allScoresA}
 2回目（${dateB}）完全データ：${allScoresB}
 主体質の変化：${typeA} → ${typeB}
 
-執筆要件：
-1. 全データの変化パターンを分析する（どの項目が連動し、どれが逆行したか、何を意味するか）
-2. 全データ比較からのみ見える驚きの洞察を最低1つ含める
-3. この変化パターンに特化した具体的なアドバイスを1つ（汎用不可）
-4. 専門用語を避け、日常の言葉で説明する
-5. 信頼できる友人のような口調で、160〜220字、自然な段落
+以下のマーカーで3段落を区切ってください（マーカーは単独行）：
+§進展§
+（第1段落）
+§理由§
+（第2段落）
+§方向§
+（第3段落）
 
-最後に別行で：
-💡 今すぐ最も大切なこと：（この変化パターンに特に効く理由とともに、具体的なアクション1つ）`
+§進展§ 全体的な評価を明確に（改善・横ばい・要注意）。最も顕著な2〜3の変化とその意味。最低120字。
+§理由§ なぜこの変化が起きたか。データから見えるパターン。1つの逆説的な洞察。考えられる生活要因。最低130字。
+§方向§ ①効いていること（継続すべき具体的なこと）②調整が必要なこと ③次の優先目標（理由と方法）。次回検査の推奨時期。最低150字。`,
+
+    es: `Eres un asesor de salud TCM experimentado. Responde en Español las tres preguntas sobre el progreso del usuario.
+
+Usuario: ${userName}
+Primera evaluación (${dateA}): ${allScoresA}
+Segunda evaluación (${dateB}): ${allScoresB}
+Cambio de constitución: ${typeA} → ${typeB}
+
+Separa con estos marcadores en líneas propias:
+§progreso§ / §razones§ / §dirección§
+
+§progreso§ Veredicto claro (mejoró/estable/requiere atención). 2-3 cambios más significativos y su significado. Mínimo 120 palabras.
+§razones§ Por qué ocurrieron estos cambios. Patrones en los datos. 1 insight contraintuitivo. Factores de estilo de vida probables. Mínimo 130 palabras.
+§dirección§ ①Qué está funcionando (seguir haciendo) ②Qué ajustar ③Próxima prioridad + cómo + cuándo reevaluar. Mínimo 150 palabras.`,
+
+    de: `Du bist ein erfahrener TCM-Gesundheitsberater. Beantworte auf Deutsch die drei Kernfragen zum Fortschritt.
+
+Nutzer: ${userName}
+Erste Bewertung (${dateA}): ${allScoresA}
+Zweite Bewertung (${dateB}): ${allScoresB}
+Konstitutionswechsel: ${typeA} → ${typeB}
+
+Trenne mit diesen Markierungen in eigenen Zeilen:
+§fortschritt§ / §gründe§ / §richtung§
+
+§fortschritt§ Klares Gesamturteil (verbessert/stabil/Aufmerksamkeit nötig). 2-3 bedeutendste Veränderungen. Mind. 120 Wörter.
+§gründe§ Warum diese Veränderungen eintraten. Muster im Datensatz. 1 kontraintuitiver Einblick. Wahrscheinliche Lebensstilfaktoren. Mind. 130 Wörter.
+§richtung§ ①Was wirkt (weiter machen) ②Was anpassen ③Nächste Priorität + wie + wann neu bewerten. Mind. 150 Wörter.`,
+
+    fr: `Tu es un conseiller en santé TCM expérimenté. Réponds en Français aux trois questions sur la progression.
+
+Utilisateur: ${userName}
+Première évaluation (${dateA}): ${allScoresA}
+Deuxième évaluation (${dateB}): ${allScoresB}
+Changement de constitution: ${typeA} → ${typeB}
+
+Sépare avec ces marqueurs sur leurs propres lignes:
+§progrès§ / §raisons§ / §direction§
+
+§progrès§ Verdict clair (amélioré/stable/attention requise). 2-3 changements les plus significatifs. Min. 120 mots.
+§raisons§ Pourquoi ces changements. Patterns dans les données. 1 insight contre-intuitif. Facteurs de style de vie probables. Min. 130 mots.
+§direction§ ①Ce qui fonctionne (continuer) ②Ce qu'il faut ajuster ③Prochaine priorité + comment + quand réévaluer. Min. 150 mots.`
   };
   const prompt = cmpPromptMap[lang] || cmpPromptMap.en;
 
@@ -1992,7 +2076,7 @@ End with a separate line:
     return;
   }
 
-  doStreamAI(prompt, 1200, cmpTextEl, null, function(){
+  doStreamAI(prompt, 1200, cmpTextEl, function(text){renderCmpReport(text,cmpTextEl);}, function(){
     cmpTextEl.textContent = generateLocalAnalysis(userName,typeA,typeB,dateA,dateB,improved,worsen,changedType);
   });
 }
@@ -2776,6 +2860,27 @@ function goToTongue(fromInvite){
   showTab('tongue');
 }
 
+function renderTongueReport(text, el){
+  var markers=[['§舌象§','✦ 我的舌象状态'],['§关联§','✦ 与体质的关联'],['§这周§','✦ 这周最重要的事']];
+  var hasMarkers=markers.some(function(m){return text.indexOf(m[0])>=0;});
+  if(!hasMarkers){el.textContent=text;return;}
+  var html='';
+  markers.forEach(function(m,idx){
+    var marker=m[0]; var title=m[1];
+    var nextMarker=idx<markers.length-1?markers[idx+1][0]:null;
+    var start=text.indexOf(marker);
+    if(start<0) return;
+    var content=text.slice(start+marker.length);
+    if(nextMarker){var end=content.indexOf(nextMarker);if(end>=0) content=content.slice(0,end);}
+    content=content.trim();
+    html+='<div style="margin-bottom:1.5rem;">';
+    html+='<div style="font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;font-weight:600;">'+title+'</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+content.replace(/\n/g,'<br>')+'</div>';
+    html+='</div>';
+  });
+  el.innerHTML=html||text;
+}
+
 function generateTongueAI(combined){
   var isZh=lang==='zh', isJa=lang==='ja';
   var qs=TONGUE_QS[lang]||TONGUE_QS.zh;
@@ -2795,27 +2900,30 @@ function generateTongueAI(combined){
   if(combined&&lastConstitutionResult){
     var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
     var primaryName=names[lastConstitutionResult.primaryIdx];
-    var sorted=lastConstitutionResult.pcts.map(function(p,i){return {name:names[i],pct:p};}).sort(function(a,b){return b.pct-a.pct;});
-    var top3=sorted.slice(0,3).map(function(x){return x.name.replace(/体质|体質|質$/,'')+' ('+x.pct+'%)';}).join(isZh||isJa?'、':', ');
-    prompt='你是一位有20年经验的中医师，精通望闻问切。请根据以下用户的体质测评结果和舌象自测，用'+promptLang+'写一份综合分析报告。\n\n'+
+    var allScoresTongue=TYPE_NAMES.zh.map(function(n,i){return n.replace(/体质$/,'')+':'+lastConstitutionResult.pcts[i]+'%';}).join('，');
+    prompt='你是一位有20年经验的中医师，精通舌诊与体质辨识。根据用户的体质数据和舌象，围绕三个核心问题写一份综合报告。直接叫名字，像顾问朋友说话。\n\n'+
       '用户姓名：'+userName+'\n'+
-      '【体质测评结果】\n主体质：'+primaryName+'\n体质分布前三：'+top3+'\n\n'+
-      '【舌象自测结果】\n'+tongueDesc+'\n\n'+
-      '请用'+outputLang+'写380-450字的综合分析，结构如下：\n\n'+
-      '第一段：叫出用户名字，说明舌象与体质测评结果的关联——舌象是否印证了体质结论，还是发现了额外信息？用生动语言解释这意味着什么。\n\n'+
-      '第二段：从中医舌诊角度详细解读舌象：舌色反映了什么、舌苔说明了什么、舌形揭示了什么，结合体质特点给出深度诠释。\n\n'+
-      '第三段：基于体质和舌象的综合判断，给出最针对性的生活调养建议（饮食、作息、运动各举具体例子）。\n\n'+
-      '第四段：告诉用户如何通过日常观察舌象来自我监测身体变化，以及坚持调养后预期会看到哪些改善，用鼓励语气收尾。\n\n'+
-      '要求：口语化、有温度、像朋友聊天，写成流畅段落，不要加标题编号。';
+      '体质完整数据（9项）：'+allScoresTongue+'\n'+
+      '主体质：'+primaryName+'\n'+
+      '舌象数据：'+tongueDesc+'\n\n'+
+      '输出时必须用以下标记分隔三段，标记本身单独一行：\n§舌象§\n（第一段）\n§关联§\n（第二段）\n§这周§\n（第三段）\n\n'+
+      '§舌象§\n'+
+      '根据舌象数据，描述用户当前的身体状态（舌象比体质更实时，反映的是现在这一刻）。说出舌色、舌苔、舌形组合在一起说明了什么，用日常场景描述，让用户感觉"说的就是我现在的状态"。至少说出2个具体的当下症状或身体感受。最低120字。\n\n'+
+      '§关联§\n'+
+      '说出舌象和体质数据的关联：舌象印证了体质结果的哪些方面，还是发现了体质问卷没有捕捉到的额外信息？如果两者有出入，解释为什么（体质是长期状态，舌象是当下状态，两者可以不同步）。这段要让用户理解为什么同时做两个检测有价值。最低100字。\n\n'+
+      '§这周§\n'+
+      '基于舌象（不是体质，舌诊的建议更即时），给出三个层次：①这周最需要加的一种食物或茶饮（具体名称+理由）；②这周最需要减少的一种食物（具体+原因）；③一个今天就能做的身体调理动作（具体到时间和方式）。最后说出舌象通常多久开始改善（给出具体时间，比如"坚持2周后，舌苔会开始……"）。最低150字。';
   } else {
-    prompt='你是一位有20年经验的中医师，精通中医舌诊。请根据以下用户的舌象自测结果，用'+promptLang+'写一份深入的舌诊分析。\n\n'+
+    prompt='你是一位有20年经验的中医师，精通中医舌诊。根据用户的舌象数据，围绕三个核心问题写一份舌诊报告。直接叫名字，像顾问朋友说话。\n\n'+
       '用户姓名：'+userName+'\n'+
-      '【舌象自测结果】\n'+tongueDesc+'\n\n'+
-      '请用'+outputLang+'写300-380字的舌诊分析，结构如下：\n\n'+
-      '第一段：叫出用户名字，根据舌象数据判断目前的体质倾向和身体状态，用生动语言描述这些舌象在中医里代表什么，让用户觉得「说的就是我」。\n\n'+
-      '第二段：从舌色、苔质、舌形等各方面详细解读，说明这些征象组合揭示了什么身体信息，以及日常生活中可能出现哪些感受或症状。\n\n'+
-      '第三段：给出针对这种舌象的具体调养建议：饮食上推荐什么食材、避免什么；作息上有什么注意点；舌苔的改善通常需要多长时间，以及如何自我观察进步。\n\n'+
-      '要求：口语化、有温度、像朋友聊天，写成流畅段落，不要加标题编号。请直接输出正文。';
+      '舌象数据：'+tongueDesc+'\n\n'+
+      '输出时必须用以下标记分隔三段，标记本身单独一行：\n§舌象§\n（第一段）\n§关联§\n（第二段）\n§这周§\n（第三段）\n\n'+
+      '§舌象§\n'+
+      '根据舌象数据，描述用户当前的身体状态。说出这几个舌象组合在一起说明什么，推断可能的体质倾向，用日常场景描述让用户感觉"说的就是我"。说出2-3个当下可能有的具体身体感受或症状（有时间点或场景）。最低120字。\n\n'+
+      '§关联§\n'+
+      '解释各个舌象征象的含义：舌色反映什么、苔质说明什么、舌形揭示什么——不要逐条列举，而是把它们连成一个整体的身体画面。解释为什么这个舌象组合比单看体质更能反映当下状态。最低100字。\n\n'+
+      '§这周§\n'+
+      '基于舌象给出三个层次的即时建议：①这周最需要加的一种食物或茶饮（具体名称+理由）；②这周最需要减少的一种食物（具体+原因）；③一个今天就能做的身体调理动作（具体时间方式）。最后说出坚持多久后舌象会开始改善，以及改善后会先看到什么变化。最低150字。';
   }
 
   var titleMap={zh:combined?'舌象 + 体质综合分析':'舌象 AI 分析',ja:combined?'舌象+体質総合分析':'舌象 AI 分析',en:combined?'Combined Tongue + Constitution Analysis':'Tongue AI Analysis',es:combined?'Análisis Combinado':'Análisis Lingual IA',de:combined?'Kombinierte Analyse':'Zungen-KI-Analyse',fr:combined?'Analyse Combinée':'Analyse Linguale IA'};
@@ -2832,7 +2940,7 @@ function generateTongueAI(combined){
   var textEl=document.getElementById('tongue-ai-text');
   var isCombined=(combined&&lastConstitutionResult)?true:false;
   // Use doStreamAI helper (Bug5&6)
-  doStreamAI(prompt, 1200, textEl, null, function(err){
+  doStreamAI(prompt, 1200, textEl, function(text){renderTongueReport(text,textEl);}, function(err){
     var retryLabel=isZh?'重试':isJa?'再試み':'Retry';
     aiBox.innerHTML=
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">'+
