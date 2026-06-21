@@ -165,6 +165,17 @@ body{font-family:'Noto Sans SC','Noto Serif SC',sans-serif;background:radial-gra
 .hc-bars{display:flex;gap:3px;align-items:flex-end;height:40px;}
 .hc-bar{width:16px;background:var(--border2);border-radius:1px 1px 0 0;min-height:3px;}
 .hc-bar.top{background:var(--gold3);}
+.trend-wrap{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:1.25rem 1.25rem 1rem;margin-bottom:1rem;}
+.trend-title{font-size:10px;letter-spacing:.18em;color:var(--gold3);text-transform:uppercase;margin-bottom:.75rem;}
+.trend-svg{width:100%;overflow:visible;}
+.trend-legend{display:flex;flex-wrap:wrap;gap:.5rem .75rem;margin-top:.6rem;}
+.trend-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);letter-spacing:.04em;}
+.trend-dot-legend{width:8px;height:8px;border-radius:50%;}
+.hc-scores{font-size:11px;color:var(--text3);letter-spacing:.04em;margin-top:.3rem;line-height:1.5;}
+.hc-change{font-size:11px;font-weight:600;letter-spacing:.04em;text-align:right;}
+.hc-change.up{color:#e05040;}
+.hc-change.down{color:#5a9a6a;}
+.hc-change.same{color:var(--text3);}
 
 .compare-selects{display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap;}
 .compare-selects select{flex:1;min-width:180px;padding:12px 16px;background:var(--card);border:1px solid var(--border);color:var(--ivory2);font-size:13px;font-family:inherit;border-radius:1px;outline:none;}
@@ -348,7 +359,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B34（舌诊+对比报告升级：三问框架+结构化标题渲染）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B35（Phase 2C: 历史记录趋势图+卡片升级+变化指示）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1602,19 +1613,103 @@ async function shareImage(){
   }catch(e){alert('截图失败：'+e.message);}
   btn.textContent=orig;
 }
+function buildTrendChart(records_asc){
+  if(records_asc.length<2) return '';
+  var W=320, H=160, PL=36, PR=16, PT=12, PB=28;
+  var cW=W-PL-PR, cH=H-PT-PB;
+  var n=records_asc.length;
+  var lastScores=records_asc[records_asc.length-1].scores||[];
+  var topIdx=lastScores.map(function(s,i){return{s:s,i:i};}).sort(function(a,b){return b.s-a.s;}).slice(0,3).map(function(x){return x.i;});
+  var colors=['var(--gold2)','var(--gold3)','var(--text3)'];
+  var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  var svg='<svg class="trend-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+  [0,25,50,75,100].forEach(function(v){
+    var y=PT+cH*(1-v/100);
+    svg+='<line x1="'+PL+'" y1="'+y+'" x2="'+(W-PR)+'" y2="'+y+'" stroke="var(--border)" stroke-width="0.5"/>';
+    if(v%50===0) svg+='<text x="'+(PL-4)+'" y="'+(y+3.5)+'" text-anchor="end" font-size="9" fill="var(--text3)">'+v+'</text>';
+  });
+  var dates=records_asc.map(function(r){return new Date(r.date).toLocaleDateString(lang==='zh'?'zh-CN':lang==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric'});});
+  svg+='<text x="'+PL+'" y="'+(H-2)+'" font-size="9" fill="var(--text3)" text-anchor="middle">'+dates[0]+'</text>';
+  svg+='<text x="'+(W-PR)+'" y="'+(H-2)+'" font-size="9" fill="var(--text3)" text-anchor="middle">'+dates[dates.length-1]+'</text>';
+  topIdx.forEach(function(ci,li){
+    var color=colors[li];
+    var pts=records_asc.map(function(r,xi){
+      var s=(r.scores&&r.scores[ci])||0;
+      var x=PL+(n===1?cW/2:xi/(n-1)*cW);
+      var y=PT+cH*(1-s/100);
+      return{x:x,y:y,s:s};
+    });
+    var d=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+    svg+='<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){
+      svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3" fill="'+color+'" stroke="var(--card)" stroke-width="1.5"/>';
+      svg+='<title>'+names[ci].replace(/体质$/,'')+'：'+p.s+'%</title>';
+    });
+  });
+  svg+='</svg>';
+  var legend='<div class="trend-legend">';
+  topIdx.forEach(function(ci,li){
+    legend+='<div class="trend-legend-item"><div class="trend-dot-legend" style="background:'+colors[li]+';"></div>'+names[ci].replace(/体质|体質|質$/,'')+'</div>';
+  });
+  legend+='</div>';
+  var titleMap={zh:'体质趋势',en:'Constitution Trend',ja:'体質トレンド',es:'Tendencia',de:'Trend',fr:'Tendance'};
+  return '<div class="trend-wrap"><div class="trend-title">'+(titleMap[lang]||titleMap.en)+'</div>'+svg+legend+'</div>';
+}
+
 function renderHistory(){
-  const el=document.getElementById('history-list');
-  const my=records.filter(r=>r.name===userName).reverse();
-  if(!my.length){el.innerHTML=`<div class="history-empty">${L('histEmpty').replace('\\n','<br>')}</div>`;return;}
+  var el=document.getElementById('history-list');
+  var my=records.filter(function(r){return r.name===userName;}).sort(function(a,b){return a.id-b.id;});
+  if(!my.length){el.innerHTML='<div class="history-empty">'+L('histEmpty').replace('\n','<br>')+'</div>';return;}
   el.innerHTML='';
-  my.forEach(rec=>{
-    const scores=rec.scores||[];
-    const sorted=[...scores].map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s);
-    const maxS=Math.max(sorted[0].s,1);
-    const bars=sorted.map((x,ri)=>`<div class="hc-bar${ri===0?' top':''}" style="height:${Math.max(3,Math.round(x.s/maxS*36))}px"></div>`).join('');
-    const div=document.createElement('div');div.className='history-card';
-    div.innerHTML=`<div><div class="hc-type">${rec.primaryType||'—'}</div><div class="hc-date">${new Date(rec.date).toLocaleDateString()}</div></div><div class="hc-bars">${bars}</div><span style="color:var(--text3);font-size:18px;">›</span>`;
-    div.onclick=()=>{const pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);historyTongueAnswers=(rec.tongueAnswers&&rec.tongueAnswers.length===6)?[...rec.tongueAnswers]:null;showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});};
+  var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
+  var changeLabel={zh:['较上次','改善','上升','持平'],en:['vs prev','improved','worsened','stable'],ja:['前回比','改善','上昇','変化なし'],es:['vs ant.','mejoró','empeoró','igual'],de:['vs vor.','besser','schlechter','stabil'],fr:['vs préc.','amélioré','aggravé','stable']};
+  var cl=changeLabel[lang]||changeLabel.en;
+  if(my.length>=2){
+    var chartEl=document.createElement('div');
+    chartEl.innerHTML=buildTrendChart(my);
+    el.appendChild(chartEl);
+  }
+  var titleMap={zh:'检测记录',en:'Assessment Records',ja:'検査記録',es:'Registros',de:'Aufzeichnungen',fr:'Historique'};
+  var secHead=document.createElement('div');
+  secHead.style.cssText='font-size:10px;letter-spacing:.18em;color:var(--gold3);text-transform:uppercase;margin:.75rem 0 .5rem;';
+  secHead.textContent=(titleMap[lang]||titleMap.en)+' ('+my.length+')';
+  el.appendChild(secHead);
+  var myDesc=[].concat(my).reverse();
+  myDesc.forEach(function(rec,idx){
+    var scores=rec.scores||[];
+    var top3=scores.map(function(s,i){return{s:s,i:i};}).sort(function(a,b){return b.s-a.s;}).slice(0,3);
+    var scoresText=top3.map(function(x){return names[x.i].replace(/体质|体質|質$/,'')+' '+x.s+'%';}).join(' · ');
+    var prevRec=idx<myDesc.length-1?myDesc[idx+1]:null;
+    var changeHtml='';
+    if(prevRec&&prevRec.scores){
+      var prevMain=prevRec.scores.slice(1).reduce(function(m,s,i){return s>m.s?{s:s,i:i+1}:m;},{s:0,i:1});
+      var currMain=scores.slice(1).reduce(function(m,s,i){return s>m.s?{s:s,i:i+1}:m;},{s:0,i:1});
+      var diff=currMain.s-prevMain.s;
+      if(Math.abs(diff)>=3){
+        var cls=diff<0?'down':'up';
+        var arrow=diff<0?'↓':'↑';
+        changeHtml='<div class="hc-change '+cls+'">'+arrow+' '+Math.abs(diff)+'%</div><div style="font-size:10px;color:var(--text3);">'+cl[0]+'</div>';
+      } else {
+        changeHtml='<div class="hc-change same">— '+cl[3]+'</div>';
+      }
+    }
+    var div=document.createElement('div');div.className='history-card';
+    div.style.alignItems='flex-start';
+    div.innerHTML=
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="hc-type">'+(rec.primaryType||'—')+'</div>'+
+        '<div class="hc-date">'+new Date(rec.date).toLocaleDateString()+'</div>'+
+        '<div class="hc-scores">'+scoresText+'</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">'+
+        changeHtml+
+        '<span style="color:var(--text3);font-size:18px;margin-top:4px;">›</span>'+
+      '</div>';
+    div.onclick=function(){
+      var pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);
+      historyTongueAnswers=(rec.tongueAnswers&&rec.tongueAnswers.length===6)?[...rec.tongueAnswers]:null;
+      showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});
+    };
     el.appendChild(div);
   });
 }
