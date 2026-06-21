@@ -392,7 +392,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B39（Phase 2B+ 完成：结果页体质配色动态背景 + 揭晓光爆动画）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B40（Phase 3A: 小红书分享图，体质配色3:4竖版卡片）</span>
 </div>
 
 <div id="result-ambient"></div>
@@ -492,7 +492,9 @@ tr:hover td{background:rgba(201,168,76,.03);}
       <div class="report-actions">
         <button class="btn-primary" onclick="shareImage()" id="img-btn-text">截图下载</button>
         <button class="btn-ghost" onclick="showTab('quiz');resetQuiz()" id="retry-btn-text">重新检测</button>
+        <button class="btn-ghost" onclick="shareXHS()" id="xhs-btn-text" style="border-color:var(--gold3);color:var(--gold);">✦ 分享图</button>
       </div>
+      <div id="xhs-share-card" style="position:fixed;top:-9999px;left:-9999px;pointer-events:none;z-index:-1;"></div>
       <div id="report-wrap">
         <div class="report-logo-text" id="report-logo-text">中医九种体质检测报告</div>
         <div class="report-hero">
@@ -812,6 +814,9 @@ const TYPE_NAMES={
   ja:['平和質','気虚質','陽虚質','陰虚質','痰湿質','湿熱質','血瘀質','気鬱質','特稟質']
 };
 const TYPE_EN=['Balanced','Qi Deficiency','Yang Deficiency','Yin Deficiency','Phlegm-Dampness','Damp-Heat','Blood Stasis','Qi Stagnation','Special Diathesis'];
+var XHS_HANDLE='@你的小红书账号';
+var XHS_WATERMARK_CHARS=['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
+var XHS_COLORS=['#5A9A6A','#C9A84C','#4A8AB0','#C97A4C','#4A9A8A','#C96A4C','#8A4A4A','#7A5A9A','#4A7AAA'];
 
 const TD=[
   {d:'阴阳气血调和，体态适中，面色红润，精力充沛，是最理想的体质状态。',dE:'Harmonious Yin-Yang balance; ideal body composition, ruddy complexion, and vigorous energy — the most desirable constitution.',f:'五谷杂粮均衡摄取，少食过寒过热食物，保持饮食多样性。',fE:'Balanced diet of whole grains; avoid extremes of hot and cold foods; maintain dietary variety.',l:'规律作息，适度运动，保持愉快心情，无需特别调理。',lE:'Regular sleep and exercise; positive mindset; no special adjustments needed.',s:'各类运动均适合，建议每周3–5次有氧运动。',sE:'All exercise types suitable; 3–5 aerobic sessions weekly recommended.',a:'避免过度劳累，防止偏食，保持心态平和。',aE:'Avoid overexertion; maintain dietary variety and emotional balance.'},
@@ -1655,6 +1660,99 @@ function showResult(result, skipAI){
 
 
 // ── 截图下载（用打印窗口截图方式）──
+function buildXHSCard(result){
+  var card=document.getElementById('xhs-share-card');
+  if(!card||!result)return;
+  var idx=result.primaryIdx;
+  var color=XHS_COLORS[idx]||'#C9A84C';
+  var d=TD[idx];
+  var isZh=lang==='zh'||lang==='ja';
+  var constName=(TYPE_NAMES[lang]||TYPE_NAMES.zh)[idx];
+  var constEn=TYPE_EN[idx];
+  var bigChar=XHS_WATERMARK_CHARS[idx]||'質';
+  var score=result.pcts[idx];
+  var desc=isZh?d.d:d.dE;
+  var food=(isZh?d.f:d.fE).split('，')[0].replace(/，.*$/,'');
+  var sport=(isZh?d.s:d.sE).split('，')[0].replace(/，.*$/,'');
+  var life=(isZh?d.l:d.lE).split('，')[0].replace(/，.*$/,'');
+  var scoreLabel=isZh?'主体质得分':'Primary Score';
+  var foodLabel=isZh?'饮食调养':'Diet';
+  var sportLabel=isZh?'适宜运动':'Exercise';
+  var lifeLabel=isZh?'起居调摄':'Lifestyle';
+  function tipBox(label,text){
+    return '<div style="background:#1A1508;border:1px solid #3A2E18;border-radius:2px;padding:18px 20px;margin-bottom:0;">'+
+      '<div style="font-size:10px;color:'+color+';letter-spacing:.18em;margin-bottom:8px;text-transform:uppercase;">'+label+'</div>'+
+      '<div style="font-size:12px;color:#C8B898;line-height:1.85;">'+text+'</div>'+
+    '</div>';
+  }
+  card.innerHTML=
+    '<div style="width:900px;min-height:1200px;background:#0F0C07;display:flex;flex-direction:column;padding:56px 68px;box-sizing:border-box;">'+
+      '<div style="height:4px;background:linear-gradient(90deg,transparent 0%,'+color+' 40%,'+color+' 60%,transparent 100%);border-radius:2px;margin-bottom:48px;"></div>'+
+      '<div style="text-align:center;font-size:10px;letter-spacing:.55em;color:#8A7A5C;text-transform:uppercase;margin-bottom:52px;">中 医 体 质 检 测</div>'+
+      '<div style="text-align:center;font-size:175px;line-height:1;color:'+color+';font-family:Ma Shan Zheng,ZCOOL XiaoWei,STKaiti,serif;text-shadow:0 0 80px '+color+'44;margin-bottom:18px;">'+bigChar+'</div>'+
+      '<div style="text-align:center;font-size:36px;color:#F0D98A;letter-spacing:.1em;margin-bottom:10px;">'+constName+'</div>'+
+      '<div style="text-align:center;font-size:13px;color:#8A7A5C;font-style:italic;letter-spacing:.18em;margin-bottom:36px;">'+constEn+'</div>'+
+      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:36px;">'+
+        '<div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#3A2E18);"></div>'+
+        '<div style="font-size:11px;color:#8B6914;letter-spacing:.3em;">◈</div>'+
+        '<div style="flex:1;height:1px;background:linear-gradient(90deg,#3A2E18,transparent);"></div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:18px;margin-bottom:32px;">'+
+        '<div style="font-size:10px;color:#8A7A5C;letter-spacing:.12em;width:90px;text-align:right;flex-shrink:0;">'+scoreLabel+'</div>'+
+        '<div style="flex:1;height:12px;background:#1A1508;border-radius:3px;overflow:hidden;">'+
+          '<div style="height:100%;width:'+score+'%;background:linear-gradient(90deg,#8B6914,'+color+');border-radius:3px;"></div>'+
+        '</div>'+
+        '<div style="font-size:22px;color:'+color+';font-weight:700;width:52px;text-align:right;">'+score+'%</div>'+
+      '</div>'+
+      '<div style="background:#111008;border:1px solid #2A2010;border-left:3px solid '+color+';border-radius:2px;padding:22px 26px;margin-bottom:28px;">'+
+        '<div style="font-size:13px;color:#C8B898;line-height:2;letter-spacing:.04em;">'+desc+'</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:auto;">'+
+        tipBox('✦ '+foodLabel,food)+
+        tipBox('✦ '+sportLabel,sport)+
+        tipBox('✦ '+lifeLabel,life)+
+        '<div style="background:#0A0905;border:1px solid #2A2010;border-radius:2px;padding:18px 20px;display:flex;align-items:center;justify-content:center;">'+
+          '<div style="font-size:28px;color:'+color+';letter-spacing:.06em;font-family:Ma Shan Zheng,serif;">'+bigChar+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="height:1px;background:#2A2010;margin:36px 0 22px;"></div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:12px;color:#8B6914;letter-spacing:.15em;">'+XHS_HANDLE+'</div>'+
+        '<div style="font-size:10px;color:#6A5A3C;letter-spacing:.08em;">vin78999.github.io/tcm-quiz</div>'+
+      '</div>'+
+    '</div>';
+}
+
+async function shareXHS(){
+  var btn=document.getElementById('xhs-btn-text');
+  var orig=btn?btn.textContent:'';
+  if(btn)btn.textContent='⏳ 生成中...';
+  try{
+    if(!lastConstitutionResult){alert('请先完成体质检测');if(btn)btn.textContent=orig;return;}
+    buildXHSCard(lastConstitutionResult);
+    var card=document.getElementById('xhs-share-card');
+    if(!card||!card.firstChild){if(btn)btn.textContent=orig;return;}
+    await new Promise(function(r){setTimeout(r,400);});
+    var canvas=await html2canvas(card.firstChild,{
+      scale:2,backgroundColor:'#0F0C07',useCORS:true,allowTaint:true,logging:false,
+      onclone:function(doc){
+        var r=doc.documentElement;
+        var vs={'--ink':'#0F0C07','--gold':'#C9A84C','--gold2':'#F0D98A','--gold3':'#8B6914','--text2':'#C8B898','--text3':'#8A7A5C','--border':'#3A2E18'};
+        Object.entries(vs).forEach(function(e){r.style.setProperty(e[0],e[1]);});
+      }
+    });
+    canvas.toBlob(function(blob){
+      if(!blob){alert('生成失败，请重试');return;}
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;a.download=userName+'_体质分享图.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    },'image/png',1.0);
+  }catch(e){alert('生成失败：'+e.message);}
+  if(btn)btn.textContent=orig;
+}
+
 async function shareImage(){
   const btn=document.getElementById('img-btn-text');
   const orig=btn.textContent;
