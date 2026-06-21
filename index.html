@@ -392,12 +392,16 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B38（历史记录：iOS风格滚轮选择器，中间高亮+淡出效果）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B39（Phase 2B+ 完成：结果页体质配色动态背景 + 揭晓光爆动画）</span>
 </div>
+
+<div id="result-ambient"></div>
 
 <div id="reveal-overlay">
   <div class="reveal-ring">
     <div class="reveal-char" id="reveal-char">質</div>
+    <div class="reveal-burst" id="reveal-burst"></div>
+    <div class="reveal-burst2" id="reveal-burst2"></div>
   </div>
   <div class="reveal-label" id="reveal-label">正在分析您的体质</div>
 </div>
@@ -683,6 +687,20 @@ tr:hover td{background:rgba(201,168,76,.03);}
 @keyframes bgShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
 .intro-particle{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.7),transparent);pointer-events:none;animation:floatUp linear infinite;}
 #intro-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+/* B39 result ambient background */
+#result-ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.2s ease;}
+#result-ambient.active{opacity:1;}
+.amb-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;animation:ambFloat 12s ease-in-out infinite;}
+@keyframes ambFloat{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(30px,-40px) scale(1.08);}66%{transform:translate(-20px,25px) scale(.94);}
+}
+.amb-particle{position:absolute;border-radius:50%;opacity:0;animation:ambPop var(--dur,6s) ease-in-out infinite var(--delay,0s);}
+@keyframes ambPop{0%,100%{opacity:0;transform:translate(0,0) scale(.5);}20%{opacity:.55;}50%{opacity:.3;transform:translate(var(--dx,20px),var(--dy,-30px)) scale(1);}80%{opacity:.1;}}
+/* B39 reveal burst rings */
+.reveal-burst{position:absolute;inset:-60px;border-radius:50%;border:2px solid var(--gold3);opacity:0;transform:scale(.7);animation:none;}
+.reveal-burst2{position:absolute;inset:-100px;border-radius:50%;border:1px solid var(--gold);opacity:0;transform:scale(.6);animation:none;}
+.reveal-burst.fire{animation:burstRing .9s cubic-bezier(.2,.8,.4,1) forwards;}
+.reveal-burst2.fire{animation:burstRing 1.1s cubic-bezier(.2,.8,.4,1) .15s forwards;}
+@keyframes burstRing{0%{opacity:.8;transform:scale(.7);}100%{opacity:0;transform:scale(2.4);}}
 
 /* ── Phase 2B+ B: 结果页水印 ── */
 .report-watermark{
@@ -1172,7 +1190,9 @@ function enterMain(){
 }
 function doLogout(){
   // 强制重置揭晓动画 overlay
-  var ov=document.getElementById('reveal-overlay');
+  // B39: clear result ambient
+  (function(){var amb=document.getElementById('result-ambient');if(amb){amb.classList.remove('active');setTimeout(function(){amb.innerHTML='';},1300);}})();
+    var ov=document.getElementById('reveal-overlay');
   if(ov){ov.classList.remove('show');ov.style.animation='';}
   document.getElementById('screen-main').style.display='none';
   // 恢复首页显示（重置 opacity，因为进入时做了淡出）
@@ -1403,7 +1423,50 @@ function showResult(result, skipAI){
   var isZh=lang==='zh';
   var isJa=lang==='ja';
 
-  // Phase 2B+ B: 体质水印
+  // Phase 2B+ A: 结果页动态背景
+  (function(){
+    var CONST_COLORS={
+      '平和质':['#c9a84c','#e8d5a0'],
+      '气虚质':['#b8956a','#d4b896'],
+      '阳虚质':['#7a9cbf','#a8c4d8'],
+      '阴虚质':['#c47a6e','#dba090'],
+      '痰湿质':['#8aab7c','#b0c8a8'],
+      '湿热质':['#c9943c','#e0b870'],
+      '血瘀质':['#9e6874','#c49098'],
+      '气郁质':['#7e82a8','#a4a8c4'],
+      '特禀质':['#9c8a7a','#bca898']
+    };
+    var typeName=TYPE_NAMES.zh[result.topIdx]||'平和质';
+    var colors=CONST_COLORS[typeName]||['#c9a84c','#e8d5a0'];
+    var amb=document.getElementById('result-ambient');
+    if(!amb)return;
+    amb.innerHTML='';
+    // blobs
+    [[65,30,280,colors[0],0],[30,65,220,colors[1],4],[55,70,180,colors[0],8]].forEach(function(b,i){
+      var el=document.createElement('div');
+      el.className='amb-blob';
+      el.style.cssText='width:'+b[2]+'px;height:'+b[2]+'px;left:'+b[0]+'%;top:'+b[1]+'%;background:'+b[3]+';animation-delay:'+b[4]+'s;';
+      amb.appendChild(el);
+    });
+    // particles
+    for(var pi=0;pi<18;pi++){
+      var p=document.createElement('div');
+      p.className='amb-particle';
+      var sz=Math.random()*5+3;
+      var dx=(Math.random()-0.5)*80;
+      var dy=-(Math.random()*60+20);
+      p.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*90+5)+'%;top:'+(Math.random()*70+15)+'%;background:'+colors[Math.random()>.5?0:1]+';--dur:'+(Math.random()*5+5)+'s;--delay:'+(Math.random()*6)+'s;--dx:'+dx+'px;--dy:'+dy+'px;';
+      amb.appendChild(p);
+    }
+    amb.classList.add('active');
+    // burst rings on reveal
+    var b1=document.getElementById('reveal-burst');
+    var b2=document.getElementById('reveal-burst2');
+    if(b1)b1.style.borderColor=colors[0];
+    if(b2)b2.style.borderColor=colors[1];
+    setTimeout(function(){if(b1)b1.classList.add('fire');if(b2)b2.classList.add('fire');},400);
+  })();
+    // Phase 2B+ B: 体质水印
   var watermarkChars = ['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
   var wm = document.getElementById('report-watermark');
   if(!wm){
