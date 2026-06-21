@@ -181,26 +181,34 @@ body{font-family:'Noto Sans SC','Noto Serif SC',sans-serif;background:radial-gra
 .hc-change.up{color:#e05040;}
 .hc-change.down{color:#5a9a6a;}
 .hc-change.same{color:var(--text3);}
-.history-carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:0 1rem 1rem 1rem;margin:0 -1rem;-webkit-overflow-scrolling:touch;}
-.history-carousel::-webkit-scrollbar{display:none;}
-.history-carousel{scrollbar-width:none;}
-.hc-slide{flex-shrink:0;width:calc(85% - 12px);max-width:300px;scroll-snap-align:start;background:linear-gradient(145deg,#1E1A0C,#141008);border:1px solid var(--border2);border-radius:12px;padding:1.4rem 1.25rem 1.1rem;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden;}
-.hc-slide::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold3) 30%,var(--gold) 60%,transparent);}
-.hc-slide:hover{border-color:var(--gold3);}
-.hc-slide-date{font-size:10px;letter-spacing:.15em;color:var(--text3);margin-bottom:1rem;text-transform:uppercase;}
-.hc-slide-type{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti',serif;font-size:32px;color:var(--gold2);letter-spacing:.08em;line-height:1.1;margin-bottom:.35rem;}
-.hc-slide-sub{font-size:11px;color:var(--text3);letter-spacing:.04em;margin-bottom:1.1rem;line-height:1.5;}
-.hc-slide-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
-.hc-slide-tag{font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:2px;color:var(--text3);letter-spacing:.04em;}
-.hc-slide-tag.t-top{border-color:var(--gold3);color:var(--gold2);}
-.hc-slide-tag.t-ping{border-color:#5a9a6a;color:#5a9a6a;}
-.hc-slide-footer{display:flex;align-items:center;justify-content:space-between;padding-top:.75rem;border-top:1px solid var(--border);}
-.hc-slide-change{font-size:11px;font-weight:600;}
-.hc-slide-change.up{color:#e05040;}
-.hc-slide-change.down{color:#5a9a6a;}
-.hc-slide-change.same{color:var(--text3);}
-.hc-slide-idx{font-size:10px;color:var(--text3);letter-spacing:.06em;}
-.hc-carousel-hint{text-align:center;font-size:10px;color:var(--text3);letter-spacing:.08em;margin-top:.35rem;opacity:.5;}
+.hc-wheel-wrap{position:relative;height:320px;overflow:hidden;margin:0 -1rem;}
+.hc-wheel-wrap::before,.hc-wheel-wrap::after{content:'';position:absolute;left:0;right:0;height:90px;z-index:2;pointer-events:none;}
+.hc-wheel-wrap::before{top:0;background:linear-gradient(to bottom,var(--ink),transparent);}
+.hc-wheel-wrap::after{bottom:0;background:linear-gradient(to top,var(--ink),transparent);}
+.hc-wheel-center-line{position:absolute;left:1rem;right:1rem;top:50%;transform:translateY(-50%);height:110px;border:1px solid var(--border2);border-radius:10px;background:rgba(201,168,76,.03);pointer-events:none;z-index:1;}
+.hc-wheel{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth;padding:105px 1rem;box-sizing:border-box;scrollbar-width:none;}
+.hc-wheel::-webkit-scrollbar{display:none;}
+.hc-wheel-item{scroll-snap-align:center;height:110px;display:flex;align-items:center;padding:0 .25rem;transition:transform .3s ease,opacity .3s ease;}
+.hc-wheel-card{width:100%;height:100%;background:linear-gradient(145deg,#1E1A0C,#141008);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;display:flex;flex-direction:column;justify-content:space-between;}
+.hc-wheel-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold3) 30%,var(--gold) 60%,transparent);opacity:0;transition:opacity .3s;}
+.hc-wheel-item.active .hc-wheel-card{border-color:var(--gold3);box-shadow:0 0 20px rgba(201,168,76,.12);}
+.hc-wheel-item.active .hc-wheel-card::before{opacity:1;}
+.hc-wheel-item:not(.active){transform:scale(.9);opacity:.4;}
+.hc-wheel-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.hc-wheel-date{font-size:10px;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;}
+.hc-wheel-num{font-size:10px;color:var(--text3);letter-spacing:.06em;}
+.hc-wheel-type{font-family:'Ma Shan Zheng','ZCOOL XiaoWei','STKaiti',serif;font-size:26px;color:var(--gold2);letter-spacing:.08em;line-height:1;}
+.hc-wheel-bottom{display:flex;justify-content:space-between;align-items:flex-end;}
+.hc-wheel-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.hc-wheel-tag{font-size:9px;padding:2px 6px;border:1px solid var(--border);border-radius:2px;color:var(--text3);}
+.hc-wheel-tag.t-top{border-color:var(--gold3);color:var(--gold2);}
+.hc-wheel-tag.t-ping{border-color:#5a9a6a;color:#5a9a6a;}
+.hc-wheel-change{font-size:11px;font-weight:600;}
+.hc-wheel-change.up{color:#e05040;}
+.hc-wheel-change.down{color:#5a9a6a;}
+.hc-wheel-hint{text-align:center;font-size:10px;color:var(--text3);letter-spacing:.08em;margin-top:.5rem;opacity:.45;}
+.hc-wheel-open-btn{display:block;width:calc(100% - 2rem);margin:.75rem 1rem 0;padding:.6rem;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--gold3);font-size:11px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;transition:border-color .2s,color .2s;}
+.hc-wheel-open-btn:hover{border-color:var(--gold);color:var(--gold);}
 
 .compare-selects{display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap;}
 .compare-selects select{flex:1;min-width:180px;padding:12px 16px;background:var(--card);border:1px solid var(--border);color:var(--ivory2);font-size:13px;font-family:inherit;border-radius:1px;outline:none;}
@@ -384,7 +392,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B37（历史记录改版：横向滑动卡片式，含体质简介+分数标签+变化指示）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B38（历史记录：iOS风格滚轮选择器，中间高亮+淡出效果）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1678,63 +1686,81 @@ function renderHistory(){
   if(!my.length){el.innerHTML='<div class="history-empty">'+L('histEmpty').replace('\n','<br>')+'</div>';return;}
   el.innerHTML='';
   var names=TYPE_NAMES[lang]||TYPE_NAMES.zh;
-  function getShortDesc(primaryIdx){
-    try{
-      var key=lang==='zh'?'ZH':lang==='ja'?'JA':lang==='es'?'ES':lang==='de'?'DE':lang==='fr'?'FR':'EN';
-      var d=window['TD_'+key]||window['TD'];
-      if(d&&d[primaryIdx]){var s=d[primaryIdx].d||d[primaryIdx].dE||'';return s.substring(0,40)+(s.length>40?'…':'');}
-    }catch(e){}
-    return '';
-  }
-  var carousel=document.createElement('div');
-  carousel.className='history-carousel';
   var myDesc=[].concat(my).reverse();
+  var total=myDesc.length;
+  var wrap=document.createElement('div');wrap.className='hc-wheel-wrap';
+  var centerLine=document.createElement('div');centerLine.className='hc-wheel-center-line';
+  var wheel=document.createElement('div');wheel.className='hc-wheel';wheel.id='hc-wheel';
   myDesc.forEach(function(rec,idx){
     var scores=rec.scores||[];
-    var pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);
-    if(pi<0) pi=0;
+    var pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);if(pi<0)pi=0;
     var top3=scores.map(function(s,i){return{s:s,i:i,zhName:TYPE_NAMES.zh[i],name:names[i]};}).sort(function(a,b){return b.s-a.s;}).slice(0,3);
     var prevRec=idx<myDesc.length-1?myDesc[idx+1]:null;
-    var changeHtml='<span class="hc-slide-change same">—</span>';
+    var changeHtml='';
     if(prevRec&&prevRec.scores){
       var prevMain=prevRec.scores.slice(1).reduce(function(m,s,i){return s>m.s?{s:s,i:i+1}:m;},{s:0,i:1});
       var currMain=scores.slice(1).reduce(function(m,s,i){return s>m.s?{s:s,i:i+1}:m;},{s:0,i:1});
       var diff=currMain.s-prevMain.s;
-      if(Math.abs(diff)>=3){
-        var cls=diff<0?'down':'up'; var arrow=diff<0?'↓ ':'↑ ';
-        changeHtml='<span class="hc-slide-change '+cls+'">'+arrow+Math.abs(diff)+'%</span>';
-      }
+      if(Math.abs(diff)>=3){var cls=diff<0?'down':'up';changeHtml='<div class="hc-wheel-change '+cls+'">'+(diff<0?'↓ ':'↑ ')+Math.abs(diff)+'%</div>';}
     }
     var tagsHtml=top3.map(function(tp,ti){
-      var isPing=tp.zhName==='平和质';
-      var cls=ti===0?'t-top':(isPing?'t-ping':'');
-      return '<div class="hc-slide-tag'+(cls?' '+cls:'')+'">'+tp.name.replace(/体质|体質|質$/,'').substring(0,4)+' '+tp.s+'%</div>';
+      var isPing=tp.zhName==='平和质';var cls=ti===0?'t-top':(isPing?'t-ping':'');
+      return '<div class="hc-wheel-tag'+(cls?' '+cls:'')+'">'+tp.name.replace(/体质|体質|質$/,'').substring(0,4)+' '+tp.s+'%</div>';
     }).join('');
-    var slide=document.createElement('div');
-    slide.className='hc-slide';
-    slide.innerHTML=
-      '<div class="hc-slide-date">'+new Date(rec.date).toLocaleDateString()+'</div>'+
-      '<div class="hc-slide-type">'+(rec.primaryType||'—')+'</div>'+
-      '<div class="hc-slide-sub">'+getShortDesc(pi)+'</div>'+
-      '<div class="hc-slide-tags">'+tagsHtml+'</div>'+
-      '<div class="hc-slide-footer">'+
-        changeHtml+
-        '<div class="hc-slide-idx">'+(myDesc.length-idx)+' / '+myDesc.length+'</div>'+
+    var item=document.createElement('div');item.className='hc-wheel-item'+(idx===0?' active':'');
+    item.dataset.idx=idx;item.dataset.pi=pi;
+    item.innerHTML=
+      '<div class="hc-wheel-card">'+
+        '<div class="hc-wheel-top">'+
+          '<div class="hc-wheel-date">'+new Date(rec.date).toLocaleDateString()+'</div>'+
+          '<div class="hc-wheel-num">'+(total-idx)+' / '+total+'</div>'+
+        '</div>'+
+        '<div class="hc-wheel-type">'+(rec.primaryType||'—')+'</div>'+
+        '<div class="hc-wheel-bottom">'+
+          '<div class="hc-wheel-tags">'+tagsHtml+'</div>'+
+          (changeHtml||'<div></div>')+
+        '</div>'+
       '</div>';
-    slide.onclick=function(){
-      historyTongueAnswers=(rec.tongueAnswers&&rec.tongueAnswers.length===6)?[...rec.tongueAnswers]:null;
-      showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});
-    };
-    carousel.appendChild(slide);
+    item.addEventListener('click',function(){
+      var isActive=this.classList.contains('active');
+      if(isActive){
+        var r=myDesc[parseInt(this.dataset.idx)];
+        var p=parseInt(this.dataset.pi);
+        historyTongueAnswers=(r.tongueAnswers&&r.tongueAnswers.length===6)?[...r.tongueAnswers]:null;
+        showResult({pcts:r.scores,primaryIdx:p>=0?p:0,answers:r.answers||[]});
+      } else {
+        this.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+    });
+    wheel.appendChild(item);
   });
-  el.appendChild(carousel);
-  if(my.length>1){
-    var hint=document.createElement('div');
-    var hintMap={zh:'← 左右滑动查看历史记录 →',en:'← Swipe to browse records →',ja:'← スワイプして履歴を見る →',es:'← Desliza para ver registros →',de:'← Wischen zum Blättern →',fr:'← Glissez pour parcourir →'};
-    hint.className='hc-carousel-hint';
-    hint.textContent=hintMap[lang]||hintMap.en;
-    el.appendChild(hint);
-  }
+  wrap.appendChild(centerLine);
+  wrap.appendChild(wheel);
+  el.appendChild(wrap);
+  var hintMap={zh:'滚动选择 · 点击激活项查看详情',en:'Scroll to select · tap active to view',ja:'スクロール選択 · タップで詳細',es:'Desplaza y toca para ver',de:'Scrollen & tippen',fr:'Défiler et appuyer'};
+  var hint=document.createElement('div');hint.className='hc-wheel-hint';hint.textContent=hintMap[lang]||hintMap.en;
+  el.appendChild(hint);
+  var openBtn=document.createElement('button');openBtn.className='hc-wheel-open-btn';
+  var openMap={zh:'✦ 查看此次检测报告',en:'✦ View This Report',ja:'✦ レポートを見る',es:'✦ Ver Este Informe',de:'✦ Bericht Ansehen',fr:'✦ Voir Ce Rapport'};
+  openBtn.textContent=openMap[lang]||openMap.en;
+  openBtn.onclick=function(){
+    var activeItem=wheel.querySelector('.hc-wheel-item.active');
+    if(!activeItem) return;
+    var r=myDesc[parseInt(activeItem.dataset.idx)];
+    var p=parseInt(activeItem.dataset.pi);
+    historyTongueAnswers=(r.tongueAnswers&&r.tongueAnswers.length===6)?[...r.tongueAnswers]:null;
+    showResult({pcts:r.scores,primaryIdx:p>=0?p:0,answers:r.answers||[]});
+  };
+  el.appendChild(openBtn);
+  var observer=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.intersectionRatio>0.7){
+        wheel.querySelectorAll('.hc-wheel-item').forEach(function(it){it.classList.remove('active');});
+        entry.target.classList.add('active');
+      }
+    });
+  },{root:wheel,threshold:0.7});
+  wheel.querySelectorAll('.hc-wheel-item').forEach(function(it){observer.observe(it);});
 }
 function loadCmpOpts(){
   const my=records.filter(r=>r.name===userName).reverse();
