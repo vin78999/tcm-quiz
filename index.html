@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B29（AI报告重构：按用户心理路径——定位+共鸣+误区+后果+行动+21天预期）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B30（AI报告三段式重构：现状+原因+怎么办）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -2121,127 +2121,129 @@ function generateResultAI(result){
 
   // ── 桌面端：完整流式 AI 分析 ──
   var singlePromptMap = {
-    zh: `你是一位直率、有洞察力的中医顾问。根据以下体质数据，按照用户真正关心的顺序写一份报告——不是给他讲中医知识，而是帮他读懂自己的身体。
+    zh: `你是一位经验丰富的中医健康顾问。根据以下体质检测数据，围绕用户最关心的三个核心问题写一份报告。直接叫名字，像顾问朋友说话，不要说废话。
 
 用户姓名：${userName}
 完整体质数据（9项）：${allScoresZh}
 主体质：${primaryName}
 
-按以下顺序写，不要用编号标题，写成自然流畅的段落：
+第一段【我现在身体状况是怎么样？】
+根据9项数据，直接描述这个人当前的身体状态：整体偏颇程度如何，哪几项分数偏高说明什么问题，这个体质组合意味着身体现在处于什么状态（比如：气的推动力不足 + 痰湿阻滞并存，身体正处于一种"堵而无力通"的状态）。说清楚，不要模糊。
 
-【第一段：定位——我现在是什么状态？】
-先给用户一个清晰的"健康定位"：根据数据，直接说这个体质组合属于偏轻微、中等偏颇还是明显偏颇，并用一句话说出这个组合的核心特征是什么（不要只说主体质，要说组合特征）。
+第二段【为什么我会这样？】
+从两个角度解释：
+一是这个体质组合的形成机制——为什么这几项会同时偏高（体质间的互相影响）；
+二是这解释了用户日常感受到的哪些具体现象，要说出2-3个有时间点或场景的具体症状（例如：下午3点后精力断崖、饭后必然发胀、早上起床喉咙有痰），用"这不是你的问题，而是……"让用户产生共鸣。
 
-【第二段：原来如此——为什么我一直有这种感觉？】
-说出2-3个这个体质组合特有的具体症状，要有时间点或场景（例如：下午3点后能量断崖式下跌、饭后30分钟必然犯困、早起喉咙总有痰）。用"这不是你懒，也不是睡眠不足，而是..."这样的句式，帮用户把困惑了很久的感受解释清楚。这段要让用户感觉"你怎么知道我是这样的"。
+第三段【那我要怎么办？】
+给出三个层次的行动指引：
+① 今天就能做的一件事（具体动作+时间+为什么对这个组合有效）
+② 要避开的一个误区（用户以为对的事，但对这个体质反效果，解释原因）
+③ 坚持多久能看到变化（给一个现实的时间预期，说出最先改善的具体感受）
 
-【第三段：你可能做错了一件事】
-说出一个用户可能以为是对的、但其实对这个体质组合有反效果的习惯或行为。要非常具体，并解释为什么对他这个组合特别有害（例如：气虚+痰湿的人喝蛋白粉或冷榨果汁，以为在补充营养，实际上脾胃运化不了，只是在加重痰湿）。
+写作要求：
+- 三段结构，自然段落，不要格式标题，不要编号
+- 绝对不写"保持良好作息"、"适当运动"、"多喝水"、"保持心情愉快"
+- 字数280-360字，内容要实、要具体、要让人有收获感`,
 
-【第四段：如果什么都不改变……】
-用现实但不恐吓的语气，说出这个体质偏颇如果持续1-2年不调整，身体可能出现的倾向（比如更容易出现哪类问题，精力、消化、睡眠、情绪哪方面会先受影响）。结尾加一句转折："但好消息是，这个体质是可以调整的。"
-
-【第五段：一件最有价值的事】
-给出一个今天就能开始的具体行动，必须包含：做什么、什么时间、多久、为什么这个动作对他这个体质组合比其他建议更有效。然后加一句："坚持21天，你最先会注意到……"（说出最先改善的具体感受）。
-
-写作风格：
-- 直接叫名字，像朋友顾问说话
-- 绝对不用"建议您"、"请注意"、"保持良好作息"、"适当运动"、"多喝水"这类废话
-- 用肯定语气，不用"可能建议"这种模糊表达
-- 总字数300-380字`,
-
-    en: `You are a direct, insightful TCM health advisor. Based on the constitution data below, write a report that follows the user's actual thought process — not a lecture on TCM theory, but helping them understand their own body.
+    en: `You are an experienced TCM health advisor. Based on the constitution data below, answer the three questions users actually care about most. Address the user by name, speak like a trusted advisor — no filler.
 
 User: ${userName}
 Full constitution data (9 types): ${allScoresZh}
 Primary constitution: ${primaryName}
 
-Write in this order as natural flowing paragraphs (no numbered headers):
+Paragraph 1 — What is my current health status?
+Based on all 9 scores, describe the person's actual body state right now: how imbalanced overall, what the elevated scores mean together, what this combination indicates about their body's current condition (e.g., "insufficient Qi to move things + phlegm-dampness blocking flow — your body is stuck in a low-power, high-resistance state"). Be clear and direct.
 
-[Para 1: Status check — how serious is this?]
-Give the user a clear health "positioning": based on the data, directly state whether this constitution combination is mild, moderate, or significantly imbalanced. In one sentence, describe the core characteristic of this specific COMBINATION (not just the primary type).
+Paragraph 2 — Why am I like this?
+Explain from two angles:
+First, the mechanism — why these specific scores are elevated together (how the constitutions reinforce each other);
+Second, what this explains about the user's daily experience — name 2-3 specific symptoms with time or context ("energy drop after 3pm", "bloating 30 min after meals", "waking with phlegm"). Use "This isn't a character flaw — it's because..." to create a real aha moment.
 
-[Para 2: The "aha moment" — why do I always feel this way?]
-Name 2-3 specific symptoms of this combination with time or context clues (e.g., "energy cliff after 3pm", "drowsiness exactly 30 minutes after eating", "waking up with phlegm"). Use phrasing like "This isn't laziness or poor sleep — it's because..." Help the user finally understand something they've felt but couldn't explain. Make them think "how did you know that about me?"
+Paragraph 3 — What should I do?
+Give three levels of action:
+① One thing to do today (specific action + when + why it works for this combination specifically)
+② One mistake to stop making (something they think is fine but works against their type — explain why)
+③ How long until improvement (realistic timeline + what they'll notice first)
 
-[Para 3: You might be doing something counterproductive]
-Name one specific habit the user probably thinks is healthy or neutral but is actually working against their particular combination. Explain exactly WHY it's harmful for their specific data pattern.
+Style: 3 paragraphs, no headers, no numbering, no generic advice. 280-360 words. Dense with insight.`,
 
-[Para 4: What happens if nothing changes?]
-In a realistic but non-alarming tone, describe what tends to develop over 1-2 years if this pattern continues — which system (energy, digestion, sleep, mood) shows strain first. End with: "But here's the good news — this constitution can absolutely be shifted."
-
-[Para 5: The one most valuable change]
-Give one specific action they can start today. Must include: what to do, when, how long, and WHY this particular action is more effective for their specific combination than generic advice. End with: "Stick with it for 21 days — the first thing you'll notice is..." (name the specific improvement they'll feel first).
-
-Style:
-- Address the user by name, like a trusted advisor
-- Never use "it is recommended", "please note", "maintain good habits", "exercise appropriately", "drink more water"
-- Confident, direct tone — no hedging
-- Total: 300-380 words`,
-
-    ja: `あなたは率直で洞察力のある中医アドバイザーです。以下の体質データを基に、ユーザーが本当に知りたいことの順番でレポートを書いてください。
+    ja: `あなたは経験豊富な中医健康顧問です。以下の体質データを基に、ユーザーが本当に気になる3つの核心的な問いに答えてください。名前で呼びかけ、信頼できる顧問のように話してください。
 
 ユーザー名：${userName}
 完全な体質データ（9項目）：${allScoresZh}
 主な体質：${primaryName}
 
-以下の順番で自然な段落として書いてください（番号見出しなし）：
+第1段落【今の私の体の状態は？】
+9項目のデータをもとに、現在の体の状態を直接説明する。全体的なアンバランスの程度、スコアが高い項目が意味すること、この体質の組み合わせが体に何を示しているか（例：「気の推進力不足＋痰湿の停滞が並存——低出力・高抵抗状態」）。明確に、曖昧にせず。
 
-①現在の状態の定位：この体質の組み合わせが軽度・中程度・明確な偏りのどれかを伝え、組み合わせの核心的な特徴を一文で説明する。
-②「そうだったのか」の瞬間：この組み合わせ特有の症状を2〜3つ、時間帯や場面を含めて挙げる。「これは怠惰でも睡眠不足でもなく…」という言い方でユーザーが長年抱えてきた疑問を解消する。
-③やってしまいがちな逆効果の習慣：ユーザーが良いと思っているが、この特定の組み合わせには逆効果である具体的な行動を1つ指摘し、なぜ有害かを説明する。
-④何もしなかったら：1〜2年後に起こりやすい傾向を現実的に（ただし脅かさずに）伝える。「でも朗報があります——この体質は改善できます」で締める。
-⑤最も価値ある一つの行動：今日から始められる具体的な行動（何を・いつ・どのくらい・なぜこの組み合わせに特に効くか）を提案。「21日続けると、最初に気づく変化は……」で締める。
+第2段落【なぜこうなったのか？】
+①この体質の組み合わせが形成されたメカニズム（体質間の相互影響）；
+②これがユーザーの日常感覚のどんな具体的な症状を説明するか（時間帯や場面を含む2〜3の症状）。「これはあなたのせいではなく……」の言い方で共感を生む。
 
-文体：名前で呼ぶ、断定的な口調、300〜380字`,
+第3段落【どうすれば良い？】
+①今日からできる具体的な1つの行動（動作＋時間＋この組み合わせに有効な理由）
+②やめるべき1つの誤解（良いと思っているが逆効果なこと＋理由）
+③いつ変化が現れるか（最初に感じる改善を具体的に）
 
-    es: `Eres un asesor de salud TCM directo y perspicaz. Escribe un informe en Español que siga el proceso mental real del usuario.
+3段落、見出し・番号なし、280〜360字、具体的かつ深みのある内容`,
+
+    es: `Eres un asesor de salud TCM experimentado. Responde en Español las tres preguntas que los usuarios realmente quieren saber. Tutea al usuario, habla como un asesor de confianza — sin relleno.
 
 Usuario: ${userName}
 Datos completos (9 tipos): ${allScoresZh}
 Constitución principal: ${primaryName}
 
-Escribe en este orden como párrafos naturales (sin encabezados numerados):
+Párrafo 1 — ¿Cuál es mi estado de salud actual?
+Basándote en los 9 datos, describe el estado corporal actual: grado general de desequilibrio, qué significan los scores elevados juntos, qué indica esta combinación sobre el estado del cuerpo ahora mismo. Claro y directo.
 
-①Estado actual: di claramente si esta combinación es leve, moderada o significativamente desequilibrada. Describe la característica central de esta COMBINACIÓN específica.
-②El momento "aha": 2-3 síntomas específicos de esta combinación con horario o contexto. Usa "Esto no es pereza ni falta de sueño — es porque..." Haz que el usuario piense "¿cómo sabías eso de mí?"
-③Lo que probablemente estás haciendo mal: un hábito específico que el usuario cree que es bueno pero es contraproducente para su combinación exacta, con explicación de por qué.
-④Qué pasa si nada cambia: tendencias realistas a 1-2 años, qué sistema falla primero. Terminar con "Pero la buena noticia es que esta constitución puede cambiar."
-⑤La acción más valiosa: una acción concreta (qué, cuándo, cuánto tiempo, por qué funciona para esta combinación). Terminar con "En 21 días, lo primero que notarás es..."
+Párrafo 2 — ¿Por qué estoy así?
+Desde dos ángulos: ①el mecanismo por el que estos scores se elevan juntos (cómo se refuerzan mutuamente); ②qué explica esto sobre la experiencia diaria del usuario — 2-3 síntomas específicos con hora o contexto. Usar "Esto no es un fallo tuyo — es porque..." para crear un momento de comprensión real.
 
-Estilo: nombre directo, tono seguro, sin frases genéricas, 300-380 palabras`,
+Párrafo 3 — ¿Qué debo hacer?
+①Una cosa concreta para hacer hoy (qué + cuándo + por qué funciona para esta combinación)
+②Un error que dejar de cometer (algo que creen que está bien pero va en contra de su tipo — con explicación)
+③Cuánto tiempo hasta notar mejoría (expectativa realista + qué notarán primero)
 
-    de: `Du bist ein direkter, einsichtsreicher TCM-Gesundheitsberater. Schreibe auf Deutsch einen Bericht, der dem echten Gedankengang des Nutzers folgt.
+3 párrafos, sin títulos ni numeración, sin consejos genéricos. 280-360 palabras, denso en insights.`,
+
+    de: `Du bist ein erfahrener TCM-Gesundheitsberater. Beantworte auf Deutsch die drei Fragen, die Nutzer wirklich wissen wollen. Sprich den Nutzer mit Namen an, wie ein vertrauenswürdiger Berater — kein Füllmaterial.
 
 Nutzer: ${userName}
 Vollständige Daten (9 Typen): ${allScoresZh}
 Hauptkonstitution: ${primaryName}
 
-Schreibe in dieser Reihenfolge als natürliche Absätze (keine nummerierten Überschriften):
+Absatz 1 — Wie ist mein aktueller Gesundheitszustand?
+Beschreibe auf Basis aller 9 Werte den aktuellen Körperzustand: Grad des Ungleichgewichts, was die erhöhten Werte zusammen bedeuten, was diese Kombination über den aktuellen Zustand aussagt. Klar und direkt.
 
-①Statuseinschätzung: Sag klar, ob diese Kombination leicht, mittel oder deutlich aus dem Gleichgewicht ist. Beschreibe das Kernmerkmal dieser spezifischen KOMBINATION.
-②Der "Aha-Moment": 2-3 spezifische Symptome dieser Kombination mit Tageszeit oder Kontext. Nutze "Das ist keine Faulheit oder schlechter Schlaf — sondern..." Lass den Nutzer denken "Woher wusstest du das?"
-③Was du wahrscheinlich falsch machst: eine spezifische Gewohnheit, die der Nutzer für gut hält, aber für seine Kombination kontraproduktiv ist, mit Erklärung warum.
-④Was passiert, wenn nichts sich ändert: realistische Tendenzen für 1-2 Jahre, welches System zuerst belastet wird. Schluss: "Die gute Nachricht ist: Diese Konstitution lässt sich verändern."
-⑤Die wertvollste Maßnahme: eine konkrete Aktion (was, wann, wie lange, warum gerade für diese Kombination). Schluss: "Nach 21 Tagen wirst du zuerst bemerken..."
+Absatz 2 — Warum bin ich so?
+Aus zwei Perspektiven: ①der Mechanismus, warum diese Werte zusammen erhöht sind; ②was das über die alltäglichen Beschwerden erklärt — 2-3 konkrete Symptome mit Tageszeit oder Kontext. "Das ist kein persönliches Versagen — sondern..." für einen echten Aha-Moment.
 
-Stil: direkte Ansprache, sicherer Ton, keine Floskeln, 300-380 Wörter`,
+Absatz 3 — Was soll ich tun?
+①Eine konkrete Sache für heute (was + wann + warum für diese Kombination wirksam)
+②Einen Fehler aufhören zu machen (etwas, das sie für gut halten, aber gegen ihren Typ wirkt — mit Erklärung)
+③Wie lange bis zur Verbesserung (realistische Erwartung + was zuerst spürbar wird)
 
-    fr: `Tu es un conseiller en santé TCM direct et perspicace. Rédige en Français un rapport qui suit le vrai cheminement mental de l'utilisateur.
+3 Absätze, keine Überschriften, keine Nummerierung, keine Allgemeinplätze. 280-360 Wörter.`,
+
+    fr: `Tu es un conseiller en santé TCM expérimenté. Réponds en Français aux trois questions que les utilisateurs veulent vraiment savoir. Tutoie l'utilisateur, parle comme un conseiller de confiance — sans remplissage.
 
 Utilisateur: ${userName}
 Données complètes (9 types): ${allScoresZh}
 Constitution principale: ${primaryName}
 
-Écris dans cet ordre en paragraphes naturels (sans titres numérotés):
+Paragraphe 1 — Quel est mon état de santé actuel?
+Sur la base des 9 données, décris l'état corporel actuel: degré global de déséquilibre, ce que les scores élevés signifient ensemble, ce que cette combinaison indique sur l'état du corps maintenant. Clair et direct.
 
-①État actuel: dis clairement si cette combinaison est légèrement, modérément ou significativement déséquilibrée. Décris la caractéristique centrale de cette COMBINAISON spécifique.
-②Le moment "eureka": 2-3 symptômes spécifiques de cette combinaison avec heure ou contexte. Utilise "Ce n'est pas de la paresse ni un mauvais sommeil — c'est parce que..." Fais penser l'utilisateur "Comment tu savais ça?"
-③Ce que tu fais probablement de travers: une habitude spécifique que l'utilisateur croit bonne mais qui est contre-productive pour sa combinaison exacte, avec explication.
-④Que se passe-t-il si rien ne change: tendances réalistes à 1-2 ans, quel système est touché en premier. Conclure avec "La bonne nouvelle: cette constitution peut évoluer."
-⑤L'action la plus précieuse: une action concrète (quoi, quand, combien de temps, pourquoi ça fonctionne pour cette combinaison). Conclure avec "Au bout de 21 jours, la première chose que tu remarqueras..."
+Paragraphe 2 — Pourquoi suis-je ainsi?
+Sous deux angles: ①le mécanisme expliquant pourquoi ces scores sont élevés ensemble (comment ils se renforcent); ②ce que cela explique sur l'expérience quotidienne — 2-3 symptômes spécifiques avec heure ou contexte. "Ce n'est pas un défaut — c'est parce que..." pour créer un vrai moment de compréhension.
 
-Style: appel par le prénom, ton direct et assuré, sans généralités, 300-380 mots`
+Paragraphe 3 — Que dois-je faire?
+①Une chose concrète à faire aujourd'hui (quoi + quand + pourquoi ça marche pour cette combinaison)
+②Une erreur à cesser (quelque chose qu'ils pensent bon mais qui va à l'encontre de leur type — avec explication)
+③Combien de temps avant d'amélioration (attente réaliste + ce qu'ils remarqueront en premier)
+
+3 paragraphes, sans titres ni numérotation, sans conseils génériques. 280-360 mots.`
   };
   var prompt = singlePromptMap[lang] || singlePromptMap.en;
   var NL='\n\n';
