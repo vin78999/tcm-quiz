@@ -381,6 +381,46 @@ tr:hover td{background:rgba(201,168,76,.03);}
   /* 免责声明 */
   #disclaimer-text,#tongue-disclaimer-text{font-size:12px!important;}
 }
+/* ── Phase 3B: 管理员后台 ── */
+#admin-overlay{position:fixed;inset:0;background:rgba(6,4,1,.96);z-index:99999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#admin-overlay.show{display:flex;}
+.admin-panel{width:min(92vw,560px);background:linear-gradient(160deg,#1C1710,#0F0C07);border:1px solid var(--border2);border-radius:4px;padding:2rem;max-height:90vh;overflow-y:auto;position:relative;}
+.admin-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold3),var(--gold),var(--gold3),transparent);}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.admin-title{font-size:11px;letter-spacing:.4em;color:var(--gold3);text-transform:uppercase;}
+.admin-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;}
+.admin-close:hover{color:var(--gold);}
+.admin-pin-wrap{text-align:center;padding:1rem 0 .5rem;}
+.admin-pin-title{font-size:11px;letter-spacing:.25em;color:var(--text3);margin-bottom:1rem;}
+.admin-pin-input{width:140px;text-align:center;background:var(--ink2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-family:inherit;font-size:18px;letter-spacing:.4em;padding:10px 12px;outline:none;}
+.admin-pin-input:focus{border-color:var(--gold3);}
+.admin-pin-btn{margin-top:.75rem;display:block;width:140px;margin-left:auto;margin-right:auto;padding:8px;font-size:11px;letter-spacing:.2em;border:1px solid var(--gold3);background:transparent;color:var(--gold);font-family:inherit;cursor:pointer;border-radius:2px;}
+.admin-pin-err{font-size:11px;color:var(--red);margin-top:.5rem;min-height:16px;text-align:center;}
+.admin-body{display:none;}
+.admin-body.show{display:block;}
+.admin-section-title{font-size:10px;letter-spacing:.3em;color:var(--gold3);text-transform:uppercase;margin:1.25rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);}
+.admin-form-row{display:flex;gap:.5rem;margin-bottom:.5rem;}
+.admin-input{flex:1;background:var(--ink2);border:1px solid var(--border2);border-radius:2px;color:var(--text);font-family:inherit;font-size:12px;padding:7px 10px;outline:none;letter-spacing:.03em;}
+.admin-input:focus{border-color:var(--gold3);}
+.admin-select{background:var(--ink2);border:1px solid var(--border2);border-radius:2px;color:var(--text2);font-family:inherit;font-size:12px;padding:7px 10px;outline:none;cursor:pointer;}
+.admin-btn-create{width:100%;padding:9px;font-size:11px;letter-spacing:.2em;border:1px solid var(--gold3);background:rgba(201,168,76,.08);color:var(--gold);font-family:inherit;cursor:pointer;border-radius:2px;margin-top:.25rem;transition:background .15s;}
+.admin-btn-create:hover{background:rgba(201,168,76,.18);}
+.admin-msg{font-size:11px;min-height:18px;margin-top:.4rem;text-align:center;letter-spacing:.04em;}
+.admin-msg.ok{color:var(--green);}
+.admin-msg.err{color:var(--red);}
+.admin-accounts{margin-top:.5rem;}
+.admin-acct-row{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;background:var(--ink2);border:1px solid var(--border);border-radius:2px;margin-bottom:.4rem;font-size:11px;}
+.admin-acct-email{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.admin-acct-days{padding:2px 8px;border-radius:2px;font-size:10px;letter-spacing:.06em;}
+.admin-acct-days.ok{border:1px solid var(--green);color:var(--green);}
+.admin-acct-days.warn{border:1px solid #C9A84C;color:#C9A84C;}
+.admin-acct-days.exp{border:1px solid var(--red);color:var(--red);}
+.admin-acct-copy{font-size:10px;padding:2px 8px;border:1px solid var(--border2);background:transparent;color:var(--text3);border-radius:2px;cursor:pointer;white-space:nowrap;}
+.admin-acct-copy:hover{border-color:var(--gold3);color:var(--gold);}
+.admin-acct-del{font-size:10px;padding:2px 6px;border:1px solid rgba(224,80,64,.3);background:transparent;color:rgba(224,80,64,.6);border-radius:2px;cursor:pointer;}
+.admin-acct-del:hover{border-color:var(--red);color:var(--red);}
+.admin-empty{font-size:11px;color:var(--text3);text-align:center;padding:1rem;letter-spacing:.06em;}
+
 </style>
 </head>
 <body>
@@ -392,10 +432,46 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B40（Phase 3A: 小红书分享图，体质配色3:4竖版卡片）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.21-B41（Phase 3B: 管理员后台 + Phase 3C: 账号到期友好提示）</span>
 </div>
 
 <div id="result-ambient"></div>
+
+<div id="admin-overlay">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <div class="admin-title">✦ 管理员后台</div>
+      <button class="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <!-- PIN 解锁 -->
+    <div class="admin-pin-wrap" id="admin-pin-wrap">
+      <div class="admin-pin-title">请输入管理员 PIN</div>
+      <input type="password" class="admin-pin-input" id="admin-pin-input" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')verifyAdminPin()">
+      <button class="admin-pin-btn" onclick="verifyAdminPin()">确认</button>
+      <div class="admin-pin-err" id="admin-pin-err"></div>
+    </div>
+    <!-- 主体内容（PIN 验证后显示） -->
+    <div class="admin-body" id="admin-body">
+      <div class="admin-section-title">创建新账号</div>
+      <div class="admin-form-row">
+        <input type="email" class="admin-input" id="adm-email" placeholder="客户邮箱">
+        <input type="password" class="admin-input" id="adm-pass" placeholder="临时密码（≥6位）" style="max-width:160px;">
+      </div>
+      <div class="admin-form-row">
+        <select class="admin-select" id="adm-months">
+          <option value="1">1 个月</option>
+          <option value="3" selected>3 个月</option>
+          <option value="6">6 个月</option>
+          <option value="12">12 个月</option>
+        </select>
+        <button class="admin-btn-create" onclick="adminCreateAccount()">✦ 创建账号</button>
+      </div>
+      <div class="admin-msg" id="adm-msg"></div>
+      <div class="admin-section-title">账号列表</div>
+      <div class="admin-accounts" id="admin-accounts-list"></div>
+    </div>
+  </div>
+</div>
 
 <div id="reveal-overlay">
   <div class="reveal-ring">
@@ -411,7 +487,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <div class="intro-bg"></div>
   <div class="intro-deco"></div>
   <div class="intro-content">
-    <div class="seal"><div class="seal-inner" id="seal-text">体质</div></div>
+    <div class="seal" id="seal-logo" onclick="sealAdminTap()"><div class="seal-inner" id="seal-text">体质</div></div>
     <div class="eyebrow" id="eyebrow-text">传统中医体质学</div>
     <h1 class="intro-title"><em id="title1-text">体质</em> <span id="title2-text">检测系统</span></h1>
     <div class="intro-sub" id="subtitle-text">九种体质 · 专业评估 · 个人化建议</div>
@@ -815,6 +891,8 @@ const TYPE_NAMES={
 };
 const TYPE_EN=['Balanced','Qi Deficiency','Yang Deficiency','Yin Deficiency','Phlegm-Dampness','Damp-Heat','Blood Stasis','Qi Stagnation','Special Diathesis'];
 var XHS_HANDLE='@你的小红书账号';
+var ADMIN_PIN='8888';
+var _sealTaps=0;var _sealTimer=null;
 var XHS_WATERMARK_CHARS=['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
 var XHS_COLORS=['#5A9A6A','#C9A84C','#4A8AB0','#C97A4C','#4A9A8A','#C96A4C','#8A4A4A','#7A5A9A','#4A7AAA'];
 
@@ -1087,7 +1165,13 @@ async function doCloudLogin(){
   try{
     var r=await _fetchWithTimeout(CN_AUTH+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},15000);
     var d=await r.json();
-    if(d.error){_authStatus('登录失败：'+d.error,'err');_authBtns(false);return;}
+    if(d.error){
+      var errMsg='登录失败：'+d.error;
+      if(d.error.indexOf('INVALID_LOGIN_CREDENTIALS')>=0||d.error.indexOf('INVALID_PASSWORD')>=0||d.error.indexOf('EMAIL_NOT_FOUND')>=0)errMsg='邮箱或密码错误，请重试';
+      if(d.error.indexOf('USER_DISABLED')>=0)errMsg='⚠ 账号已到期或被停用，请联系管理员续费';
+      if(d.error.indexOf('TOO_MANY_ATTEMPTS')>=0)errMsg='登录尝试过多，请稍后再试';
+      _authStatus(errMsg,'err');_authBtns(false);return;
+    }
     if(!d.uid||!d.idToken||!d.email){_authStatus('登录失败：服务器异常（'+JSON.stringify(d)+'）','err');_authBtns(false);return;}
     localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
     _showLoggedIn(d.email);
@@ -1660,6 +1744,110 @@ function showResult(result, skipAI){
 
 
 // ── 截图下载（用打印窗口截图方式）──
+function sealAdminTap(){
+  _sealTaps++;
+  if(_sealTimer)clearTimeout(_sealTimer);
+  if(_sealTaps>=5){_sealTaps=0;openAdmin();return;}
+  _sealTimer=setTimeout(function(){_sealTaps=0;},2000);
+}
+function openAdmin(){
+  var ov=document.getElementById('admin-overlay');
+  if(!ov)return;
+  ov.classList.add('show');
+  document.getElementById('admin-pin-wrap').style.display='block';
+  document.getElementById('admin-body').classList.remove('show');
+  document.getElementById('admin-pin-input').value='';
+  document.getElementById('admin-pin-err').textContent='';
+  setTimeout(function(){document.getElementById('admin-pin-input').focus();},100);
+}
+function closeAdmin(){
+  var ov=document.getElementById('admin-overlay');
+  if(ov)ov.classList.remove('show');
+}
+function verifyAdminPin(){
+  var pin=document.getElementById('admin-pin-input').value;
+  if(pin===ADMIN_PIN){
+    document.getElementById('admin-pin-wrap').style.display='none';
+    document.getElementById('admin-body').classList.add('show');
+    adminRenderAccounts();
+  } else {
+    document.getElementById('admin-pin-err').textContent='PIN 错误，请重试';
+    document.getElementById('admin-pin-input').value='';
+    document.getElementById('admin-pin-input').focus();
+  }
+}
+function adminGetAccounts(){
+  try{return JSON.parse(localStorage.getItem('_tcm_admin_accts')||'[]');}catch(e){return [];}
+}
+function adminSaveAccounts(arr){
+  localStorage.setItem('_tcm_admin_accts',JSON.stringify(arr));
+}
+function adminRenderAccounts(){
+  var list=document.getElementById('admin-accounts-list');
+  if(!list)return;
+  var accts=adminGetAccounts();
+  if(!accts.length){list.innerHTML='<div class="admin-empty">暂无账号记录</div>';return;}
+  list.innerHTML='';
+  var now=Date.now();
+  accts.slice().reverse().forEach(function(a,revIdx){
+    var idx=accts.length-1-revIdx;
+    var msLeft=a.expiresAt-now;
+    var daysLeft=Math.ceil(msLeft/86400000);
+    var cls=daysLeft>14?'ok':daysLeft>0?'warn':'exp';
+    var label=daysLeft>0?daysLeft+'天':'已到期';
+    var row=document.createElement('div');row.className='admin-acct-row';
+    row.innerHTML=
+      '<div class="admin-acct-email" title="'+a.email+'">'+a.email+'</div>'+
+      '<div class="admin-acct-days '+cls+'">'+label+'</div>'+
+      '<button class="admin-acct-copy" onclick="adminCopyCredentials('+idx+')">复制</button>'+
+      '<button class="admin-acct-del" onclick="adminDeleteAccount('+idx+')">删</button>';
+    list.appendChild(row);
+  });
+}
+function adminCopyCredentials(idx){
+  var accts=adminGetAccounts();
+  var a=accts[idx];if(!a)return;
+  var exp=new Date(a.expiresAt).toLocaleDateString('zh-CN');
+  var text='📱 中医体质检测账号\n邮箱：'+a.email+'\n密码：'+a.password+'\n有效期至：'+exp+'\n🔗 https://vin78999.github.io/tcm-quiz/';
+  navigator.clipboard.writeText(text).then(function(){
+    var msg=document.getElementById('adm-msg');
+    msg.textContent='✓ 已复制到剪贴板';msg.className='admin-msg ok';
+    setTimeout(function(){msg.textContent='';},2500);
+  });
+}
+function adminDeleteAccount(idx){
+  var accts=adminGetAccounts();
+  accts.splice(idx,1);
+  adminSaveAccounts(accts);
+  adminRenderAccounts();
+}
+async function adminCreateAccount(){
+  var email=document.getElementById('adm-email').value.trim();
+  var pass=document.getElementById('adm-pass').value;
+  var months=parseInt(document.getElementById('adm-months').value)||3;
+  var msg=document.getElementById('adm-msg');
+  if(!email||!pass){msg.textContent='请填写邮箱和密码';msg.className='admin-msg err';return;}
+  if(pass.length<6){msg.textContent='密码至少 6 位';msg.className='admin-msg err';return;}
+  msg.textContent='创建中，请稍候…';msg.className='admin-msg';
+  try{
+    var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
+    var d=await r.json();
+    if(d.error){msg.textContent='创建失败：'+d.error;msg.className='admin-msg err';return;}
+    if(!d.uid){msg.textContent='创建失败：'+JSON.stringify(d);msg.className='admin-msg err';return;}
+    var expiresAt=Date.now()+months*30*86400000;
+    var accts=adminGetAccounts();
+    accts.push({uid:d.uid,email:email,password:pass,createdAt:Date.now(),months:months,expiresAt:expiresAt});
+    adminSaveAccounts(accts);
+    msg.textContent='✓ 账号创建成功！有效期 '+months+' 个月';msg.className='admin-msg ok';
+    document.getElementById('adm-email').value='';
+    document.getElementById('adm-pass').value='';
+    adminRenderAccounts();
+  }catch(e){
+    msg.textContent=e.name==='AbortError'?'超时，请重试':('网络错误：'+e.message);
+    msg.className='admin-msg err';
+  }
+}
+
 function buildXHSCard(result){
   var card=document.getElementById('xhs-share-card');
   if(!card||!result)return;
