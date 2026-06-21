@@ -348,7 +348,7 @@ tr:hover td{background:rgba(201,168,76,.03);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B31（AI报告深化：三段式+字数420-500+饮食建议+时间预期+深度标准）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.20-B32（修复：历史记录查看时自动恢复舌诊答案）</span>
 </div>
 
 <div id="reveal-overlay">
@@ -1613,7 +1613,7 @@ function renderHistory(){
     const bars=sorted.map((x,ri)=>`<div class="hc-bar${ri===0?' top':''}" style="height:${Math.max(3,Math.round(x.s/maxS*36))}px"></div>`).join('');
     const div=document.createElement('div');div.className='history-card';
     div.innerHTML=`<div><div class="hc-type">${rec.primaryType||'—'}</div><div class="hc-date">${new Date(rec.date).toLocaleDateString()}</div></div><div class="hc-bars">${bars}</div><span style="color:var(--text3);font-size:18px;">›</span>`;
-    div.onclick=()=>{const pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});};
+    div.onclick=()=>{const pi=TYPE_NAMES.zh.indexOf(rec.primaryZh||rec.primaryType);if(rec.tongueAnswers&&rec.tongueAnswers.length===6){tongueAnswers=[...rec.tongueAnswers];}else{tongueAnswers=new Array(6).fill(0);}showResult({pcts:rec.scores,primaryIdx:pi>=0?pi:0,answers:rec.answers||[]});};
     el.appendChild(div);
   });
 }
