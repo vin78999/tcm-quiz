@@ -1,0 +1,4 @@
+function/*.zip
+function/.env
+function/.env.*
+!function/.env.example
