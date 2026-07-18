@@ -12,6 +12,7 @@ const DS_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 const CONFIG = {
   deepseekKey: process.env.DEEPSEEK_KEY || process.env.DS_KEY || '',
+  deepseekModel: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
   jwtSecret: process.env.JWT_SECRET || '',
   adminPasswordHash: process.env.ADMIN_PASSWORD_HASH || '',
   ossBucket: process.env.OSS_BUCKET || '',
@@ -444,7 +445,7 @@ function createHandler(options = {}) {
         const upstream = await fetchImpl(DS_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + config.deepseekKey },
-          body: JSON.stringify({ model: 'deepseek-chat', messages: body.messages, max_tokens: maxTokens, temperature: 0.7, stream: true }),
+          body: JSON.stringify({ model: config.deepseekModel, messages: body.messages, max_tokens: maxTokens, temperature: 0.7, stream: true }),
         });
         if (!upstream.ok) {
           log('ai_upstream_error', { requestId, status: upstream.status });
