@@ -440,7 +440,7 @@ tr:hover td{background:rgba(63,111,125,.04);}
   <button class="lang-btn" onclick="setLang('de')">DE</button>
   <button class="lang-btn" onclick="setLang('fr')">FR</button>
   <button class="lang-btn" onclick="setLang('ja')">日本語</button>
-  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.06.21-B43（修复历史滚轮卡片模糊）</span>
+  <span style="font-size:9px;opacity:.4;margin-left:auto;padding-right:4px;align-self:center;letter-spacing:.05em;">v2026.07.17-B44（阿里云安全升级）</span>
 </div>
 
 <div id="result-ambient"></div>
@@ -451,19 +451,19 @@ tr:hover td{background:rgba(63,111,125,.04);}
       <div class="admin-title">✦ 管理员后台</div>
       <button class="admin-close" onclick="closeAdmin()">✕</button>
     </div>
-    <!-- PIN 解锁 -->
+    <!-- 服务器端管理员验证 -->
     <div class="admin-pin-wrap" id="admin-pin-wrap">
-      <div class="admin-pin-title">请输入管理员 PIN</div>
-      <input type="password" class="admin-pin-input" id="admin-pin-input" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')verifyAdminPin()">
+      <div class="admin-pin-title">请输入管理员密码</div>
+      <input type="password" class="admin-pin-input" id="admin-pin-input" maxlength="64" placeholder="管理员密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')verifyAdminPin()">
       <button class="admin-pin-btn" onclick="verifyAdminPin()">确认</button>
       <div class="admin-pin-err" id="admin-pin-err"></div>
     </div>
-    <!-- 主体内容（PIN 验证后显示） -->
+    <!-- 主体内容（服务器验证后显示） -->
     <div class="admin-body" id="admin-body">
       <div class="admin-section-title">创建新账号</div>
       <div class="admin-form-row">
         <input type="email" class="admin-input" id="adm-email" placeholder="客户邮箱">
-        <input type="password" class="admin-input" id="adm-pass" placeholder="临时密码（≥6位）" style="max-width:160px;">
+        <input type="password" class="admin-input" id="adm-pass" placeholder="初始密码（≥10位）" style="max-width:160px;">
       </div>
       <div class="admin-form-row">
         <select class="admin-select" id="adm-months">
@@ -512,11 +512,12 @@ tr:hover td{background:rgba(63,111,125,.04);}
       <!-- 未登录：显示登录注册表单 -->
       <div class="auth-fields" id="auth-fields">
         <input type="email" id="auth-email" class="auth-input" placeholder="邮箱">
-        <input type="password" id="auth-password" class="auth-input" placeholder="密码（至少6位）">
+        <input type="password" id="auth-password" class="auth-input" placeholder="密码">
         <div class="auth-row">
           <button class="auth-btn" onclick="doCloudLogin()">登录</button>
-          <button class="auth-btn" onclick="doCloudRegister()">注册</button>
+          <button class="auth-btn" onclick="doCloudRegister()">申请账号</button>
         </div>
+        <div style="font-size:9px;line-height:1.6;color:var(--text3);margin-top:.55rem;">隐私说明：云端同步会保存邮箱与检测记录；密码仅以不可逆加密形式保存。可联系管理员停用账号或永久删除云端数据。</div>
         <div class="auth-status" id="auth-status"></div>
       </div>
       <!-- 已登录：显示同步状态 + 操作按钮 -->
@@ -902,7 +903,8 @@ const TYPE_NAMES={
 };
 const TYPE_EN=['Balanced','Qi Deficiency','Yang Deficiency','Yin Deficiency','Phlegm-Dampness','Damp-Heat','Blood Stasis','Qi Stagnation','Special Diathesis'];
 var XHS_HANDLE='@你的小红书账号';
-var ADMIN_PIN='8888';
+var _adminToken=sessionStorage.getItem('_tcm_admin_token')||'';
+var _adminAccounts=[];
 var _sealTaps=0;var _sealTimer=null;
 var XHS_WATERMARK_CHARS=['平','氣','陽','陰','濕','熱','瘀','郁','禀'];
 var XHS_COLORS=['#4a8a5a','#3f6f7d','#4a78b0','#b07040','#3a8a7a','#a05040','#7a4050','#6058a0','#4a7aaa'];
@@ -1152,21 +1154,7 @@ function _fetchWithTimeout(url,opts,ms){
   return fetch(url,Object.assign({},opts,{signal:ctrl.signal})).finally(function(){clearTimeout(t);});
 }
 async function doCloudRegister(){
-  var email=document.getElementById('auth-email').value.trim();
-  var pass=document.getElementById('auth-password').value;
-  if(!email||!pass){_authStatus('请填写邮箱和密码','err');return;}
-  _authBtns(true);_authStatus('注册中，请稍候（约5-10秒）…');
-  try{
-    var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
-    var d=await r.json();
-    if(d.error){_authStatus('注册失败：'+d.error,'err');_authBtns(false);return;}
-    if(!d.uid||!d.idToken||!d.email){_authStatus('注册失败：服务器异常（'+JSON.stringify(d)+'）','err');_authBtns(false);return;}
-    localStorage.setItem('_tcm_auth',JSON.stringify({uid:d.uid,idToken:d.idToken,email:d.email}));
-    _showLoggedIn(d.email);
-    _authStatus('✓ 注册成功！现在可点击「立即同步」上传数据','ok');
-  }catch(e){
-    _authStatus(e.name==='AbortError'?'超时，请检查网络后重试':'网络错误，请重试','err');
-  }finally{_authBtns(false);}
+  _authStatus('账号由管理员开通，请联系管理员获取登录邮箱和初始密码。','err');
 }
 async function doCloudLogin(){
   var email=document.getElementById('auth-email').value.trim();
@@ -1179,7 +1167,8 @@ async function doCloudLogin(){
     if(d.error){
       var errMsg='登录失败：'+d.error;
       if(d.error.indexOf('INVALID_LOGIN_CREDENTIALS')>=0||d.error.indexOf('INVALID_PASSWORD')>=0||d.error.indexOf('EMAIL_NOT_FOUND')>=0)errMsg='邮箱或密码错误，请重试';
-      if(d.error.indexOf('USER_DISABLED')>=0)errMsg='⚠ 账号已到期或被停用，请联系管理员续费';
+      if(d.error.indexOf('INVALID_CREDENTIALS')>=0)errMsg='邮箱或密码错误，请重试';
+      if(d.error.indexOf('USER_DISABLED')>=0||d.error.indexOf('USER_EXPIRED')>=0)errMsg='⚠ 账号已到期或被停用，请联系管理员续费';
       if(d.error.indexOf('TOO_MANY_ATTEMPTS')>=0)errMsg='登录尝试过多，请稍后再试';
       _authStatus(errMsg,'err');_authBtns(false);return;
     }
@@ -1221,7 +1210,7 @@ async function _syncLoad(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
     if(!auth||!auth.uid||!auth.idToken)return 0;
-    var r=await _fetchWithTimeout(CN_AUTH+'/sync/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken})},15000);
+    var r=await _fetchWithTimeout(CN_AUTH+'/sync/load',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.idToken},body:JSON.stringify({uid:auth.uid})},15000);
     var d=await r.json();
     if(d.records&&Array.isArray(d.records)&&d.records.length>0){
       var localIds=new Set(records.map(function(x){return x.id;}));
@@ -1238,7 +1227,7 @@ async function _syncSave(){
   try{
     var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
     if(!auth||!auth.uid||!auth.idToken)return;
-    await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:auth.uid,idToken:auth.idToken,records:records,userName:userName,lang:lang})},15000);
+    await _fetchWithTimeout(CN_AUTH+'/sync/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.idToken},body:JSON.stringify({uid:auth.uid,records:records,userName:userName,lang:lang})},15000);
   }catch(e){}
 }
 // 更新主页面顶部的云端账号徽标
@@ -1257,7 +1246,7 @@ function _updateSyncBadge(){
 (async function(){
   var auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');
   // 清除无效的登录状态（空对象或字段缺失）
-  if(!auth||!auth.uid||!auth.idToken||!auth.email){
+  if(!auth||!auth.uid||!auth.idToken||!auth.email||auth.idToken.indexOf('.')<0){
     if(auth)localStorage.removeItem('_tcm_auth');
     return;
   }
@@ -1765,71 +1754,96 @@ function openAdmin(){
   var ov=document.getElementById('admin-overlay');
   if(!ov)return;
   ov.classList.add('show');
-  document.getElementById('admin-pin-wrap').style.display='block';
-  document.getElementById('admin-body').classList.remove('show');
+  document.getElementById('admin-pin-wrap').style.display=_adminToken?'none':'block';
+  document.getElementById('admin-body').classList.toggle('show',!!_adminToken);
   document.getElementById('admin-pin-input').value='';
   document.getElementById('admin-pin-err').textContent='';
-  setTimeout(function(){document.getElementById('admin-pin-input').focus();},100);
+  if(_adminToken){adminRenderAccounts();}
+  else setTimeout(function(){document.getElementById('admin-pin-input').focus();},100);
 }
 function closeAdmin(){
   var ov=document.getElementById('admin-overlay');
   if(ov)ov.classList.remove('show');
 }
-function verifyAdminPin(){
-  var pin=document.getElementById('admin-pin-input').value;
-  if(pin===ADMIN_PIN){
+async function verifyAdminPin(){
+  var password=document.getElementById('admin-pin-input').value;
+  var err=document.getElementById('admin-pin-err');
+  if(!password){err.textContent='请输入管理员密码';return;}
+  err.textContent='验证中…';
+  try{
+    var r=await _fetchWithTimeout(CN_AUTH+'/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:password})},15000);
+    var d=await r.json();
+    if(!r.ok||!d.token){throw new Error(d.error||'验证失败');}
+    _adminToken=d.token;
+    sessionStorage.setItem('_tcm_admin_token',_adminToken);
     document.getElementById('admin-pin-wrap').style.display='none';
     document.getElementById('admin-body').classList.add('show');
-    adminRenderAccounts();
-  } else {
-    document.getElementById('admin-pin-err').textContent='PIN 错误，请重试';
+    await adminMigrateLegacy();
+    await adminRenderAccounts();
+  }catch(e){
+    err.textContent=e.message==='TOO_MANY_ATTEMPTS'?'尝试次数过多，请稍后再试':'管理员密码错误';
     document.getElementById('admin-pin-input').value='';
     document.getElementById('admin-pin-input').focus();
   }
 }
-function adminGetAccounts(){
-  try{return JSON.parse(localStorage.getItem('_tcm_admin_accts')||'[]');}catch(e){return [];}
+async function _adminFetch(path,opts){
+  opts=opts||{};
+  opts.headers=Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+_adminToken},opts.headers||{});
+  var r=await _fetchWithTimeout(CN_AUTH+path,opts,20000);
+  var d=await r.json();
+  if(r.status===401){_adminToken='';sessionStorage.removeItem('_tcm_admin_token');throw new Error('管理员登录已过期，请关闭后重新登录');}
+  if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+  return d;
 }
-function adminSaveAccounts(arr){
-  localStorage.setItem('_tcm_admin_accts',JSON.stringify(arr));
+function _adminEsc(value){
+  return String(value||'').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});
 }
-function adminRenderAccounts(){
+async function adminMigrateLegacy(){
+  var legacy=[];
+  try{legacy=JSON.parse(localStorage.getItem('_tcm_admin_accts')||'[]');}catch(e){}
+  if(!legacy.length)return;
+  var safe=legacy.map(function(a){return {uid:a.uid,email:a.email,createdAt:a.createdAt,expiresAt:a.expiresAt};});
+  await _adminFetch('/admin/accounts/migrate',{method:'POST',body:JSON.stringify({accounts:safe})});
+  localStorage.removeItem('_tcm_admin_accts');
+}
+async function adminRenderAccounts(){
   var list=document.getElementById('admin-accounts-list');
   if(!list)return;
-  var accts=adminGetAccounts();
-  if(!accts.length){list.innerHTML='<div class="admin-empty">暂无账号记录</div>';return;}
-  list.innerHTML='';
-  var now=Date.now();
-  accts.slice().reverse().forEach(function(a,revIdx){
-    var idx=accts.length-1-revIdx;
-    var msLeft=a.expiresAt-now;
-    var daysLeft=Math.ceil(msLeft/86400000);
-    var cls=daysLeft>14?'ok':daysLeft>0?'warn':'exp';
-    var label=daysLeft>0?daysLeft+'天':'已到期';
-    var row=document.createElement('div');row.className='admin-acct-row';
-    row.innerHTML=
-      '<div class="admin-acct-email" title="'+a.email+'">'+a.email+'</div>'+
-      '<div class="admin-acct-days '+cls+'">'+label+'</div>'+
-      '<button class="admin-acct-copy" onclick="adminCopyCredentials('+idx+')">复制</button>'+
-      '<button class="admin-acct-del" onclick="adminDeleteAccount('+idx+')">删</button>';
-    list.appendChild(row);
-  });
+  list.innerHTML='<div class="admin-empty">载入中…</div>';
+  try{
+    var d=await _adminFetch('/admin/accounts',{method:'GET'});
+    _adminAccounts=d.accounts||[];
+    if(!_adminAccounts.length){list.innerHTML='<div class="admin-empty">暂无账号记录</div>';return;}
+    list.innerHTML='';
+    var now=Date.now();
+    _adminAccounts.slice().reverse().forEach(function(a){
+      var daysLeft=Math.ceil(((a.expiresAt||0)-now)/86400000);
+      var cls=a.disabled||daysLeft<=0?'exp':daysLeft>14?'ok':'warn';
+      var label=a.disabled?'已停用':daysLeft>0?daysLeft+'天':'已到期';
+      var row=document.createElement('div');row.className='admin-acct-row';
+      row.innerHTML='<div class="admin-acct-email" title="'+_adminEsc(a.email)+'">'+_adminEsc(a.email)+'</div>'+
+        '<div class="admin-acct-days '+cls+'">'+label+'</div>'+
+        '<button class="admin-acct-copy" onclick="adminRenewAccount(\''+a.uid+'\')">续期</button>'+
+        '<button class="admin-acct-del" onclick="adminToggleAccount(\''+a.uid+'\','+(!a.disabled)+')">'+(a.disabled?'启用':'停用')+'</button>'+
+        '<button class="admin-acct-del" onclick="adminDeleteAccount(\''+a.uid+'\')">删除</button>';
+      list.appendChild(row);
+    });
+  }catch(e){list.innerHTML='<div class="admin-empty">'+_adminEsc(e.message)+'</div>';}
 }
-function adminCopyCredentials(idx){
-  var accts=adminGetAccounts();
-  var a=accts[idx];if(!a)return;
-  var exp=new Date(a.expiresAt).toLocaleDateString('zh-CN');
-  var text='📱 中医体质检测账号\n邮箱：'+a.email+'\n密码：'+a.password+'\n有效期至：'+exp+'\n🔗 https://vin78999.github.io/tcm-quiz/';
-  navigator.clipboard.writeText(text).then(function(){
-    var msg=document.getElementById('adm-msg');
-    msg.textContent='✓ 已复制到剪贴板';msg.className='admin-msg ok';
-    setTimeout(function(){msg.textContent='';},2500);
-  });
+async function adminRenewAccount(uid){
+  var months=parseInt(prompt('续期几个月？','3'));
+  if(!months||months<1)return;
+  await _adminFetch('/admin/accounts/renew',{method:'POST',body:JSON.stringify({uid:uid,months:months})});
+  adminRenderAccounts();
 }
-function adminDeleteAccount(idx){
-  var accts=adminGetAccounts();
-  accts.splice(idx,1);
-  adminSaveAccounts(accts);
+async function adminToggleAccount(uid,disabled){
+  if(!confirm(disabled?'确认停用这个账号？':'确认重新启用这个账号？'))return;
+  await _adminFetch('/admin/accounts/disable',{method:'POST',body:JSON.stringify({uid:uid,disabled:disabled})});
+  adminRenderAccounts();
+}
+async function adminDeleteAccount(uid){
+  if(prompt('永久删除账号及其云端检测数据。请输入 DELETE 确认：')!=='DELETE')return;
+  await _adminFetch('/admin/accounts/delete',{method:'POST',body:JSON.stringify({uid:uid})});
   adminRenderAccounts();
 }
 async function adminCreateAccount(){
@@ -1838,21 +1852,18 @@ async function adminCreateAccount(){
   var months=parseInt(document.getElementById('adm-months').value)||3;
   var msg=document.getElementById('adm-msg');
   if(!email||!pass){msg.textContent='请填写邮箱和密码';msg.className='admin-msg err';return;}
-  if(pass.length<6){msg.textContent='密码至少 6 位';msg.className='admin-msg err';return;}
+  if(pass.length<10){msg.textContent='初始密码至少 10 位';msg.className='admin-msg err';return;}
   msg.textContent='创建中，请稍候…';msg.className='admin-msg';
   try{
-    var r=await _fetchWithTimeout(CN_AUTH+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})},20000);
-    var d=await r.json();
-    if(d.error){msg.textContent='创建失败：'+d.error;msg.className='admin-msg err';return;}
-    if(!d.uid){msg.textContent='创建失败：'+JSON.stringify(d);msg.className='admin-msg err';return;}
-    var expiresAt=Date.now()+months*30*86400000;
-    var accts=adminGetAccounts();
-    accts.push({uid:d.uid,email:email,password:pass,createdAt:Date.now(),months:months,expiresAt:expiresAt});
-    adminSaveAccounts(accts);
-    msg.textContent='✓ 账号创建成功！有效期 '+months+' 个月';msg.className='admin-msg ok';
+    var d=await _adminFetch('/admin/accounts/create',{method:'POST',body:JSON.stringify({email:email,password:pass,months:months})});
+    var exp=new Date(d.account.expiresAt).toLocaleDateString('zh-CN');
+    var text='📱 中医体质检测账号\n邮箱：'+email+'\n初始密码：'+pass+'\n有效期至：'+exp+'\n🔗 https://vin78999.github.io/tcm-quiz/';
+    try{await navigator.clipboard.writeText(text);msg.textContent='✓ 创建成功，登录资料已复制；密码不会被保存。';}
+    catch(copyErr){msg.textContent='✓ 创建成功。请现在记录初始密码，关闭后无法再次查看。';}
+    msg.className='admin-msg ok';
     document.getElementById('adm-email').value='';
     document.getElementById('adm-pass').value='';
-    adminRenderAccounts();
+    await adminRenderAccounts();
   }catch(e){
     msg.textContent=e.name==='AbortError'?'超时，请重试':('网络错误：'+e.message);
     msg.className='admin-msg err';
@@ -2351,6 +2362,9 @@ function renderCompare(){
 }
 
 
+function _escapeAIHtml(value){
+  return String(value||'').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});
+}
 function renderCmpReport(text, el){
   var allMarkers=[
     ['§进展§','📊 整体进展评估'],['§原因§','🔍 变化背后的原因'],['§方向§','🎯 下一阶段重点'],
@@ -2373,10 +2387,10 @@ function renderCmpReport(text, el){
     content=content.trim();
     html+='<div style="margin-bottom:1.5rem;">';
     html+='<div style="font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;font-weight:600;">'+title+'</div>';
-    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+content.replace(/\n/g,'<br>')+'</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+_escapeAIHtml(content).replace(/\n/g,'<br>')+'</div>';
     html+='</div>';
   });
-  el.innerHTML=html||text;
+  el.innerHTML=html||_escapeAIHtml(text);
 }
 
 function generateAIAnalysis(rA, rB, sA, sB, names, improved, worsen, primaryAIdx, primaryBIdx){
@@ -2533,8 +2547,8 @@ Sépare avec ces marqueurs sur leurs propres lignes:
   var isMobileCmp=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||('ontouchstart' in window&&window.screen.width<900);
   if(isMobileCmp){
     // ── 手机端对比：阿里云代理（支持中国大陆）→ Cloudflare备用 ──
-    var CN_PROXY2='https://tcm-ai-proxy-qpckqjvffh.cn-shenzhen.fcapp.run';
-    var CF_PROXY2='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev';
+    var CN_PROXY2=CN_AUTH;
+    var CF_PROXY2=CN_AUTH;
     var improvedShort=improved.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'改善';}).join('、')||'无';
     var worsenShort=worsen.slice(0,2).map(function(c){return c.name.replace(/体质|体質|質$/,'')+'需注意';}).join('、')||'无';
     var shortCmpPrompt='你是中医顾问。用'+promptLang+'为'+userName+'写一份简短体质变化报告，格式如下：第一行叫出名字说明体质变化（1句）；第二行说改善项让用户感受到什么变好了（1句）；第三行说需关注项会有什么日常影响（1句）；最后给出最重要的1条具体建议（1句）。避免生僻中医术语，建议具体可执行。直接输出正文，共4句。从'+typeA+'变为'+typeB+'，改善：'+improvedShort+'，需关注：'+worsenShort+'。';
@@ -2555,18 +2569,19 @@ Sépare avec ces marqueurs sur leurs propres lignes:
       mCmpAttempt++;
       var done2=false;
       var base2=useFallback?CF_PROXY2:CN_PROXY2;
-      var q2=btoa(unescape(encodeURIComponent(JSON.stringify([{role:'user',content:shortCmpPrompt}]))));
+      var auth2=null;try{auth2=JSON.parse(localStorage.getItem('_tcm_auth')||'null');}catch(e){}
+      if(!auth2||!auth2.idToken){showCmpErr('请先登录云端账号后使用 AI 分析');return;}
       var timer2=setTimeout(function(){
         if(!done2){done2=true;
           if(!useFallback){setTimeout(function(){doMobileCmpProxy(true);},500);return;}
           showCmpErr('📱 对比代理超时[#'+mCmpAttempt+']');
         }
       },20000);
-      fetch(base2+'/?q='+encodeURIComponent(q2)+'&stream=no')
-        .then(function(r){return r.json();})
-        .then(function(d){
+      fetch(base2+'/ai',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth2.idToken},body:JSON.stringify({messages:[{role:'user',content:shortCmpPrompt}],max_tokens:600})})
+        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+        .then(function(raw){
           if(done2)return;done2=true;clearTimeout(timer2);
-          var t=d.text;
+          var t=_parseAIStreamText(raw);
           if(t&&t.length>5){showCmpResult(t);return;}
           if(!useFallback){setTimeout(function(){doMobileCmpProxy(true);},500);return;}
           showCmpErr('📱 对比空响应[#'+mCmpAttempt+']');
@@ -2609,17 +2624,30 @@ function renderAIReport(text, el){
     content=content.trim();
     html+='<div style="margin-bottom:1.5rem;">';
     html+='<div style="font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;font-weight:600;">'+title+'</div>';
-    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+content.replace(/\n/g,'<br>')+'</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+_escapeAIHtml(content).replace(/\n/g,'<br>')+'</div>';
     html+='</div>';
   });
-  el.innerHTML=html||text;
+  el.innerHTML=html||_escapeAIHtml(text);
 }
 
-// ── AI 通用 helper（全平台流式；手机用 res.text() 缓冲避免 Cloudflare 30s 超时）──
+function _parseAIStreamText(text){
+  var full='';
+  String(text||'').split('\n').forEach(function(line){
+    var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
+    var d=tl.slice(6).trim();if(d==='[DONE]')return;
+    try{var j=JSON.parse(d);var choice=j.choices&&j.choices[0];var t=choice&&((choice.delta&&choice.delta.content)||(choice.message&&choice.message.content));if(t)full+=t;}catch(e){}
+  });
+  if(!full){try{var json=JSON.parse(text);full=(json.choices&&json.choices[0]&&json.choices[0].message&&json.choices[0].message.content)||'';}catch(e){}}
+  return full;
+}
+
+// ── AI 通用 helper（全平台统一使用阿里云安全代理）──
 function doStreamAI(prompt, maxTokens, textEl, onDone, onError){
   var isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   textEl.innerHTML = '<div class="ai-loading-wrap"><div class="ai-loading-rings"></div><div class="ai-loading-text">'+(lang==='zh'?'正在深度分析体质...':lang==='ja'?'体質を分析中...':'Analyzing constitution...')+'</div></div>';
-  var WORKER='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev/';
+  var auth=null;try{auth=JSON.parse(localStorage.getItem('_tcm_auth')||'null');}catch(e){}
+  if(!auth||!auth.idToken){if(onError)onError(new Error('LOGIN_REQUIRED_FOR_AI'));return;}
+  var WORKER=CN_AUTH+'/ai';
   var done=false;
   var timer=setTimeout(function(){if(!done){done=true;if(onError)onError(new Error('Timeout'));}},55000);
   function finish(text){
@@ -2631,7 +2659,7 @@ function doStreamAI(prompt, maxTokens, textEl, onDone, onError){
 
   // 统一用流式 — 避免 Cloudflare Worker 30 秒非流式超时
   var body={max_tokens:maxTokens||1200,messages:[{role:'user',content:prompt}]};
-  fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth.idToken},body:JSON.stringify(body)})
   .then(function(res){
     if(!res.ok) throw new Error('HTTP '+res.status);
     if(!isMobile && res.body && typeof res.body.getReader==='function'){
@@ -2652,14 +2680,7 @@ function doStreamAI(prompt, maxTokens, textEl, onDone, onError){
     } else {
       // 手机：res.text() 等流全部到达后一次解析（流式不会触发 Cloudflare 30s 限制）
       res.text().then(function(text){
-        var full='';
-        text.split('\n').forEach(function(line){
-          var tl=line.trim();if(tl.indexOf('data: ')!==0)return;
-          var d=tl.slice(6).trim();if(d==='[DONE]')return;
-          try{var j=JSON.parse(d);var t=j&&j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;if(t)full+=t;}catch(e){}
-        });
-        // 降级：尝试直接 JSON 解析
-        if(!full){try{var jj=JSON.parse(text);full=(jj.choices&&jj.choices[0]&&jj.choices[0].message&&jj.choices[0].message.content)||'';}catch(e){}}
+        var full=_parseAIStreamText(text);
         if(full)finish(full);else fail(new Error('Empty response'));
       }).catch(function(e){fail(e);});
     }
@@ -2692,8 +2713,8 @@ function generateResultAI(result){
 
   if(isMobile){
     // ── 手机端：阿里云代理（支持中国大陆）→ Cloudflare备用 ──
-    var CN_PROXY='https://tcm-ai-proxy-qpckqjvffh.cn-shenzhen.fcapp.run';
-    var CF_PROXY='https://tcm-aiweathered-sun-c1b3.vcm70.workers.dev';
+    var CN_PROXY=CN_AUTH;
+    var CF_PROXY=CN_AUTH;
     textEl.innerHTML = '<div class="ai-loading-wrap"><div class="ai-loading-rings"></div><div class="ai-loading-text">'+(isZh?'正在深度分析体质...':isJa?'体質を分析中...':'Analyzing constitution...')+'</div></div>';
 
     var debugBox=document.getElementById('mobile-debug-box');
@@ -2713,18 +2734,19 @@ function generateResultAI(result){
       mAttempt++;
       var done=false;
       var base=useFallback?CF_PROXY:CN_PROXY;
-      var q=btoa(unescape(encodeURIComponent(JSON.stringify([{role:'user',content:ultraPrompt}]))));
+      var authMobile=null;try{authMobile=JSON.parse(localStorage.getItem('_tcm_auth')||'null');}catch(e){}
+      if(!authMobile||!authMobile.idToken){showErr('请先登录云端账号后使用 AI 分析');return;}
       var timer=setTimeout(function(){
         if(!done){done=true;
           if(!useFallback){setTimeout(function(){doMobileProxy(true);},500);return;}
           showErr('📱 代理超时[#'+mAttempt+']');
         }
       },20000);
-      fetch(base+'/?q='+encodeURIComponent(q)+'&stream=no')
-        .then(function(r){return r.json();})
-        .then(function(d){
+      fetch(base+'/ai',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authMobile.idToken},body:JSON.stringify({messages:[{role:'user',content:ultraPrompt}],max_tokens:600})})
+        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+        .then(function(raw){
           if(done)return;done=true;clearTimeout(timer);
-          var t=d.text;
+          var t=_parseAIStreamText(raw);
           if(t&&t.length>5){showResult(t);return;}
           if(!useFallback){setTimeout(function(){doMobileProxy(true);},500);return;}
           showErr('📱 空响应[#'+mAttempt+']');
@@ -3380,10 +3402,10 @@ function renderTongueReport(text, el){
     content=content.trim();
     html+='<div style="margin-bottom:1.5rem;">';
     html+='<div style="font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;font-weight:600;">'+title+'</div>';
-    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+content.replace(/\n/g,'<br>')+'</div>';
+    html+='<div style="font-size:15px;line-height:1.9;color:var(--text1);">'+_escapeAIHtml(content).replace(/\n/g,'<br>')+'</div>';
     html+='</div>';
   });
-  el.innerHTML=html||text;
+  el.innerHTML=html||_escapeAIHtml(text);
 }
 
 function generateTongueAI(combined){
