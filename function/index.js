@@ -8,6 +8,8 @@ const DAY_MS = 86400000;
 const MAX_BODY_BYTES = 256 * 1024;
 const TOKEN_TTL_MS = 7 * DAY_MS;
 const ADMIN_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
+const SUPPORT_RETENTION_MS = 90 * DAY_MS;
+const SUPPORT_TYPES = new Set(['account', 'data_delete', 'technical', 'other']);
 const DS_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 const CONFIG = {
@@ -34,6 +36,13 @@ function normalizeEmail(email) {
 
 function validEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
+}
+
+function validateSupportRequest(body) {
+  const type = String(body.type || '');
+  const email = normalizeEmail(body.email);
+  const message = String(body.message || '').trim();
+  return SUPPORT_TYPES.has(type) && validEmail(email) && message.length >= 10 && message.length <= 1000;
 }
 
 function safeEqualHex(left, right) {
@@ -254,6 +263,33 @@ async function saveAccounts(storage, accounts) {
   await storage.put('/admin/accounts.json', { accounts, updatedAt: Date.now() });
 }
 
+function sanitizeSupportTicket(ticket) {
+  return {
+    id: ticket.id,
+    type: ticket.type,
+    email: ticket.email,
+    message: ticket.message,
+    createdAt: ticket.createdAt,
+    status: ticket.status === 'resolved' ? 'resolved' : 'open',
+    resolvedAt: ticket.resolvedAt || null,
+  };
+}
+
+async function loadSupportTickets(storage, timestamp = Date.now()) {
+  const data = await storage.get('/admin/support-tickets.json');
+  const tickets = data && Array.isArray(data.tickets) ? data.tickets : [];
+  return tickets.filter(ticket => ticket.status !== 'resolved'
+    || !ticket.resolvedAt
+    || ticket.resolvedAt > timestamp - SUPPORT_RETENTION_MS);
+}
+
+async function saveSupportTickets(storage, tickets, timestamp = Date.now()) {
+  await storage.put('/admin/support-tickets.json', {
+    tickets: tickets.slice(-500),
+    updatedAt: timestamp,
+  });
+}
+
 function accountState(accounts, uid) {
   return accounts.find(account => account.uid === uid) || null;
 }
@@ -295,9 +331,10 @@ function createHandler(options = {}) {
     const path = new URL(request.url || '/', 'http://localhost').pathname;
     const ip = clientIp(request);
     if (path === '/health' && request.method === 'GET') {
-      return sendJson(response, 200, { ok: true, version: '4.0.0' });
+      return sendJson(response, 200, { ok: true, version: '4.1.0' });
     }
-    if (request.method !== 'POST' && !(request.method === 'GET' && path === '/admin/accounts')) {
+    const adminGet = request.method === 'GET' && (path === '/admin/accounts' || path === '/admin/support');
+    if (request.method !== 'POST' && !adminGet) {
       return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' });
     }
 
@@ -338,10 +375,61 @@ function createHandler(options = {}) {
         return sendJson(response, 200, { token: makeToken('admin', 'admin', 'admin', now(), config.jwtSecret), expiresIn: ADMIN_TOKEN_TTL_MS / 1000 });
       }
 
+      if (path === '/support/request') {
+        if (!allowRate('support:' + ip, 5, 60 * 60 * 1000)) {
+          return sendJson(response, 429, { error: 'SUPPORT_RATE_LIMIT' });
+        }
+        if (String(body.website || '').trim()) return sendJson(response, 200, { ok: true });
+        if (!validateSupportRequest(body)) return sendJson(response, 400, { error: 'INVALID_SUPPORT_REQUEST' });
+        const timestamp = now();
+        const ticket = {
+          id: 'TCM-' + crypto.randomBytes(4).toString('hex').toUpperCase(),
+          type: String(body.type),
+          email: normalizeEmail(body.email),
+          message: String(body.message).trim(),
+          createdAt: timestamp,
+          status: 'open',
+          resolvedAt: null,
+        };
+        const tickets = await loadSupportTickets(storage, timestamp);
+        tickets.push(ticket);
+        await saveSupportTickets(storage, tickets, timestamp);
+        log('support_request_created', { requestId, ticketId: ticket.id, type: ticket.type });
+        return sendJson(response, 200, { ok: true, ticketId: ticket.id });
+      }
+
       if (path.startsWith('/admin/')) {
         const admin = verifyToken(bearerToken(request), 'admin', now(), config.jwtSecret);
         if (!admin) return sendJson(response, 401, { error: 'ADMIN_AUTH_REQUIRED' });
         let accounts = await loadAccounts(storage);
+
+        if (path === '/admin/support' && request.method === 'GET') {
+          const tickets = await loadSupportTickets(storage, now());
+          return sendJson(response, 200, {
+            tickets: tickets.map(sanitizeSupportTicket).sort((a, b) => b.createdAt - a.createdAt),
+          });
+        }
+
+        if (path === '/admin/support/resolve') {
+          const tickets = await loadSupportTickets(storage, now());
+          const ticket = tickets.find(item => item.id === String(body.id || ''));
+          if (!ticket) return sendJson(response, 404, { error: 'SUPPORT_TICKET_NOT_FOUND' });
+          const resolved = body.resolved !== false;
+          ticket.status = resolved ? 'resolved' : 'open';
+          ticket.resolvedAt = resolved ? now() : null;
+          await saveSupportTickets(storage, tickets, now());
+          return sendJson(response, 200, { ticket: sanitizeSupportTicket(ticket) });
+        }
+
+        if (path === '/admin/support/delete') {
+          let tickets = await loadSupportTickets(storage, now());
+          const before = tickets.length;
+          tickets = tickets.filter(item => item.id !== String(body.id || ''));
+          if (tickets.length === before) return sendJson(response, 404, { error: 'SUPPORT_TICKET_NOT_FOUND' });
+          await saveSupportTickets(storage, tickets, now());
+          log('support_request_deleted', { requestId, ticketId: String(body.id || '') });
+          return sendJson(response, 200, { ok: true });
+        }
 
         if (path === '/admin/accounts' && request.method === 'GET') {
           return sendJson(response, 200, { accounts: accounts.map(sanitizeAccount) });
@@ -483,7 +571,7 @@ if (require.main === module) {
   if (missing.length) log('config_warning', { missing });
   const port = Number(process.env.FC_SERVER_PORT || 9000);
   http.createServer(createHandler()).listen(port, '0.0.0.0', () => {
-    log('server_started', { port, version: '4.0.0' });
+    log('server_started', { port, version: '4.1.0' });
   });
 }
 
@@ -499,6 +587,7 @@ module.exports = {
   normalizeEmail,
   userKey,
   validEmail,
+  validateSupportRequest,
   validateMessages,
   verifyAdminPassword,
   verifyPassword,

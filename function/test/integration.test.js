@@ -64,11 +64,42 @@ test('admin creates an expiring account and user authentication protects AI', as
     const publicRegister = await api(base, '/auth/register', { method: 'POST', body: '{}' });
     assert.equal(publicRegister.response.status, 403);
 
+    const invalidSupport = await api(base, '/support/request', {
+      method: 'POST', body: JSON.stringify({ type: 'technical', email: 'bad-email', message: 'too short' }),
+    });
+    assert.equal(invalidSupport.response.status, 400);
+
+    const support = await api(base, '/support/request', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'technical',
+        email: 'visitor@example.com',
+        message: 'The assessment page does not advance after I select an answer.',
+      }),
+    });
+    assert.equal(support.response.status, 200);
+    assert.match(support.body.ticketId, /^TCM-[0-9A-F]{8}$/);
+
     const adminLogin = await api(base, '/admin/login', {
       method: 'POST', body: JSON.stringify({ password: 'very-secure-admin-password' }),
     });
     assert.equal(adminLogin.response.status, 200);
     assert.ok(adminLogin.body.token);
+
+    const supportList = await api(base, '/admin/support', {
+      method: 'GET', headers: { Authorization: 'Bearer ' + adminLogin.body.token },
+    });
+    assert.equal(supportList.response.status, 200);
+    assert.equal(supportList.body.tickets.length, 1);
+    assert.equal(supportList.body.tickets[0].email, 'visitor@example.com');
+
+    const resolvedSupport = await api(base, '/admin/support/resolve', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + adminLogin.body.token },
+      body: JSON.stringify({ id: support.body.ticketId, resolved: true }),
+    });
+    assert.equal(resolvedSupport.response.status, 200);
+    assert.equal(resolvedSupport.body.ticket.status, 'resolved');
 
     const created = await api(base, '/admin/accounts/create', {
       method: 'POST',

@@ -13,6 +13,7 @@ const {
   makePasswordRecord,
   makeToken,
   validEmail,
+  validateSupportRequest,
   validateMessages,
   verifyAdminPassword,
   verifyPassword,
@@ -74,4 +75,19 @@ test('origin, email, and AI message validation reject unsafe input', () => {
   assert.equal(validateMessages([{ role: 'user', content: 'hello' }]), true);
   assert.equal(validateMessages([{ role: 'tool', content: 'hello' }]), false);
   assert.equal(validateMessages([{ role: 'user', content: 'x'.repeat(12001) }]), false);
+  assert.equal(validateSupportRequest({
+    type: 'technical',
+    email: 'person@example.com',
+    message: 'The report is not loading after I finish the assessment.',
+  }), true);
+  assert.equal(validateSupportRequest({
+    type: 'unknown',
+    email: 'person@example.com',
+    message: 'This message is long enough but the type is not supported.',
+  }), false);
+  assert.equal(validateSupportRequest({
+    type: 'technical',
+    email: 'not-an-email',
+    message: 'This message is long enough but the email is invalid.',
+  }), false);
 });
