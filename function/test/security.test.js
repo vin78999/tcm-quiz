@@ -8,7 +8,9 @@ process.env.JWT_SECRET = 'test-secret-that-is-long-enough';
 const {
   accountError,
   createRateLimiter,
+  decryptCredentials,
   encodeAdminPassword,
+  encryptCredentials,
   isAllowedOrigin,
   makePasswordRecord,
   makeToken,
@@ -48,6 +50,17 @@ test('tokens are signed, typed, and expire', () => {
   assert.equal(verifyToken(token, 'admin', 1001), null);
   assert.equal(verifyToken(token, 'user', 1000 + 8 * 86400000), null);
   assert.equal(verifyToken(token + 'x', 'user', 1001), null);
+});
+
+test('trial credentials are encrypted and reject tampering', () => {
+  const secret = 'a-dedicated-test-secret';
+  const original = { email: 'trial@example.com', password: 'random-password', expiresAt: 2000 };
+  const encrypted = encryptCredentials(original, secret);
+  assert.equal(encrypted.includes(original.password), false);
+  assert.deepEqual(decryptCredentials(encrypted, secret), original);
+  const parts = encrypted.split('.');
+  parts[2] = parts[2].slice(0, -1) + (parts[2].endsWith('A') ? 'B' : 'A');
+  assert.throws(() => decryptCredentials(parts.join('.'), secret));
 });
 
 test('account expiration and disable state are enforced', () => {

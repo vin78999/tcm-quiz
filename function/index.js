@@ -9,6 +9,7 @@ const MAX_BODY_BYTES = 256 * 1024;
 const TOKEN_TTL_MS = 7 * DAY_MS;
 const ADMIN_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
 const SUPPORT_RETENTION_MS = 90 * DAY_MS;
+const TRIAL_DURATION_MS = DAY_MS;
 const SUPPORT_TYPES = new Set(['account', 'data_delete', 'technical', 'other']);
 const DS_URL = 'https://api.deepseek.com/v1/chat/completions';
 
@@ -24,6 +25,7 @@ const CONFIG = {
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'https://vin78999.github.io')
     .split(',').map(value => value.trim()).filter(Boolean),
   allowLocalhost: process.env.ALLOW_LOCALHOST === 'true',
+  siteUrl: process.env.PUBLIC_SITE_URL || 'https://vin78999.github.io/tcm-quiz/',
 };
 
 function log(event, details = {}) {
@@ -110,6 +112,35 @@ function verifyToken(token, expectedType = 'user', now = Date.now(), secret = CO
   } catch {
     return null;
   }
+}
+
+function credentialKey(secret) {
+  if (!secret) throw new Error('JWT secret is not configured');
+  return crypto.createHash('sha256').update(String(secret)).digest();
+}
+
+function encryptCredentials(credentials, secret = CONFIG.jwtSecret) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', credentialKey(secret), iv);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(credentials), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [iv, tag, encrypted].map(value => value.toString('base64url')).join('.');
+}
+
+function decryptCredentials(payload, secret = CONFIG.jwtSecret) {
+  const [ivText, tagText, encryptedText, extra] = String(payload || '').split('.');
+  if (!ivText || !tagText || !encryptedText || extra) throw new Error('Invalid credential payload');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', credentialKey(secret), Buffer.from(ivText, 'base64url'));
+  decipher.setAuthTag(Buffer.from(tagText, 'base64url'));
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(encryptedText, 'base64url')),
+    decipher.final(),
+  ]);
+  return JSON.parse(decrypted.toString('utf8'));
+}
+
+function makeTrialPassword() {
+  return crypto.randomBytes(12).toString('base64url') + 'Aa1!';
 }
 
 function userKey(email) {
@@ -251,6 +282,7 @@ function sanitizeAccount(account) {
     createdAt: account.createdAt || null,
     expiresAt: account.expiresAt || null,
     disabled: Boolean(account.disabled),
+    kind: account.kind === 'trial' ? 'trial' : 'standard',
   };
 }
 
@@ -272,6 +304,9 @@ function sanitizeSupportTicket(ticket) {
     createdAt: ticket.createdAt,
     status: ticket.status === 'resolved' ? 'resolved' : 'open',
     resolvedAt: ticket.resolvedAt || null,
+    trialStatus: ticket.trialStatus || null,
+    trialExpiresAt: ticket.trialExpiresAt || null,
+    credentialClaimedAt: ticket.credentialClaimedAt || null,
   };
 }
 
@@ -331,7 +366,7 @@ function createHandler(options = {}) {
     const path = new URL(request.url || '/', 'http://localhost').pathname;
     const ip = clientIp(request);
     if (path === '/health' && request.method === 'GET') {
-      return sendJson(response, 200, { ok: true, version: '4.1.0' });
+      return sendJson(response, 200, { ok: true, version: '4.2.0' });
     }
     const adminGet = request.method === 'GET' && (path === '/admin/accounts' || path === '/admin/support');
     if (request.method !== 'POST' && !adminGet) {
@@ -398,6 +433,40 @@ function createHandler(options = {}) {
         return sendJson(response, 200, { ok: true, ticketId: ticket.id });
       }
 
+      if (path === '/support/status') {
+        if (!allowRate('support-status:' + ip, 10, 60 * 60 * 1000)) {
+          return sendJson(response, 429, { error: 'SUPPORT_STATUS_RATE_LIMIT' });
+        }
+        const ticketId = String(body.ticketId || '').trim().toUpperCase();
+        const email = normalizeEmail(body.email);
+        if (!/^TCM-[0-9A-F]{8}$/.test(ticketId) || !validEmail(email)) {
+          return sendJson(response, 400, { error: 'INVALID_SUPPORT_LOOKUP' });
+        }
+        const tickets = await loadSupportTickets(storage, now());
+        const ticket = tickets.find(item => item.id === ticketId && item.email === email && item.type === 'account');
+        if (!ticket) return sendJson(response, 404, { error: 'SUPPORT_TICKET_NOT_FOUND' });
+        if (ticket.trialStatus !== 'approved') {
+          return sendJson(response, 200, { status: ticket.status === 'resolved' ? 'resolved' : 'pending' });
+        }
+        if (ticket.credentialClaimedAt || !ticket.credentialCipher) {
+          return sendJson(response, 200, { status: 'claimed', expiresAt: ticket.trialExpiresAt || null });
+        }
+        const credentials = decryptCredentials(ticket.credentialCipher, config.jwtSecret);
+        ticket.credentialClaimedAt = now();
+        delete ticket.credentialCipher;
+        await saveSupportTickets(storage, tickets, now());
+        log('trial_credentials_claimed', { requestId, ticketId: ticket.id, uid: ticket.trialUid });
+        return sendJson(response, 200, {
+          status: 'approved',
+          credentials: {
+            email: credentials.email,
+            password: credentials.password,
+            expiresAt: credentials.expiresAt,
+            loginUrl: config.siteUrl,
+          },
+        });
+      }
+
       if (path.startsWith('/admin/')) {
         const admin = verifyToken(bearerToken(request), 'admin', now(), config.jwtSecret);
         if (!admin) return sendJson(response, 401, { error: 'ADMIN_AUTH_REQUIRED' });
@@ -418,6 +487,39 @@ function createHandler(options = {}) {
           ticket.status = resolved ? 'resolved' : 'open';
           ticket.resolvedAt = resolved ? now() : null;
           await saveSupportTickets(storage, tickets, now());
+          return sendJson(response, 200, { ticket: sanitizeSupportTicket(ticket) });
+        }
+
+        if (path === '/admin/support/approve-trial') {
+          const tickets = await loadSupportTickets(storage, now());
+          const ticket = tickets.find(item => item.id === String(body.id || ''));
+          if (!ticket) return sendJson(response, 404, { error: 'SUPPORT_TICKET_NOT_FOUND' });
+          if (ticket.type !== 'account') return sendJson(response, 400, { error: 'NOT_ACCOUNT_REQUEST' });
+          if (ticket.trialStatus === 'approved') {
+            return sendJson(response, 409, { error: 'TRIAL_ALREADY_APPROVED' });
+          }
+          if (await storage.get(userKey(ticket.email))) return sendJson(response, 409, { error: 'EMAIL_EXISTS' });
+          const uid = crypto.randomBytes(16).toString('hex');
+          const password = makeTrialPassword();
+          const createdAt = now();
+          const expiresAt = createdAt + TRIAL_DURATION_MS;
+          await storage.put(userKey(ticket.email), {
+            uid,
+            email: ticket.email,
+            ...makePasswordRecord(password),
+            at: createdAt,
+          });
+          accounts.push({ uid, email: ticket.email, createdAt, expiresAt, disabled: false, kind: 'trial' });
+          await saveAccounts(storage, accounts);
+          ticket.status = 'resolved';
+          ticket.resolvedAt = createdAt;
+          ticket.trialStatus = 'approved';
+          ticket.trialUid = uid;
+          ticket.trialExpiresAt = expiresAt;
+          ticket.credentialClaimedAt = null;
+          ticket.credentialCipher = encryptCredentials({ email: ticket.email, password, expiresAt }, config.jwtSecret);
+          await saveSupportTickets(storage, tickets, createdAt);
+          log('trial_account_approved', { requestId, ticketId: ticket.id, uid });
           return sendJson(response, 200, { ticket: sanitizeSupportTicket(ticket) });
         }
 
@@ -445,7 +547,7 @@ function createHandler(options = {}) {
           const createdAt = now();
           const expiresAt = createdAt + months * 30 * DAY_MS;
           await storage.put(userKey(email), { uid, email, ...makePasswordRecord(password), at: createdAt });
-          accounts.push({ uid, email, createdAt, expiresAt, disabled: false });
+          accounts.push({ uid, email, createdAt, expiresAt, disabled: false, kind: 'standard' });
           await saveAccounts(storage, accounts);
           log('admin_account_created', { requestId, uid });
           return sendJson(response, 200, { account: sanitizeAccount(accounts[accounts.length - 1]) });
@@ -571,7 +673,7 @@ if (require.main === module) {
   if (missing.length) log('config_warning', { missing });
   const port = Number(process.env.FC_SERVER_PORT || 9000);
   http.createServer(createHandler()).listen(port, '0.0.0.0', () => {
-    log('server_started', { port, version: '4.1.0' });
+    log('server_started', { port, version: '4.2.0' });
   });
 }
 
@@ -580,7 +682,9 @@ module.exports = {
   accountError,
   createHandler,
   createRateLimiter,
+  decryptCredentials,
   encodeAdminPassword,
+  encryptCredentials,
   isAllowedOrigin,
   makePasswordRecord,
   makeToken,

@@ -101,6 +101,60 @@ test('admin creates an expiring account and user authentication protects AI', as
     assert.equal(resolvedSupport.response.status, 200);
     assert.equal(resolvedSupport.body.ticket.status, 'resolved');
 
+    const trialRequest = await api(base, '/support/request', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'account',
+        email: 'trial@example.com',
+        message: 'I would like to apply for a one-day trial account.',
+      }),
+    });
+    assert.equal(trialRequest.response.status, 200);
+
+    const anonymousApproval = await api(base, '/admin/support/approve-trial', {
+      method: 'POST', body: JSON.stringify({ id: trialRequest.body.ticketId }),
+    });
+    assert.equal(anonymousApproval.response.status, 401);
+
+    const approvedTrial = await api(base, '/admin/support/approve-trial', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + adminLogin.body.token },
+      body: JSON.stringify({ id: trialRequest.body.ticketId }),
+    });
+    assert.equal(approvedTrial.response.status, 200);
+    assert.equal(approvedTrial.body.ticket.trialStatus, 'approved');
+    assert.equal(approvedTrial.body.ticket.trialExpiresAt, 1700000000000 + 86400000);
+    assert.equal(Object.hasOwn(approvedTrial.body.ticket, 'credentialCipher'), false);
+
+    const wrongClaim = await api(base, '/support/status', {
+      method: 'POST',
+      body: JSON.stringify({ ticketId: trialRequest.body.ticketId, email: 'wrong@example.com' }),
+    });
+    assert.equal(wrongClaim.response.status, 404);
+
+    const claimedTrial = await api(base, '/support/status', {
+      method: 'POST',
+      body: JSON.stringify({ ticketId: trialRequest.body.ticketId, email: 'trial@example.com' }),
+    });
+    assert.equal(claimedTrial.response.status, 200);
+    assert.equal(claimedTrial.body.status, 'approved');
+    assert.equal(claimedTrial.body.credentials.email, 'trial@example.com');
+    assert.ok(claimedTrial.body.credentials.password.length >= 10);
+
+    const trialLogin = await api(base, '/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'trial@example.com', password: claimedTrial.body.credentials.password }),
+    });
+    assert.equal(trialLogin.response.status, 200);
+
+    const secondClaim = await api(base, '/support/status', {
+      method: 'POST',
+      body: JSON.stringify({ ticketId: trialRequest.body.ticketId, email: 'trial@example.com' }),
+    });
+    assert.equal(secondClaim.response.status, 200);
+    assert.equal(secondClaim.body.status, 'claimed');
+    assert.equal(Object.hasOwn(secondClaim.body, 'credentials'), false);
+
     const created = await api(base, '/admin/accounts/create', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + adminLogin.body.token },
@@ -130,7 +184,7 @@ test('admin creates an expiring account and user authentication protects AI', as
     assert.equal(authenticatedAi.body.error, 'AI_NOT_CONFIGURED');
 
     const accountIndex = storage.values.get('/admin/accounts.json');
-    accountIndex.accounts[0].expiresAt = 1700000000000 - 1;
+    accountIndex.accounts.find(account => account.email === 'customer@example.com').expiresAt = 1700000000000 - 1;
     storage.values.set('/admin/accounts.json', accountIndex);
     setNow(1700000000000);
     const expiredLogin = await api(base, '/auth/login', {
