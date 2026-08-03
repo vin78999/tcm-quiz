@@ -455,6 +455,9 @@ tr:hover td{background:rgba(63,111,125,.04);}
 .admin-ticket-message{margin:.45rem 0 .65rem;padding:.55rem .65rem;border-left:2px solid var(--border2);font-size:11px;line-height:1.65;color:var(--text2);white-space:pre-wrap;overflow-wrap:anywhere;}
 .admin-ticket-time{font-size:10px;color:var(--text3);}
 .admin-ticket-actions{justify-content:flex-end;margin-top:.45rem;}
+.admin-trial-approve{font-size:11px;padding:7px 11px;border:0;background:var(--gold2);color:#fff;border-radius:7px;cursor:pointer;font-weight:700;}
+.admin-trial-approve:hover{background:#294f5b;}
+.admin-trial-note{margin-top:.45rem;font-size:10px;color:#39764b;}
 
 /* ── Commercial V1: marketing, trust and step-by-step assessment ── */
 .lang-bar{top:12px;right:20px;padding:0;display:block;background:transparent;}
@@ -585,6 +588,15 @@ tr:hover td{background:rgba(63,111,125,.04);}
 .support-status.ok{color:#39764b;}
 .support-status.err{color:var(--red);}
 .support-trap{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important;}
+.support-divider{display:flex;align-items:center;gap:12px;margin:22px 0 6px;color:var(--text3);font-size:12px;}
+.support-divider:before,.support-divider:after{content:"";height:1px;background:var(--border);flex:1;}
+.support-lookup{display:grid;gap:14px;padding:18px;background:rgba(63,111,125,.045);border:1px solid var(--border);border-radius:14px;}
+.support-lookup h3{margin:0;font-size:16px;}
+.support-credential{padding:16px;border:1px solid rgba(57,118,75,.28);border-radius:12px;background:#f5faf5;color:var(--text);}
+.support-credential strong{display:block;margin-bottom:8px;color:#39764b;}
+.support-credential dl{display:grid;grid-template-columns:68px 1fr;gap:6px 10px;margin:0;font-size:13px;}
+.support-credential dt{color:var(--text3);}.support-credential dd{margin:0;overflow-wrap:anywhere;font-weight:600;}
+.support-copy{margin-top:12px;min-height:42px;width:100%;border:1px solid var(--gold2);border-radius:9px;background:#fff;color:var(--gold2);font:inherit;font-weight:700;cursor:pointer;}
 
 .topbar-brand,.logout-link,#sync-badge,.nav-tab{border:0;background:transparent;}
 .nav-tab{font-family:inherit;}
@@ -1464,7 +1476,7 @@ function applyI18n(){
 const LEGAL_CONTENT={
   privacy:{
     title:'隐私政策',
-    body:'<p><strong>更新日期：2026年7月25日</strong></p><h3>我们处理哪些信息</h3><p>未登录使用时，称呼、答题结果和历史记录主要保存在当前浏览器。登录云端账号后，我们会处理登录邮箱、账号状态和你主动同步的检测记录。提交站内支持申请时，我们会保存你填写的联系邮箱、问题类别、问题说明和处理状态。</p><h3>信息用途</h3><ul><li>生成体质分布与健康参考报告；</li><li>在已登录设备之间同步记录；</li><li>回复并处理你主动提交的支持申请；</li><li>维护账号安全、限制异常请求并排查服务故障。</li></ul><h3>AI辅助处理</h3><p>当你主动使用AI解读功能时，生成报告所需的体质与舌象自测摘要会发送至AI服务进行处理。请勿在称呼、反馈内容或自定义内容中填写身份证号、完整病历等不必要的敏感信息。</p><h3>保留期限与选择</h3><p>你可以在数据管理中导出本机记录，并通过站内“联系与支持”申请停用账号或删除云端记录。已处理的支持申请最多保留90天；数据删除申请会在核验账号归属后处理。</p>'
+    body:'<p><strong>更新日期：2026年8月3日</strong></p><h3>我们处理哪些信息</h3><p>未登录使用时，称呼、答题结果和历史记录主要保存在当前浏览器。登录云端账号后，我们会处理登录邮箱、账号状态和你主动同步的检测记录。提交站内支持申请时，我们会保存你填写的联系邮箱、问题类别、问题说明和处理状态。</p><h3>信息用途</h3><ul><li>生成体质分布与健康参考报告；</li><li>在已登录设备之间同步记录；</li><li>处理体验账号及其他支持申请；</li><li>维护账号安全、限制异常请求并排查服务故障。</li></ul><h3>体验账号资料</h3><p>体验账号获准后，初始密码会加密保存，并只允许申请人使用申请编号与邮箱领取一次。领取完成后，服务器会删除可还原的初始密码资料。</p><h3>AI辅助处理</h3><p>当你主动使用AI解读功能时，生成报告所需的体质与舌象自测摘要会发送至AI服务进行处理。请勿在称呼、反馈内容或自定义内容中填写身份证号、完整病历等不必要的敏感信息。</p><h3>保留期限与选择</h3><p>你可以在数据管理中导出本机记录，并通过站内“联系与支持”申请停用账号或删除云端记录。已处理的支持申请最多保留90天；数据删除申请会在核验账号归属后处理。</p>'
   },
   terms:{
     title:'用户协议',
@@ -1476,7 +1488,7 @@ const LEGAL_CONTENT={
   },
   contact:{
     title:'联系与支持',
-    body:'<p>无需添加公开邮箱或微信。请在这里提交账号开通、续期、数据删除或使用问题，我们会通过你填写的邮箱回复。</p><form class="support-form" id="support-form" onsubmit="submitSupportRequest(event)"><div class="support-field"><label for="support-type">问题类别</label><select id="support-type" required><option value="account">账号开通或续期</option><option value="data_delete">云端数据删除</option><option value="technical">使用或技术问题</option><option value="other">其他问题</option></select></div><div class="support-field"><label for="support-email">联系邮箱</label><input id="support-email" type="email" maxlength="254" autocomplete="email" required placeholder="用于接收处理回复"></div><div class="support-field"><label for="support-message">问题说明</label><textarea id="support-message" minlength="10" maxlength="1000" required placeholder="请描述发生时间、设备、浏览器和页面提示（10–1000字）"></textarea><span class="support-hint">请勿填写密码、验证码、身份证号或完整病历。数据删除申请会先核验账号归属。</span></div><div class="support-trap" aria-hidden="true"><label for="support-website">网站</label><input id="support-website" type="text" tabindex="-1" autocomplete="off"></div><label class="support-consent"><input id="support-consent" type="checkbox" required><span>我同意为处理本次申请保存以上信息；已处理申请最多保留90天。</span></label><button class="support-submit" id="support-submit" type="submit">提交支持申请</button><div class="support-status" id="support-status" role="status" aria-live="polite"></div></form>'
+    body:'<p>申请 1 天体验账号不需要公开邮箱或微信。提交后请保存申请编号，管理员核准后可在本页领取登录资料。</p><form class="support-form" id="support-form" onsubmit="submitSupportRequest(event)"><div class="support-field"><label for="support-type">问题类别</label><select id="support-type" required onchange="updateSupportType()"><option value="account">申请 1 天体验账号</option><option value="data_delete">云端数据删除</option><option value="technical">使用或技术问题</option><option value="other">其他问题</option></select></div><div class="support-field"><label for="support-email">联系邮箱</label><input id="support-email" type="email" maxlength="254" autocomplete="email" required placeholder="用于核对申请人身份"></div><div class="support-field"><label for="support-message">问题说明</label><textarea id="support-message" minlength="10" maxlength="1000" required placeholder="请简要说明申请或问题（10–1000字）">我想申请 1 天体验账号。</textarea><span class="support-hint">请勿填写密码、验证码、身份证号或完整病历。体验期从管理员核准时起计算 24 小时。</span></div><div class="support-trap" aria-hidden="true"><label for="support-website">网站</label><input id="support-website" type="text" tabindex="-1" autocomplete="off"></div><label class="support-consent"><input id="support-consent" type="checkbox" required><span>我同意为处理本次申请保存以上信息；已处理申请最多保留90天。</span></label><button class="support-submit" id="support-submit" type="submit">提交申请</button><div class="support-status" id="support-status" role="status" aria-live="polite"></div></form><div class="support-divider">已经申请</div><form class="support-lookup" id="support-lookup-form" onsubmit="lookupTrialRequest(event)"><h3>查询并领取体验账号</h3><div class="support-field"><label for="support-ticket-id">申请编号</label><input id="support-ticket-id" required maxlength="12" autocomplete="off" placeholder="例如 TCM-12AB34CD"></div><div class="support-field"><label for="support-lookup-email">申请邮箱</label><input id="support-lookup-email" type="email" maxlength="254" autocomplete="email" required></div><button class="support-submit" id="support-lookup-submit" type="submit">查询申请状态</button><div class="support-status" id="support-lookup-status" role="status" aria-live="polite"></div><div id="support-credential-result"></div></form>'
   }
 };
 function openLegal(type){
@@ -1487,6 +1499,7 @@ function openLegal(type){
   overlay.hidden=false;
   document.body.style.overflow='hidden';
   setTimeout(function(){document.getElementById('legal-close').focus();},0);
+  if(type==='contact')setTimeout(hydrateSupportLookup,0);
 }
 function closeLegal(){
   var overlay=document.getElementById('legal-overlay');
@@ -1510,12 +1523,13 @@ async function submitSupportRequest(event){
   status.textContent='';
   status.className='support-status';
   try{
+    var submittedEmail=document.getElementById('support-email').value.trim();
     var response=await _fetchWithTimeout(CN_AUTH+'/support/request',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         type:document.getElementById('support-type').value,
-        email:document.getElementById('support-email').value.trim(),
+        email:submittedEmail,
         message:document.getElementById('support-message').value.trim(),
         website:document.getElementById('support-website').value
       })
@@ -1526,16 +1540,103 @@ async function submitSupportRequest(event){
       if(data.error==='INVALID_SUPPORT_REQUEST')throw new Error('请检查邮箱和问题说明是否填写完整。');
       throw new Error('暂时无法提交，请稍后再试。');
     }
+    if(data.ticketId){
+      try{localStorage.setItem('tcm_support_lookup',JSON.stringify({ticketId:data.ticketId,email:submittedEmail}));}catch(storageError){}
+      var ticketInput=document.getElementById('support-ticket-id');
+      var lookupEmail=document.getElementById('support-lookup-email');
+      if(ticketInput)ticketInput.value=data.ticketId;
+      if(lookupEmail)lookupEmail.value=submittedEmail;
+    }
     form.reset();
-    status.textContent=data.ticketId?'已提交。申请编号：'+data.ticketId+'。请保存此编号。':'已提交，我们会尽快处理。';
+    updateSupportType();
+    status.textContent=data.ticketId?'已提交。申请编号：'+data.ticketId+'。请截图或保存，核准后在下方领取。':'已提交，我们会尽快处理。';
     status.className='support-status ok';
   }catch(error){
     status.textContent=error.name==='AbortError'?'连接超时，请稍后再试。':error.message;
     status.className='support-status err';
   }finally{
     button.disabled=false;
+    updateSupportType();
+  }
+}
+
+function updateSupportType(){
+  var type=document.getElementById('support-type');
+  var message=document.getElementById('support-message');
+  var button=document.getElementById('support-submit');
+  if(!type||!message||!button)return;
+  if(type.value==='account'){
+    if(!message.value.trim())message.value='我想申请 1 天体验账号。';
+    message.placeholder='可补充你的使用需求（10–1000字）';
+    button.textContent='提交体验申请';
+  }else{
+    if(message.value.trim()==='我想申请 1 天体验账号。')message.value='';
+    message.placeholder='请描述发生时间、设备、浏览器和页面提示（10–1000字）';
     button.textContent='提交支持申请';
   }
+}
+
+function hydrateSupportLookup(){
+  try{
+    var saved=JSON.parse(localStorage.getItem('tcm_support_lookup')||'null');
+    if(!saved)return;
+    var ticket=document.getElementById('support-ticket-id');
+    var email=document.getElementById('support-lookup-email');
+    if(ticket)ticket.value=saved.ticketId||'';
+    if(email)email.value=saved.email||'';
+  }catch(error){}
+}
+
+async function lookupTrialRequest(event){
+  event.preventDefault();
+  var form=document.getElementById('support-lookup-form');
+  var button=document.getElementById('support-lookup-submit');
+  var status=document.getElementById('support-lookup-status');
+  var result=document.getElementById('support-credential-result');
+  if(!form||!button||!status||!result||!form.reportValidity())return;
+  button.disabled=true;
+  button.textContent='正在查询…';
+  status.textContent='';status.className='support-status';result.textContent='';
+  try{
+    var ticketId=document.getElementById('support-ticket-id').value.trim().toUpperCase();
+    var email=document.getElementById('support-lookup-email').value.trim();
+    var response=await _fetchWithTimeout(CN_AUTH+'/support/status',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticketId:ticketId,email:email})
+    },15000);
+    var data=await response.json();
+    if(!response.ok){
+      if(data.error==='SUPPORT_TICKET_NOT_FOUND')throw new Error('找不到相符的体验申请，请核对申请编号和邮箱。');
+      if(data.error==='SUPPORT_STATUS_RATE_LIMIT')throw new Error('查询次数较多，请一小时后再试。');
+      throw new Error('查询失败，请检查填写内容后重试。');
+    }
+    if(data.status==='pending'){
+      status.textContent='申请仍在等待管理员核准，请稍后再查询。';status.className='support-status ok';return;
+    }
+    if(data.status==='claimed'){
+      status.textContent='登录资料已经领取过。初始密码只显示一次；若未保存，请重新提交申请。';status.className='support-status err';return;
+    }
+    if(data.status==='resolved'){
+      status.textContent='这项申请已处理，但没有可领取的体验账号。';return;
+    }
+    if(data.status==='approved'&&data.credentials){
+      var c=data.credentials;
+      status.textContent='核准成功。请立即保存以下资料，初始密码只显示这一次。';status.className='support-status ok';
+      var box=document.createElement('div');box.className='support-credential';
+      var title=document.createElement('strong');title.textContent='1 天体验账号';box.appendChild(title);
+      var dl=document.createElement('dl');
+      [['邮箱',c.email],['初始密码',c.password],['有效期至',new Date(c.expiresAt).toLocaleString('zh-CN')]].forEach(function(row){
+        var dt=document.createElement('dt');dt.textContent=row[0];var dd=document.createElement('dd');dd.textContent=row[1];dl.appendChild(dt);dl.appendChild(dd);
+      });
+      box.appendChild(dl);
+      var copy=document.createElement('button');copy.type='button';copy.className='support-copy';copy.textContent='复制登录资料';
+      copy.addEventListener('click',async function(){
+        var text='中医体质检测｜1 天体验账号\n邮箱：'+c.email+'\n初始密码：'+c.password+'\n有效期至：'+new Date(c.expiresAt).toLocaleString('zh-CN')+'\n登录：'+c.loginUrl;
+        try{await navigator.clipboard.writeText(text);copy.textContent='✓ 已复制，请妥善保存';}catch(error){copy.textContent='复制失败，请手动记录';}
+      });
+      box.appendChild(copy);result.appendChild(box);
+    }
+  }catch(error){status.textContent=error.name==='AbortError'?'连接超时，请稍后再试。':error.message;status.className='support-status err';}
+  finally{button.disabled=false;button.textContent='查询申请状态';}
 }
 
 function toggleAuthFields(){
@@ -2298,7 +2399,7 @@ async function adminRenderAccounts(){
     _adminAccounts.slice().reverse().forEach(function(a){
       var daysLeft=Math.ceil(((a.expiresAt||0)-now)/86400000);
       var cls=a.disabled||daysLeft<=0?'exp':daysLeft>14?'ok':'warn';
-      var label=a.disabled?'已停用':daysLeft>0?daysLeft+'天':'已到期';
+      var label=a.disabled?'已停用':daysLeft>0?(a.kind==='trial'?'体验 · ':'')+daysLeft+'天':'已到期';
       var row=document.createElement('div');row.className='admin-acct-row';
       row.innerHTML='<div class="admin-acct-email" title="'+_adminEsc(a.email)+'">'+_adminEsc(a.email)+'</div>'+
         '<div class="admin-acct-days '+cls+'">'+label+'</div>'+
@@ -2332,13 +2433,20 @@ async function adminRenderSupport(){
       head.className='admin-ticket-head';
       head.appendChild(_adminTicketText('admin-ticket-id',ticket.id));
       head.appendChild(_adminTicketText('admin-ticket-type',labels[ticket.type]||ticket.type));
-      head.appendChild(_adminTicketText('admin-ticket-status '+(ticket.status==='resolved'?'resolved':''),ticket.status==='resolved'?'已处理':'待处理'));
+      var statusText=ticket.trialStatus==='approved'?(ticket.credentialClaimedAt?'体验已领取':'体验已核准'):(ticket.status==='resolved'?'已处理':'待处理');
+      head.appendChild(_adminTicketText('admin-ticket-status '+(ticket.status==='resolved'?'resolved':''),statusText));
       card.appendChild(head);
       card.appendChild(_adminTicketText('admin-ticket-email',ticket.email));
       card.appendChild(_adminTicketText('admin-ticket-message',ticket.message));
       card.appendChild(_adminTicketText('admin-ticket-time',new Date(ticket.createdAt).toLocaleString('zh-CN')));
       var actions=document.createElement('div');
       actions.className='admin-ticket-actions';
+      if(ticket.type==='account'&&ticket.status!=='resolved'&&ticket.trialStatus!=='approved'){
+        var approve=document.createElement('button');
+        approve.type='button';approve.className='admin-trial-approve';approve.textContent='核准 1 天体验';
+        approve.addEventListener('click',function(){adminApproveTrial(ticket.id,ticket.email);});
+        actions.appendChild(approve);
+      }
       var resolve=document.createElement('button');
       resolve.type='button';
       resolve.className='admin-acct-copy';
@@ -2349,12 +2457,25 @@ async function adminRenderSupport(){
       remove.className='admin-acct-del';
       remove.textContent='删除';
       remove.addEventListener('click',function(){adminDeleteSupport(ticket.id);});
-      actions.appendChild(resolve);
-      actions.appendChild(remove);
+      if(ticket.trialStatus!=='approved')actions.appendChild(resolve);
+      if(ticket.trialStatus!=='approved'||ticket.credentialClaimedAt)actions.appendChild(remove);
       card.appendChild(actions);
+      if(ticket.trialStatus==='approved'){
+        card.appendChild(_adminTicketText('admin-trial-note',ticket.credentialClaimedAt?'申请人已领取登录资料':'等待申请人凭申请编号与邮箱领取'));
+      }
       list.appendChild(card);
     });
   }catch(e){list.innerHTML='<div class="admin-empty">'+_adminEsc(e.message)+'</div>';}
+}
+async function adminApproveTrial(id,email){
+  if(!confirm('将为 '+email+' 创建有效 24 小时的体验账号。确认核准？'))return;
+  try{
+    await _adminFetch('/admin/support/approve-trial',{method:'POST',body:JSON.stringify({id:id})});
+    await Promise.all([adminRenderSupport(),adminRenderAccounts()]);
+  }catch(error){
+    if(error.message&&error.message.indexOf('EMAIL_EXISTS')>=0)alert('这个邮箱已经有账号，请在账号列表续期或先处理原账号。');
+    else alert('核准失败：'+error.message);
+  }
 }
 async function adminResolveSupport(id,resolved){
   await _adminFetch('/admin/support/resolve',{method:'POST',body:JSON.stringify({id:id,resolved:resolved})});
